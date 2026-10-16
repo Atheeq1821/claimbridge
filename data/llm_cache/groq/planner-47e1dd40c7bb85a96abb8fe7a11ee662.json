@@ -1,0 +1,46 @@
+{
+ "task": "planner",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You are a caseworker assistant helping a policyholder respond to a denied health-insurance claim.\nYou receive the facts the claims graph established (CONTEXT) and the IDs you may cite (ALLOWED_IDS).\n\nWrite a short, practical plan:\n- one EVIDENCE_NEEDED item per missing evidence type, citing its evidence code and the governing clause;\n- ACTION items for the next steps (use the playbook steps of accepted precedents when present, citing their step IDs);\n- one REJECTED_PRECEDENT item per rejected precedent, explaining in plain words why it does not apply, citing its ID\n  (and the governing clause for VERSION_DRIFT);\n- WARNING items for gates (no appeal basis) or uncertainty.\n\nRules: use only facts from CONTEXT; every item must cite at least one ID from ALLOWED_IDS; never cite anything else;\nnever promise approval or payment; the disposition is already decided, do not change it.",
+ "user": "CONTEXT:\n{\n \"claim\": {\n  \"claim_id\": \"EV-T6-01\",\n  \"service\": \"Outpatient MRI\",\n  \"service_date\": 20260201,\n  \"is_emergency\": false,\n  \"in_network\": true,\n  \"filing_lag_days\": 120,\n  \"enrolled_months\": null\n },\n \"policy_version\": \"V2026\",\n \"denial_reason\": {\n  \"code\": \"TIMELY_FILING\",\n  \"name\": \"Filed after the deadline\"\n },\n \"clause\": {\n  \"clause_id\": \"C-2026-TIMELY-FILING\",\n  \"section\": \"9.1\",\n  \"title\": \"Timely filing limit\",\n  \"text\": \"Claims must be filed within 90 days of the date of service.\"\n },\n \"gates\": [\n  \"FILED_LATE\"\n ],\n \"evidence\": [\n  {\n   \"code\": \"PROOF_OF_TIMELY_FILING\",\n   \"name\": \"Proof of timely filing\",\n   \"satisfied\": false\n  }\n ],\n \"accepted_precedents\": [],\n \"rejected_precedents\": [\n  {\n   \"finding_id\": \"F-TIMELY-180\",\n   \"code\": \"VERSION_DRIFT\",\n   \"statement\": \"Filed after the deadline denials under L-TIMELY-FILING were overturned when the appeal included: Proof of timely filing.\",\n   \"learned_on\": \"C-2025-TIMELY-FILING\",\n   \"governing\": \"C-2026-TIMELY-FILING\",\n   \"contradicted_by\": []\n  }\n ],\n \"disposition\": \"NO_BASIS_ESCALATE\"\n}\nALLOWED_IDS:\n[\"C-2025-TIMELY-FILING\", \"C-2026-TIMELY-FILING\", \"F-TIMELY-180\", \"PROOF_OF_TIMELY_FILING\", \"V2026\"]\nWrite the plan.",
+ "output": {
+  "summary": "The claim was denied because it was filed 120 days after service, exceeding the 90\u2011day filing limit in clause C\u20112026\u2011TIMELY\u2011FILING. The following plan lists the missing evidence, next steps, and why prior precedent does not apply.",
+  "items": [
+   {
+    "kind": "EVIDENCE_NEEDED",
+    "text": "Obtain and submit proof that the claim was filed within the 90\u2011day limit (e.g., dated receipt acknowledgment).",
+    "cite_ids": [
+     "PROOF_OF_TIMELY_FILING",
+     "C-2026-TIMELY-FILING"
+    ]
+   },
+   {
+    "kind": "ACTION",
+    "text": "Submit the gathered proof of timely filing to the insurer as a supplemental document and request a review of the denial.",
+    "cite_ids": [
+     "C-2026-TIMELY-FILING",
+     "PROOF_OF_TIMELY_FILING"
+    ]
+   },
+   {
+    "kind": "REJECTED_PRECEDENT",
+    "text": "Precedent F\u2011TIMELY\u2011180 does not apply because it was based on the 2025 clause (C\u20112025\u2011TIMELY\u2011FILING); the current policy uses C\u20112026\u2011TIMELY\u2011FILING, so the prior overturn does not govern.",
+    "cite_ids": [
+     "F-TIMELY-180",
+     "C-2025-TIMELY-FILING",
+     "C-2026-TIMELY-FILING"
+    ]
+   },
+   {
+    "kind": "WARNING",
+    "text": "The claim is flagged by the FILED_LATE gate, meaning the denial has no appeal basis under the current rules.",
+    "cite_ids": [
+     "C-2026-TIMELY-FILING"
+    ]
+   }
+  ]
+ },
+ "input_tokens": 877,
+ "output_tokens": 944
+}

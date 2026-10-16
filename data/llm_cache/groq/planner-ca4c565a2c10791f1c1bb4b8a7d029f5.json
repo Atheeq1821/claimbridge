@@ -1,0 +1,37 @@
+{
+ "task": "planner",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You are a caseworker assistant helping a policyholder respond to a denied health-insurance claim.\nYou receive the facts the claims graph established (CONTEXT) and the IDs you may cite (ALLOWED_IDS).\n\nWrite a short, practical plan:\n- one EVIDENCE_NEEDED item per missing evidence type, citing its evidence code and the governing clause;\n- ACTION items for the next steps (use the playbook steps of accepted precedents when present, citing their step IDs);\n- one REJECTED_PRECEDENT item per rejected precedent, explaining in plain words why it does not apply, citing its ID\n  (and the governing clause for VERSION_DRIFT);\n- WARNING items for gates (no appeal basis) or uncertainty.\n\nRules: use only facts from CONTEXT; every item must cite at least one ID from ALLOWED_IDS; never cite anything else;\nnever promise approval or payment; the disposition is already decided, do not change it.",
+ "user": "CONTEXT:\n{\n \"claim\": {\n  \"claim_id\": \"EV-N-09\",\n  \"service\": \"Maternity care\",\n  \"service_date\": 20260402,\n  \"is_emergency\": false,\n  \"in_network\": true,\n  \"filing_lag_days\": 40,\n  \"enrolled_months\": 10\n },\n \"policy_version\": \"V2026\",\n \"denial_reason\": {\n  \"code\": \"WAITING_PERIOD\",\n  \"name\": \"Waiting period not satisfied\"\n },\n \"clause\": {\n  \"clause_id\": \"C-2026-MATERNITY-WAIT\",\n  \"section\": \"3.2\",\n  \"title\": \"Maternity waiting period\",\n  \"text\": \"Maternity benefits are available after the member has been continuously enrolled for 9 months.\"\n },\n \"gates\": [],\n \"evidence\": [\n  {\n   \"code\": \"ENROLLMENT_RECORD\",\n   \"name\": \"Enrollment record\",\n   \"satisfied\": false\n  }\n ],\n \"accepted_precedents\": [\n  {\n   \"finding_id\": \"F-MATERNITY-9M\",\n   \"statement\": \"Waiting period not satisfied denials under L-MATERNITY-WAIT were overturned when the appeal included: Enrollment record.\",\n   \"confidence\": 1.0,\n   \"support\": 2,\n   \"status\": \"ACTIVE\",\n   \"playbook_steps\": [\n    {\n     \"step_id\": \"PB-WAITING-CHECK-S1\",\n     \"action\": \"Obtain the enrollment record\"\n    },\n    {\n     \"step_id\": \"PB-WAITING-CHECK-S2\",\n     \"action\": \"Recompute the waiting period under the policy version in force on the service date\"\n    }\n   ]\n  }\n ],\n \"rejected_precedents\": [],\n \"disposition\": \"APPEAL_NEEDS_EVIDENCE\"\n}\nALLOWED_IDS:\n[\"C-2026-MATERNITY-WAIT\", \"ENROLLMENT_RECORD\", \"F-MATERNITY-9M\", \"PB-WAITING-CHECK-S1\", \"PB-WAITING-CHECK-S2\", \"V2026\"]\nWrite the plan.",
+ "output": {
+  "summary": "The claim was denied because the maternity waiting period was not met. To move forward, obtain the enrollment record and recalculate the waiting period under the applicable policy clause.",
+  "items": [
+   {
+    "kind": "EVIDENCE_NEEDED",
+    "text": "Provide the member\u2019s enrollment record showing continuous coverage.",
+    "cite_ids": [
+     "ENROLLMENT_RECORD",
+     "C-2026-MATERNITY-WAIT"
+    ]
+   },
+   {
+    "kind": "ACTION",
+    "text": "Obtain the enrollment record as directed in the playbook.",
+    "cite_ids": [
+     "PB-WAITING-CHECK-S1"
+    ]
+   },
+   {
+    "kind": "ACTION",
+    "text": "Recompute the waiting period using policy version V2026 on the service date.",
+    "cite_ids": [
+     "PB-WAITING-CHECK-S2",
+     "V2026"
+    ]
+   }
+  ]
+ },
+ "input_tokens": 929,
+ "output_tokens": 407
+}

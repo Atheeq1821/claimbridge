@@ -1,0 +1,24 @@
+{
+ "task": "planner",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You are a caseworker assistant helping a policyholder respond to a denied health-insurance claim.\nYou receive the facts the claims graph established (CONTEXT) and the IDs you may cite (ALLOWED_IDS).\n\nWrite a short, practical plan:\n- one EVIDENCE_NEEDED item per missing evidence type, citing its evidence code and the governing clause;\n- ACTION items for the next steps (use the playbook steps of accepted precedents when present, citing their step IDs);\n- one REJECTED_PRECEDENT item per rejected precedent, explaining in plain words why it does not apply, citing its ID\n  (and the governing clause for VERSION_DRIFT);\n- WARNING items for gates (no appeal basis) or uncertainty.\n\nRules: use only facts from CONTEXT; every item must cite at least one ID from ALLOWED_IDS; never cite anything else;\nnever promise approval or payment; the disposition is already decided, do not change it.",
+ "user": "CONTEXT:\n{\n \"claim\": {\n  \"claim_id\": \"EV-N-10\",\n  \"service\": \"Outpatient MRI\",\n  \"service_date\": 20250410,\n  \"is_emergency\": false,\n  \"in_network\": true,\n  \"filing_lag_days\": 150,\n  \"enrolled_months\": null\n },\n \"policy_version\": \"V2025\",\n \"denial_reason\": {\n  \"code\": \"TIMELY_FILING\",\n  \"name\": \"Filed after the deadline\"\n },\n \"clause\": {\n  \"clause_id\": \"C-2025-TIMELY-FILING\",\n  \"section\": \"9.1\",\n  \"title\": \"Timely filing limit\",\n  \"text\": \"Claims must be filed within 180 days of the date of service.\"\n },\n \"gates\": [],\n \"evidence\": [\n  {\n   \"code\": \"PROOF_OF_TIMELY_FILING\",\n   \"name\": \"Proof of timely filing\",\n   \"satisfied\": true\n  }\n ],\n \"accepted_precedents\": [\n  {\n   \"finding_id\": \"F-TIMELY-180\",\n   \"statement\": \"Filed after the deadline denials under L-TIMELY-FILING were overturned when the appeal included: Proof of timely filing.\",\n   \"confidence\": 1.0,\n   \"support\": 2,\n   \"status\": \"STALE\",\n   \"playbook_steps\": [\n    {\n     \"step_id\": \"PB-TIMELY-PROOF-S1\",\n     \"action\": \"Locate proof that the claim was filed within the limit\"\n    },\n    {\n     \"step_id\": \"PB-TIMELY-PROOF-S2\",\n     \"action\": \"If no proof exists, escalate: there is no appeal basis\"\n    }\n   ]\n  }\n ],\n \"rejected_precedents\": [],\n \"disposition\": \"APPEAL_VIABLE\"\n}\nALLOWED_IDS:\n[\"C-2025-TIMELY-FILING\", \"F-TIMELY-180\", \"PB-TIMELY-PROOF-S1\", \"PB-TIMELY-PROOF-S2\", \"PROOF_OF_TIMELY_FILING\", \"V2025\"]\nWrite the plan.",
+ "output": {
+  "summary": "The denial was based on filing timing, but the claim was filed within the 180\u2011day limit and proof is on file. Submit that proof to the appeals unit to address the denial.",
+  "items": [
+   {
+    "kind": "ACTION",
+    "text": "Submit the satisfied Proof of Timely Filing to the appeals department to demonstrate compliance with the 180\u2011day filing limit.",
+    "cite_ids": [
+     "PB-TIMELY-PROOF-S1",
+     "C-2025-TIMELY-FILING",
+     "PROOF_OF_TIMELY_FILING",
+     "V2025"
+    ]
+   }
+  ]
+ },
+ "input_tokens": 933,
+ "output_tokens": 603
+}

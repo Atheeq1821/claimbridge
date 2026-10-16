@@ -1,0 +1,40 @@
+{
+ "task": "planner",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You are a caseworker assistant helping a policyholder respond to a denied health-insurance claim.\nYou receive the facts the claims graph established (CONTEXT) and the IDs you may cite (ALLOWED_IDS).\n\nWrite a short, practical plan:\n- one EVIDENCE_NEEDED item per missing evidence type, citing its evidence code and the governing clause;\n- ACTION items for the next steps (use the playbook steps of accepted precedents when present, citing their step IDs);\n- one REJECTED_PRECEDENT item per rejected precedent, explaining in plain words why it does not apply, citing its ID\n  (and the governing clause for VERSION_DRIFT);\n- WARNING items for gates (no appeal basis) or uncertainty.\n\nRules: use only facts from CONTEXT; every item must cite at least one ID from ALLOWED_IDS; never cite anything else;\nnever promise approval or payment; the disposition is already decided, do not change it.",
+ "user": "CONTEXT:\n{\n \"claim\": {\n  \"claim_id\": \"EV-N-07\",\n  \"service\": \"Bariatric surgery\",\n  \"service_date\": 20260305,\n  \"is_emergency\": false,\n  \"in_network\": true,\n  \"filing_lag_days\": 40,\n  \"enrolled_months\": null\n },\n \"policy_version\": \"V2026\",\n \"denial_reason\": {\n  \"code\": \"EXCLUDED_SERVICE\",\n  \"name\": \"Service excluded by the policy\"\n },\n \"clause\": {\n  \"clause_id\": \"C-2026-BARIATRIC\",\n  \"section\": \"7.4\",\n  \"title\": \"Bariatric surgery\",\n  \"text\": \"Bariatric surgery is covered for members with a documented BMI of 40 or more who completed a six-month supervised weight-loss program.\"\n },\n \"gates\": [],\n \"evidence\": [\n  {\n   \"code\": \"BMI_RECORD\",\n   \"name\": \"BMI record\",\n   \"satisfied\": true\n  },\n  {\n   \"code\": \"SUPERVISED_PROGRAM_RECORD\",\n   \"name\": \"Supervised weight-loss program record\",\n   \"satisfied\": true\n  }\n ],\n \"accepted_precedents\": [\n  {\n   \"finding_id\": \"F-BARIATRIC\",\n   \"statement\": \"Service excluded by the policy denials under L-BARIATRIC were overturned when the appeal included: BMI record, Supervised weight-loss program record.\",\n   \"confidence\": 1.0,\n   \"support\": 2,\n   \"status\": \"ACTIVE\",\n   \"playbook_steps\": [\n    {\n     \"step_id\": \"PB-COVERAGE-CRITERIA-S1\",\n     \"action\": \"Collect the records the coverage clause requires\"\n    },\n    {\n     \"step_id\": \"PB-COVERAGE-CRITERIA-S2\",\n     \"action\": \"Appeal citing the coverage clause in force on the service date\"\n    }\n   ]\n  }\n ],\n \"rejected_precedents\": [\n  {\n   \"finding_id\": \"F-GENETIC\",\n   \"code\": \"LINEAGE_MISMATCH\",\n   \"statement\": \"Service excluded by the policy denials under L-GENETIC-TEST were overturned when the appeal included: Genetic counselor referral.\",\n   \"learned_on\": \"C-2025-GENETIC-TEST\",\n   \"governing\": \"C-2026-GENETIC-TEST\",\n   \"contradicted_by\": []\n  }\n ],\n \"disposition\": \"APPEAL_VIABLE\"\n}\nALLOWED_IDS:\n[\"BMI_RECORD\", \"C-2025-GENETIC-TEST\", \"C-2026-BARIATRIC\", \"C-2026-GENETIC-TEST\", \"F-BARIATRIC\", \"F-GENETIC\", \"PB-COVERAGE-CRITERIA-S1\", \"PB-COVERAGE-CRITERIA-S2\", \"SUPERVISED_PROGRAM_RECORD\", \"V2026\"]\nWrite the plan.",
+ "output": {
+  "summary": "The claim can be appealed by providing the required bariatric-surgery records and citing the appropriate coverage clause. The genetic-testing precedent is irrelevant to this case.",
+  "items": [
+   {
+    "kind": "ACTION",
+    "text": "Collect the BMI record and supervised weight\u2011loss program record as required by the bariatric surgery coverage clause.",
+    "cite_ids": [
+     "BMI_RECORD",
+     "SUPERVISED_PROGRAM_RECORD",
+     "C-2026-BARIATRIC",
+     "PB-COVERAGE-CRITERIA-S1"
+    ]
+   },
+   {
+    "kind": "ACTION",
+    "text": "Submit an appeal citing clause C-2026-BARIATRIC (section 7.4) and attaching the collected records.",
+    "cite_ids": [
+     "C-2026-BARIATRIC",
+     "PB-COVERAGE-CRITERIA-S2"
+    ]
+   },
+   {
+    "kind": "REJECTED_PRECEDENT",
+    "text": "The genetic\u2011testing precedent (F\u2011GENETIC) does not apply because the denial concerns bariatric surgery, not a genetic test, and the governing clause is unrelated (C\u20112026\u2011GENETIC\u2011TEST).",
+    "cite_ids": [
+     "F-GENETIC",
+     "C-2026-GENETIC-TEST"
+    ]
+   }
+  ]
+ },
+ "input_tokens": 1113,
+ "output_tokens": 976
+}

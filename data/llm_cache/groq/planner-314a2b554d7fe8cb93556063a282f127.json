@@ -1,0 +1,55 @@
+{
+ "task": "planner",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You are a caseworker assistant helping a policyholder respond to a denied health-insurance claim.\nYou receive the facts the claims graph established (CONTEXT) and the IDs you may cite (ALLOWED_IDS).\n\nWrite a short, practical plan:\n- one EVIDENCE_NEEDED item per missing evidence type, citing its evidence code and the governing clause;\n- ACTION items for the next steps (use the playbook steps of accepted precedents when present, citing their step IDs);\n- one REJECTED_PRECEDENT item per rejected precedent, explaining in plain words why it does not apply, citing its ID\n  (and the governing clause for VERSION_DRIFT);\n- WARNING items for gates (no appeal basis) or uncertainty.\n\nRules: use only facts from CONTEXT; every item must cite at least one ID from ALLOWED_IDS; never cite anything else;\nnever promise approval or payment; the disposition is already decided, do not change it.",
+ "user": "CONTEXT:\n{\n \"claim\": {\n  \"claim_id\": \"EV-T4-01\",\n  \"service\": \"Sleep study\",\n  \"service_date\": 20250715,\n  \"is_emergency\": false,\n  \"in_network\": true,\n  \"filing_lag_days\": 30,\n  \"enrolled_months\": null\n },\n \"policy_version\": \"V2025\",\n \"denial_reason\": {\n  \"code\": \"PREAUTH_MISSING\",\n  \"name\": \"Prior authorization not obtained\"\n },\n \"clause\": {\n  \"clause_id\": \"C-2025-SLEEP-STUDY-PREAUTH\",\n  \"section\": \"4.4\",\n  \"title\": \"Prior authorization for sleep studies\",\n  \"text\": \"Facility-based sleep studies require prior authorization. A retroactive authorization request may be considered.\"\n },\n \"gates\": [],\n \"evidence\": [\n  {\n   \"code\": \"RETRO_AUTH_REQUEST\",\n   \"name\": \"Retroactive authorization request\",\n   \"satisfied\": true\n  }\n ],\n \"accepted_precedents\": [],\n \"rejected_precedents\": [\n  {\n   \"finding_id\": \"F-INPATIENT-RETRO\",\n   \"code\": \"LINEAGE_MISMATCH\",\n   \"statement\": \"Prior authorization not obtained denials under L-INPATIENT-PREAUTH were overturned when the appeal included: Retroactive authorization request, Discharge summary.\",\n   \"learned_on\": \"C-2026-INPATIENT-PREAUTH\",\n   \"governing\": \"C-2025-INPATIENT-PREAUTH\",\n   \"contradicted_by\": []\n  },\n  {\n   \"finding_id\": \"F-MRI-REFERRAL\",\n   \"code\": \"LINEAGE_MISMATCH\",\n   \"statement\": \"Prior authorization not obtained denials under L-MRI-PREAUTH were overturned when the appeal included: Specialist referral.\",\n   \"learned_on\": \"C-2025-MRI-PREAUTH\",\n   \"governing\": \"C-2025-MRI-PREAUTH\",\n   \"contradicted_by\": []\n  },\n  {\n   \"finding_id\": \"F-SLEEP-RETRO\",\n   \"code\": \"CONTRADICTED\",\n   \"statement\": \"Prior authorization not obtained denials under L-SLEEP-STUDY-PREAUTH were overturned when the appeal included: Retroactive authorization request.\",\n   \"learned_on\": \"C-2025-SLEEP-STUDY-PREAUTH\",\n   \"governing\": \"C-2025-SLEEP-STUDY-PREAUTH\",\n   \"contradicted_by\": [\n    \"R-HC-010\",\n    \"R-HC-011\"\n   ]\n  }\n ],\n \"disposition\": \"APPEAL_VIABLE\"\n}\nALLOWED_IDS:\n[\"C-2025-INPATIENT-PREAUTH\", \"C-2025-MRI-PREAUTH\", \"C-2025-SLEEP-STUDY-PREAUTH\", \"C-2026-INPATIENT-PREAUTH\", \"F-INPATIENT-RETRO\", \"F-MRI-REFERRAL\", \"F-SLEEP-RETRO\", \"R-HC-010\", \"R-HC-011\", \"RETRO_AUTH_REQUEST\", \"V2025\"]\nWrite the plan.",
+ "output": {
+  "summary": "The claim can be appealed by referencing the sleep\u2011study pre\u2011auth clause and including the retroactive authorization request. Prior precedents for inpatient, MRI, or earlier sleep\u2011study rulings do not apply.",
+  "items": [
+   {
+    "kind": "ACTION",
+    "text": "As the claim is appeal\u2011viable, compile an appeal that references clause C-2025-SLEEP-STUDY-PREAUTH (section 4.4) and attach the already\u2011satisfied retroactive authorization request (evidence code RETRO_AUTH_REQUEST) along with any supporting medical\u2011necessity notes.",
+    "cite_ids": [
+     "C-2025-SLEEP-STUDY-PREAUTH",
+     "RETRO_AUTH_REQUEST",
+     "V2025"
+    ]
+   },
+   {
+    "kind": "REJECTED_PRECEDENT",
+    "text": "The inpatient\u2011preauth precedent (F-INPATIENT-RETRO) does not apply because it governs inpatient services under clause C-2025-INPATIENT-PREAUTH, not sleep\u2011study services.",
+    "cite_ids": [
+     "F-INPATIENT-RETRO",
+     "C-2025-INPATIENT-PREAUTH"
+    ]
+   },
+   {
+    "kind": "REJECTED_PRECEDENT",
+    "text": "The MRI\u2011preauth precedent (F-MRI-REFERRAL) is unrelated; it is tied to clause C-2025-MRI-PREAUTH for MRI procedures, not to sleep\u2011study authorization.",
+    "cite_ids": [
+     "F-MRI-REFERRAL",
+     "C-2025-MRI-PREAUTH"
+    ]
+   },
+   {
+    "kind": "REJECTED_PRECEDENT",
+    "text": "The sleep\u2011study retroactive\u2011auth precedent (F-SLEEP-RETRO) has been contradicted by rules R-HC-010 and R-HC-011, so it cannot be relied on for this appeal.",
+    "cite_ids": [
+     "F-SLEEP-RETRO",
+     "R-HC-010",
+     "R-HC-011"
+    ]
+   },
+   {
+    "kind": "WARNING",
+    "text": "There is no gate limiting appeal grounds, but the appeal must be submitted within the policy\u2019s standard appeal window (see policy version V2025).",
+    "cite_ids": [
+     "V2025"
+    ]
+   }
+  ]
+ },
+ "input_tokens": 1162,
+ "output_tokens": 1648
+}

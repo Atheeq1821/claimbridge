@@ -1,0 +1,53 @@
+{
+ "task": "planner",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You are a caseworker assistant helping a policyholder respond to a denied health-insurance claim.\nYou receive the facts the claims graph established (CONTEXT) and the IDs you may cite (ALLOWED_IDS).\n\nWrite a short, practical plan:\n- one EVIDENCE_NEEDED item per missing evidence type, citing its evidence code and the governing clause;\n- ACTION items for the next steps (use the playbook steps of accepted precedents when present, citing their step IDs);\n- one REJECTED_PRECEDENT item per rejected precedent, explaining in plain words why it does not apply, citing its ID\n  (and the governing clause for VERSION_DRIFT);\n- WARNING items for gates (no appeal basis) or uncertainty.\n\nRules: use only facts from CONTEXT; every item must cite at least one ID from ALLOWED_IDS; never cite anything else;\nnever promise approval or payment; the disposition is already decided, do not change it.",
+ "user": "CONTEXT:\n{\n \"claim\": {\n  \"claim_id\": \"EV-T5-02\",\n  \"service\": \"Physiotherapy\",\n  \"service_date\": 20251102,\n  \"is_emergency\": false,\n  \"in_network\": false,\n  \"filing_lag_days\": 40,\n  \"enrolled_months\": null\n },\n \"policy_version\": \"V2025\",\n \"denial_reason\": {\n  \"code\": \"OUT_OF_NETWORK\",\n  \"name\": \"Provider out of network\"\n },\n \"clause\": {\n  \"clause_id\": \"C-2025-OON-EMERGENCY\",\n  \"section\": \"6.3\",\n  \"title\": \"Out-of-network services\",\n  \"text\": \"Services from out-of-network providers are not covered, except emergency services, which are covered at the in-network rate when an emergency attestation is filed within 72 hours of admission.\"\n },\n \"gates\": [\n  \"EMERGENCY_REQUIRED\"\n ],\n \"evidence\": [\n  {\n   \"code\": \"DISCHARGE_SUMMARY\",\n   \"name\": \"Discharge summary\",\n   \"satisfied\": false\n  },\n  {\n   \"code\": \"EMERGENCY_ATTESTATION\",\n   \"name\": \"Emergency attestation\",\n   \"satisfied\": false\n  }\n ],\n \"accepted_precedents\": [],\n \"rejected_precedents\": [\n  {\n   \"finding_id\": \"F-OON-ER\",\n   \"code\": \"CONDITION_UNMET\",\n   \"statement\": \"Provider out of network denials under L-OON-EMERGENCY in an emergency were overturned when the appeal included: Emergency attestation, Discharge summary.\",\n   \"learned_on\": \"C-2025-OON-EMERGENCY\",\n   \"governing\": \"C-2025-OON-EMERGENCY\",\n   \"contradicted_by\": []\n  }\n ],\n \"disposition\": \"NO_BASIS_ESCALATE\"\n}\nALLOWED_IDS:\n[\"C-2025-OON-EMERGENCY\", \"DISCHARGE_SUMMARY\", \"EMERGENCY_ATTESTATION\", \"F-OON-ER\", \"V2025\"]\nWrite the plan.",
+ "output": {
+  "summary": "The claim was denied because the provider was out-of-network and no emergency documentation was provided. To pursue further review, the required emergency attestation and discharge summary must be obtained and submitted.",
+  "items": [
+   {
+    "kind": "EVIDENCE_NEEDED",
+    "text": "Provide the discharge summary for the physiotherapy visit.",
+    "cite_ids": [
+     "DISCHARGE_SUMMARY",
+     "C-2025-OON-EMERGENCY"
+    ]
+   },
+   {
+    "kind": "EVIDENCE_NEEDED",
+    "text": "Provide an emergency attestation confirming the service was an emergency.",
+    "cite_ids": [
+     "EMERGENCY_ATTESTATION",
+     "C-2025-OON-EMERGENCY"
+    ]
+   },
+   {
+    "kind": "ACTION",
+    "text": "Gather the missing discharge summary and emergency attestation and submit them to the insurer for reconsideration.",
+    "cite_ids": [
+     "C-2025-OON-EMERGENCY",
+     "V2025"
+    ]
+   },
+   {
+    "kind": "REJECTED_PRECEDENT",
+    "text": "Precedent F-OON-ER does not apply because it only overturns out-of-network denials for true emergencies, and this claim lacks an emergency attestation.",
+    "cite_ids": [
+     "F-OON-ER",
+     "C-2025-OON-EMERGENCY"
+    ]
+   },
+   {
+    "kind": "WARNING",
+    "text": "Without an emergency attestation, the claim fails the EMERGENCY_REQUIRED gate and has no basis for escalation.",
+    "cite_ids": [
+     "C-2025-OON-EMERGENCY"
+    ]
+   }
+  ]
+ },
+ "input_tokens": 932,
+ "output_tokens": 966
+}

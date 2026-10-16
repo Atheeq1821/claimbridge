@@ -1,0 +1,45 @@
+# ClaimBridge local stack.
+#   docker compose up -d falkordb            database only (develop agents locally)
+#   docker compose --profile agents up -d    database + seeded graph + supervised agent pool
+services:
+  falkordb:
+    image: falkordb/falkordb:latest
+    ports:
+      - "6379:6379"   # FalkorDB (Redis protocol)
+      - "3000:3000"   # FalkorDB Browser
+    volumes:
+      - falkordb_data:/var/lib/falkordb/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+
+  seed:
+    profiles: ["agents"]
+    build: {context: ., dockerfile: backend/Dockerfile}
+    command: ["reset"]
+    env_file: [.env]
+    environment: &env
+      FALKORDB_HOST: falkordb
+      GRAPH: claimbridge
+    volumes:
+      - embed_cache:/app/.fastembed_cache
+    depends_on:
+      falkordb: {condition: service_healthy}
+
+  # The Supervisor runs every worker as its own process, executes KILL/START
+  # commands written into the graph, and records expired leases.
+  agents:
+    profiles: ["agents"]
+    build: {context: ., dockerfile: backend/Dockerfile}
+    command: ["up", "--pool", "intake=1,retrieval=1,verifier=2,planner=1,curator=1"]
+    env_file: [.env]
+    environment: *env
+    volumes:
+      - ./data/llm_cache:/app/data/llm_cache   # recorded LLM responses survive restarts
+    depends_on:
+      seed: {condition: service_completed_successfully}
+
+volumes:
+  falkordb_data:
+  embed_cache:

@@ -1,0 +1,63 @@
+{
+ "task": "planner",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You are a caseworker assistant helping a policyholder respond to a denied health-insurance claim.\nYou receive the facts the claims graph established (CONTEXT) and the IDs you may cite (ALLOWED_IDS).\n\nWrite a short, practical plan:\n- one EVIDENCE_NEEDED item per missing evidence type, citing its evidence code and the governing clause;\n- ACTION items for the next steps (use the playbook steps of accepted precedents when present, citing their step IDs);\n- one REJECTED_PRECEDENT item per rejected precedent, explaining in plain words why it does not apply, citing its ID\n  (and the governing clause for VERSION_DRIFT);\n- WARNING items for gates (no appeal basis) or uncertainty.\n\nRules: use only facts from CONTEXT; every item must cite at least one ID from ALLOWED_IDS; never cite anything else;\nnever promise approval or payment; the disposition is already decided, do not change it.",
+ "user": "CONTEXT:\n{\n \"claim\": {\n  \"claim_id\": \"EV-T1-01\",\n  \"service\": \"Outpatient MRI\",\n  \"service_date\": 20260310,\n  \"is_emergency\": false,\n  \"in_network\": true,\n  \"filing_lag_days\": 37,\n  \"enrolled_months\": null\n },\n \"policy_version\": \"V2026\",\n \"denial_reason\": {\n  \"code\": \"PREAUTH_MISSING\",\n  \"name\": \"Prior authorization not obtained\"\n },\n \"clause\": {\n  \"clause_id\": \"C-2026-MRI-PREAUTH\",\n  \"section\": \"4.2\",\n  \"title\": \"Prior authorization for outpatient MRI\",\n  \"text\": \"Outpatient magnetic resonance imaging requires prior authorization from the Plan before the date of service. No referral exception applies. Where authorization was not obtained, a retroactive authorization request supported by a letter of medical necessity may be submitted.\"\n },\n \"gates\": [],\n \"evidence\": [\n  {\n   \"code\": \"PHYSICIAN_NECESSITY_LETTER\",\n   \"name\": \"Physician letter of medical necessity\",\n   \"satisfied\": false\n  },\n  {\n   \"code\": \"RETRO_AUTH_REQUEST\",\n   \"name\": \"Retroactive authorization request\",\n   \"satisfied\": false\n  }\n ],\n \"accepted_precedents\": [],\n \"rejected_precedents\": [\n  {\n   \"finding_id\": \"F-INPATIENT-RETRO\",\n   \"code\": \"LINEAGE_MISMATCH\",\n   \"statement\": \"Prior authorization not obtained denials under L-INPATIENT-PREAUTH were overturned when the appeal included: Retroactive authorization request, Discharge summary.\",\n   \"learned_on\": \"C-2026-INPATIENT-PREAUTH\",\n   \"governing\": \"C-2026-INPATIENT-PREAUTH\",\n   \"contradicted_by\": []\n  },\n  {\n   \"finding_id\": \"F-MRI-REFERRAL\",\n   \"code\": \"VERSION_DRIFT\",\n   \"statement\": \"Prior authorization not obtained denials under L-MRI-PREAUTH were overturned when the appeal included: Specialist referral.\",\n   \"learned_on\": \"C-2025-MRI-PREAUTH\",\n   \"governing\": \"C-2026-MRI-PREAUTH\",\n   \"contradicted_by\": []\n  },\n  {\n   \"finding_id\": \"F-SLEEP-RETRO\",\n   \"code\": \"LINEAGE_MISMATCH\",\n   \"statement\": \"Prior authorization not obtained denials under L-SLEEP-STUDY-PREAUTH were overturned when the appeal included: Retroactive authorization request.\",\n   \"learned_on\": \"C-2025-SLEEP-STUDY-PREAUTH\",\n   \"governing\": \"C-2026-SLEEP-STUDY-PREAUTH\",\n   \"contradicted_by\": [\n    \"R-HC-010\",\n    \"R-HC-011\"\n   ]\n  }\n ],\n \"disposition\": \"APPEAL_NEEDS_EVIDENCE\"\n}\nALLOWED_IDS:\n[\"C-2025-MRI-PREAUTH\", \"C-2025-SLEEP-STUDY-PREAUTH\", \"C-2026-INPATIENT-PREAUTH\", \"C-2026-MRI-PREAUTH\", \"C-2026-SLEEP-STUDY-PREAUTH\", \"F-INPATIENT-RETRO\", \"F-MRI-REFERRAL\", \"F-SLEEP-RETRO\", \"PHYSICIAN_NECESSITY_LETTER\", \"R-HC-010\", \"R-HC-011\", \"RETRO_AUTH_REQUEST\", \"V2026\"]\nWrite the plan.",
+ "output": {
+  "summary": "The denial is for missing prior authorization. Submit the required physician letter of medical necessity and a retroactive authorization request as outlined in clause C-2026-MRI-PREAUTH.",
+  "items": [
+   {
+    "kind": "EVIDENCE_NEEDED",
+    "text": "Provide a physician\u2019s letter of medical necessity for the outpatient MRI.",
+    "cite_ids": [
+     "PHYSICIAN_NECESSITY_LETTER",
+     "C-2026-MRI-PREAUTH"
+    ]
+   },
+   {
+    "kind": "EVIDENCE_NEEDED",
+    "text": "Submit a retroactive authorization request for the MRI service.",
+    "cite_ids": [
+     "RETRO_AUTH_REQUEST",
+     "C-2026-MRI-PREAUTH"
+    ]
+   },
+   {
+    "kind": "ACTION",
+    "text": "File the retroactive authorization request together with the physician\u2019s letter to the Plan\u2019s prior\u2011auth department.",
+    "cite_ids": [
+     "C-2026-MRI-PREAUTH",
+     "PHYSICIAN_NECESSITY_LETTER",
+     "RETRO_AUTH_REQUEST"
+    ]
+   },
+   {
+    "kind": "REJECTED_PRECEDENT",
+    "text": "The inpatient retroactive\u2011auth precedent does not apply because this claim is for an outpatient MRI, not an inpatient stay.",
+    "cite_ids": [
+     "F-INPATIENT-RETRO",
+     "C-2026-INPATIENT-PREAUTH"
+    ]
+   },
+   {
+    "kind": "REJECTED_PRECEDENT",
+    "text": "The referral\u2011exception precedent is inapplicable; clause C-2026-MRI-PREAUTH expressly states no referral exception for MRI prior\u2011auth.",
+    "cite_ids": [
+     "F-MRI-REFERRAL",
+     "C-2026-MRI-PREAUTH"
+    ]
+   },
+   {
+    "kind": "REJECTED_PRECEDENT",
+    "text": "The sleep\u2011study retro\u2011auth precedent is unrelated to MRI services and therefore does not apply.",
+    "cite_ids": [
+     "F-SLEEP-RETRO",
+     "C-2026-SLEEP-STUDY-PREAUTH"
+    ]
+   }
+  ]
+ },
+ "input_tokens": 1254,
+ "output_tokens": 1474
+}
