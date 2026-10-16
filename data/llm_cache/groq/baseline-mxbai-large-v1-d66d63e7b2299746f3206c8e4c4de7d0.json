@@ -1,0 +1,52 @@
+{
+ "task": "baseline-mxbai-large-v1",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You help a caseworker respond to a denied health-insurance claim.\nYou get the claim and the passages retrieved from the policy documents (all policy versions) and from\npast case records. Decide:\n- the insurer's denial reason (one code);\n- the policy version in force on the service date (versions run from their effective date until the next one);\n- the evidence an appeal needs under the governing terms, and which of it the claim is missing;\n- which past cases (HC-...) are valid precedents for this claim (empty if none truly apply);\n- the disposition: APPEAL_VIABLE (all required evidence on file), APPEAL_NEEDS_EVIDENCE (an appeal is possible\n  once evidence is added) or NO_BASIS_ESCALATE (the governing terms leave no basis for appeal);\n- a short plan whose items cite the passage IDs they rely on.\nUse only the passages and claim facts. Never promise approval.",
+ "user": "CLAIM:\nClaim ID: EV-T6-02\nService: Genetic testing\nService date: 2024-09-05\nFiled: 2024-10-08 (33 days after the service)\nEmergency: no\nIn network: yes\nEvidence already on file: Genetic counselor referral (GENETIC_COUNSELOR_REFERRAL)\nDenial notice: Lumen Health Assurance - Notice of claim denial. Claim EV-T6-02. Service: Genetic testing. Date of service: 2024-09-05. This service is not a covered benefit under your plan. This decision applies the policy terms on experimental and investigational services. You may appeal this decision within 180 days of this notice.\n\nRETRIEVED PASSAGES:\n[CS-HC-044] Past case HC-044. Policyholder: Asha Varma. Service: Genetic testing, service date 2024-07-27 (policy V2024). Emergency: no. In network: yes. Denial notice: Service: Genetic testing. This service is not a covered benefit under your plan. This decision applies the policy terms on experimental and investigational services. Evidence submitted on appeal: Lab report (LAB_REPORT). Verified outcome: UPHELD on 2024-10-08.\n\n[CS-HC-027] Past case HC-027. Policyholder: Dev Mehta. Service: Genetic testing, service date 2025-08-08 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Genetic testing. This type of service falls outside what your plan pays for. Evidence submitted on appeal: Genetic counselor referral (GENETIC_COUNSELOR_REFERRAL). Verified outcome: OVERTURNED on 2025-11-12.\n\n[CS-HC-026] Past case HC-026. Policyholder: Ines Moreau. Service: Genetic testing, service date 2025-04-09 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Genetic testing. This type of service falls outside what your plan pays for. Evidence submitted on appeal: Genetic counselor referral (GENETIC_COUNSELOR_REFERRAL). Verified outcome: OVERTURNED on 2025-07-20.\n\n[CS-HC-043] Past case HC-043. Policyholder: Ines Moreau. Service: Genetic testing, service date 2024-12-11 (policy V2024). Emergency: no. In network: yes. Denial notice: Service: Genetic testing. This service is not a covered benefit under your plan. See Section 8.2 (Experimental and investigational services) of your LumenCare Silver policy. Evidence submitted on appeal: Lab report (LAB_REPORT). Verified outcome: UPHELD on 2025-03-14.\n\n[CL-C-2024-EXPERIMENTAL-EXCL] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 8.2, Experimental and investigational services: Experimental or investigational services, including genetic testing not otherwise listed as covered, are excluded. Evidence required for an appeal under this section: none.\n\n[CL-C-2025-EXPERIMENTAL-EXCL] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 8.2, Experimental and investigational services: Experimental or investigational services, including genetic testing not otherwise listed as covered, are excluded. Evidence required for an appeal under this section: none.\n\n[CL-C-2026-EXPERIMENTAL-EXCL] Policy LumenCare Silver, version V2026 (in force 2026-01-01 to open-ended). Section 8.2, Experimental and investigational services: Experimental or investigational services, including genetic testing not otherwise listed as covered, are excluded. Evidence required for an appeal under this section: none.\n\n[CL-C-2025-GENETIC-TEST] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 7.6, Genetic testing: Diagnostic genetic testing is covered when ordered following a referral from a certified genetic counselor. Evidence required for an appeal under this section: Genetic counselor referral (GENETIC_COUNSELOR_REFERRAL).\n\nDecide and write the plan.",
+ "output": {
+  "denial_reason": "EXCLUDED_SERVICE",
+  "policy_version": "V2024",
+  "cited_section": "8.2",
+  "required_evidence": [],
+  "missing_evidence": [],
+  "precedent_case_ids": [
+   "HC-044",
+   "HC-043"
+  ],
+  "disposition": "APPEAL_VIABLE",
+  "summary": "The claim was denied because genetic testing is excluded as an experimental service under Section\u202f8.2 of the V2024 policy. No additional evidence is required for an appeal, but prior V2024 cases (HC-044, HC-043) were upheld, indicating limited likelihood of reversal.",
+  "items": [
+   {
+    "kind": "ACTION",
+    "text": "Denial is based on Section\u202f8.2 (Experimental and investigational services) of the V2024 policy, which excludes genetic testing not listed as covered.",
+    "cite_ids": [
+     "CL-C-2024-EXPERIMENTAL-EXCL"
+    ]
+   },
+   {
+    "kind": "ACTION",
+    "text": "No additional evidence is required for an appeal under this section; the appeal can be filed immediately.",
+    "cite_ids": [
+     "CL-C-2024-EXPERIMENTAL-EXCL"
+    ]
+   },
+   {
+    "kind": "REJECTED_PRECEDENT",
+    "text": "Past case HC-044 (V2024) was upheld despite submission of a lab report, showing that appeals under this exclusion are typically denied.",
+    "cite_ids": [
+     "CS-HC-044"
+    ]
+   },
+   {
+    "kind": "REJECTED_PRECEDENT",
+    "text": "Past case HC-043 (V2024) was also upheld, reinforcing the exclusionary nature of Section\u202f8.2 for genetic testing.",
+    "cite_ids": [
+     "CS-HC-043"
+    ]
+   }
+  ]
+ },
+ "input_tokens": 1895,
+ "output_tokens": 1264
+}

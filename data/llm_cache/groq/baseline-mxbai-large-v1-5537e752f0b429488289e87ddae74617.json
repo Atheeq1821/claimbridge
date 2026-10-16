@@ -1,0 +1,35 @@
+{
+ "task": "baseline-mxbai-large-v1",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You help a caseworker respond to a denied health-insurance claim.\nYou get the claim and the passages retrieved from the policy documents (all policy versions) and from\npast case records. Decide:\n- the insurer's denial reason (one code);\n- the policy version in force on the service date (versions run from their effective date until the next one);\n- the evidence an appeal needs under the governing terms, and which of it the claim is missing;\n- which past cases (HC-...) are valid precedents for this claim (empty if none truly apply);\n- the disposition: APPEAL_VIABLE (all required evidence on file), APPEAL_NEEDS_EVIDENCE (an appeal is possible\n  once evidence is added) or NO_BASIS_ESCALATE (the governing terms leave no basis for appeal);\n- a short plan whose items cite the passage IDs they rely on.\nUse only the passages and claim facts. Never promise approval.",
+ "user": "CLAIM:\nClaim ID: EV-T5-02\nService: Physiotherapy\nService date: 2025-11-02\nFiled: 2025-12-12 (40 days after the service)\nEmergency: no\nIn network: no\nEvidence already on file: Itemized bill (ITEMIZED_BILL), Clinical progress notes (PROGRESS_NOTES)\nDenial notice: Lumen Health Assurance - Notice of claim denial. Claim EV-T5-02. Service: Physiotherapy. Date of service: 2025-11-02. Services from non-participating providers are not covered under your plan. This decision applies the policy terms on out-of-network services. You may appeal this decision within 180 days of this notice.\n\nRETRIEVED PASSAGES:\n[CS-HC-050] Past case HC-050. Policyholder: Elif Kaya. Service: Physiotherapy, service date 2026-07-26 (policy V2026). Emergency: no. In network: yes. Denial notice: Service: Physiotherapy. The claim could not be processed as billed. Evidence submitted on appeal: Itemized bill (ITEMIZED_BILL). Verified outcome: PARTIAL on 2026-10-11.\n\n[CS-HC-012] Past case HC-012. Policyholder: Keiko Sato. Service: Physiotherapy, service date 2024-02-07 (policy V2024). Emergency: no. In network: yes. Denial notice: Service: Physiotherapy. Clinical review determined the treatment was not medically necessary as documented. This decision applies the policy terms on physiotherapy session limit. Evidence submitted on appeal: Clinical progress notes (PROGRESS_NOTES). Verified outcome: OVERTURNED on 2024-04-18.\n\n[CS-HC-015] Past case HC-015. Policyholder: Grace Lin. Service: Physiotherapy, service date 2026-03-26 (policy V2026). Emergency: no. In network: yes. Denial notice: Service: Physiotherapy. Based on our review, the claim does not meet the plan's criteria for payment. Evidence submitted on appeal: Physician letter of medical necessity (PHYSICIAN_NECESSITY_LETTER), Clinical progress notes (PROGRESS_NOTES). Verified outcome: OVERTURNED on 2026-06-20.\n\n[CS-HC-016] Past case HC-016. Policyholder: Keiko Sato. Service: Physiotherapy, service date 2026-05-18 (policy V2026). Emergency: no. In network: yes. Denial notice: Service: Physiotherapy. The services billed exceed what is considered medically necessary for the diagnosis provided. See Section 5.1 (Physiotherapy session limit) of your LumenCare Silver policy. Evidence submitted on appeal: Physician letter of medical necessity (PHYSICIAN_NECESSITY_LETTER), Clinical progress notes (PROGRESS_NOTES). Verified outcome: OVERTURNED on 2026-08-09.\n\n[CS-HC-013] Past case HC-013. Policyholder: Ines Moreau. Service: Physiotherapy, service date 2025-05-05 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Physiotherapy. Clinical review determined the treatment was not medically necessary as documented. See Section 5.1 (Physiotherapy session limit) of your LumenCare Silver policy. Evidence submitted on appeal: Clinical progress notes (PROGRESS_NOTES). Verified outcome: OVERTURNED on 2025-09-02.\n\n[CS-HC-014] Past case HC-014. Policyholder: Ines Moreau. Service: Physiotherapy, service date 2024-07-12 (policy V2024). Emergency: no. In network: yes. Denial notice: Service: Physiotherapy. The documentation submitted does not establish that this service was medically necessary. See Section 5.1 (Physiotherapy session limit) of your LumenCare Silver policy. Evidence submitted on appeal: Clinical progress notes (PROGRESS_NOTES). Verified outcome: OVERTURNED on 2024-09-05.\n\n[CS-HC-038] Past case HC-038. Policyholder: Carmen Ruiz. Service: Physiotherapy, service date 2026-06-08 (policy V2026). Emergency: no. In network: yes. Denial notice: Service: Physiotherapy. A claim for the same member, provider, date and amount has already been processed. This decision applies the policy terms on duplicate claims. Evidence submitted on appeal: Itemized bill (ITEMIZED_BILL). Verified outcome: OVERTURNED on 2026-09-10.\n\n[CS-HC-049] Past case HC-049. Policyholder: Maya Cohen. Service: Physiotherapy, service date 2025-12-05 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Physiotherapy. The diagnosis and procedure codes on the claim are inconsistent. See Section 9.4 (Coding corrections) of your LumenCare Silver policy. Evidence submitted on appeal: Itemized bill (ITEMIZED_BILL). Verified outcome: PARTIAL on 2026-01-30.\n\nDecide and write the plan.",
+ "output": {
+  "denial_reason": "OUT_OF_NETWORK",
+  "policy_version": "V2025",
+  "cited_section": null,
+  "required_evidence": [
+   "SPECIALIST_REFERRAL"
+  ],
+  "missing_evidence": [
+   "SPECIALIST_REFERRAL"
+  ],
+  "precedent_case_ids": [],
+  "disposition": "APPEAL_NEEDS_EVIDENCE",
+  "summary": "The claim was denied because the provider was out-of-network under policy V2025. The policy requires a specialist referral to justify out-of-network physiotherapy. The claim lacks this referral, so an appeal is possible once the referral is submitted.",
+  "items": [
+   {
+    "kind": "EVIDENCE_NEEDED",
+    "text": "Submit a specialist referral approving out-of-network physiotherapy.",
+    "cite_ids": []
+   },
+   {
+    "kind": "ACTION",
+    "text": "Gather and attach the specialist referral, then file an appeal within 180 days of the denial notice.",
+    "cite_ids": []
+   }
+  ]
+ },
+ "input_tokens": 2069,
+ "output_tokens": 1189
+}

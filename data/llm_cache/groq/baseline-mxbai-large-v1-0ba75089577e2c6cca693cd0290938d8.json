@@ -1,0 +1,44 @@
+{
+ "task": "baseline-mxbai-large-v1",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You help a caseworker respond to a denied health-insurance claim.\nYou get the claim and the passages retrieved from the policy documents (all policy versions) and from\npast case records. Decide:\n- the insurer's denial reason (one code);\n- the policy version in force on the service date (versions run from their effective date until the next one);\n- the evidence an appeal needs under the governing terms, and which of it the claim is missing;\n- which past cases (HC-...) are valid precedents for this claim (empty if none truly apply);\n- the disposition: APPEAL_VIABLE (all required evidence on file), APPEAL_NEEDS_EVIDENCE (an appeal is possible\n  once evidence is added) or NO_BASIS_ESCALATE (the governing terms leave no basis for appeal);\n- a short plan whose items cite the passage IDs they rely on.\nUse only the passages and claim facts. Never promise approval.",
+ "user": "CLAIM:\nClaim ID: EV-N-09\nService: Maternity care\nService date: 2026-04-02\nFiled: 2026-05-12 (40 days after the service)\nEmergency: no\nIn network: yes\nMonths enrolled before the service: 10\nEvidence already on file: none\nDenial notice: Lumen Health Assurance - Notice of claim denial. Claim EV-N-09. Service: Maternity care. Date of service: 2026-04-02. Benefits for this service begin only after the required period of continuous enrollment. This decision applies the policy terms on maternity waiting period. You may appeal this decision within 180 days of this notice.\n\nRETRIEVED PASSAGES:\n[CS-HC-029] Past case HC-029. Policyholder: Dev Mehta. Service: Maternity care, service date 2026-01-13 (policy V2026). Emergency: no. In network: yes. Denial notice: Service: Maternity care. Benefits for this service begin only after the required period of continuous enrollment. This decision applies the policy terms on maternity waiting period. Evidence submitted on appeal: Enrollment record (ENROLLMENT_RECORD). Verified outcome: OVERTURNED on 2026-03-26.\n\n[CL-C-2024-MATERNITY-WAIT] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 3.2, Maternity waiting period: Maternity benefits are available after the member has been continuously enrolled for 12 months. Evidence required for an appeal under this section: Enrollment record (ENROLLMENT_RECORD).\n\n[CL-C-2025-MATERNITY-WAIT] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 3.2, Maternity waiting period: Maternity benefits are available after the member has been continuously enrolled for 12 months. Evidence required for an appeal under this section: Enrollment record (ENROLLMENT_RECORD).\n\n[CL-C-2026-MATERNITY-WAIT] Policy LumenCare Silver, version V2026 (in force 2026-01-01 to open-ended). Section 3.2, Maternity waiting period: Maternity benefits are available after the member has been continuously enrolled for 9 months. Evidence required for an appeal under this section: Enrollment record (ENROLLMENT_RECORD).\n\n[CS-HC-048] Past case HC-048. Policyholder: Farid Haddad. Service: Maternity care, service date 2025-11-08 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Maternity care. You were not yet eligible for this benefit on the date of service. Evidence submitted on appeal: Enrollment record (ENROLLMENT_RECORD). Verified outcome: UPHELD on 2026-02-09.\n\n[CS-HC-028] Past case HC-028. Policyholder: Keiko Sato. Service: Maternity care, service date 2026-07-14 (policy V2026). Emergency: no. In network: yes. Denial notice: Service: Maternity care. You were not yet eligible for this benefit on the date of service. Evidence submitted on appeal: Enrollment record (ENROLLMENT_RECORD). Verified outcome: OVERTURNED on 2026-09-16.\n\n[CS-HC-047] Past case HC-047. Policyholder: Elif Kaya. Service: Maternity care, service date 2025-03-14 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Maternity care. The waiting period for this benefit had not been met on the date of service. See Section 3.2 (Maternity waiting period) of your LumenCare Silver policy. Evidence submitted on appeal: Enrollment record (ENROLLMENT_RECORD). Verified outcome: UPHELD on 2025-05-14.\n\n[CS-HC-044] Past case HC-044. Policyholder: Asha Varma. Service: Genetic testing, service date 2024-07-27 (policy V2024). Emergency: no. In network: yes. Denial notice: Service: Genetic testing. This service is not a covered benefit under your plan. This decision applies the policy terms on experimental and investigational services. Evidence submitted on appeal: Lab report (LAB_REPORT). Verified outcome: UPHELD on 2024-10-08.\n\nDecide and write the plan.",
+ "output": {
+  "denial_reason": "WAITING_PERIOD",
+  "policy_version": "V2026",
+  "cited_section": "3.2",
+  "required_evidence": [
+   "ENROLLMENT_RECORD"
+  ],
+  "missing_evidence": [
+   "ENROLLMENT_RECORD"
+  ],
+  "precedent_case_ids": [
+   "HC-029",
+   "HC-028"
+  ],
+  "disposition": "APPEAL_NEEDS_EVIDENCE",
+  "summary": "The claim was denied because the member had not met the maternity waiting period under policy V2026 (requires 9 months continuous enrollment). An enrollment record is required for appeal; none is currently on file. Prior V2026 cases (HC-029, HC-028) were overturned when enrollment evidence was provided.",
+  "items": [
+   {
+    "kind": "EVIDENCE_NEEDED",
+    "text": "Provide an enrollment record proving at least 9 months of continuous enrollment prior to the service date.",
+    "cite_ids": [
+     "CL-C-2026-MATERNITY-WAIT"
+    ]
+   },
+   {
+    "kind": "ACTION",
+    "text": "Submit the enrollment record as part of the appeal within the 180\u2011day appeal window.",
+    "cite_ids": [
+     "CL-C-2026-MATERNITY-WAIT",
+     "CS-HC-029",
+     "CS-HC-028"
+    ]
+   }
+  ]
+ },
+ "input_tokens": 1926,
+ "output_tokens": 1150
+}

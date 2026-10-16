@@ -1,0 +1,34 @@
+{
+ "task": "baseline-mxbai-large-v1",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You help a caseworker respond to a denied health-insurance claim.\nYou get the claim and the passages retrieved from the policy documents (all policy versions) and from\npast case records. Decide:\n- the insurer's denial reason (one code);\n- the policy version in force on the service date (versions run from their effective date until the next one);\n- the evidence an appeal needs under the governing terms, and which of it the claim is missing;\n- which past cases (HC-...) are valid precedents for this claim (empty if none truly apply);\n- the disposition: APPEAL_VIABLE (all required evidence on file), APPEAL_NEEDS_EVIDENCE (an appeal is possible\n  once evidence is added) or NO_BASIS_ESCALATE (the governing terms leave no basis for appeal);\n- a short plan whose items cite the passage IDs they rely on.\nUse only the passages and claim facts. Never promise approval.",
+ "user": "CLAIM:\nClaim ID: EV-N-02\nService: Outpatient MRI\nService date: 2024-09-20\nFiled: 2024-09-29 (9 days after the service)\nEmergency: no\nIn network: yes\nEvidence already on file: Specialist referral (SPECIALIST_REFERRAL)\nDenial notice: Lumen Health Assurance - Notice of claim denial. Claim EV-N-02. Service: Outpatient MRI. Date of service: 2024-09-20. This service required precertification from the plan, which was not requested. This decision applies the policy terms on prior authorization for outpatient mri. You may appeal this decision within 180 days of this notice.\n\nRETRIEVED PASSAGES:\n[CS-HC-001] Past case HC-001. Policyholder: Dev Mehta. Service: Outpatient MRI, service date 2024-02-01 (policy V2024). Emergency: no. In network: yes. Denial notice: Service: Outpatient MRI. Prior authorization was not obtained before this service was performed. This decision applies the policy terms on prior authorization for outpatient mri. Evidence submitted on appeal: Specialist referral (SPECIALIST_REFERRAL). Verified outcome: OVERTURNED on 2024-04-13.\n\n[CS-HC-051] Past case HC-051. Policyholder: Dev Mehta. Service: Outpatient MRI, service date 2025-01-28 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Outpatient MRI. Our records show no pre-approval on file for this service. This decision applies the policy terms on prior authorization for outpatient mri. Evidence submitted on appeal: none. Verified outcome: UPHELD on 2025-04-17.\n\n[CL-C-2024-MRI-PREAUTH] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 4.2, Prior authorization for outpatient MRI: Outpatient magnetic resonance imaging requires prior authorization from the Plan. Prior authorization is not required where the MRI was ordered on the written referral of a board-certified specialist. Evidence required for an appeal under this section: Specialist referral (SPECIALIST_REFERRAL).\n\n[CL-C-2025-MRI-PREAUTH] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 4.2, Prior authorization for outpatient MRI: Outpatient magnetic resonance imaging requires prior authorization from the Plan. Prior authorization is not required where the MRI was ordered on the written referral of a board-certified specialist. Evidence required for an appeal under this section: Specialist referral (SPECIALIST_REFERRAL).\n\n[CL-C-2026-MRI-PREAUTH] Policy LumenCare Silver, version V2026 (in force 2026-01-01 to open-ended). Section 4.2, Prior authorization for outpatient MRI: Outpatient magnetic resonance imaging requires prior authorization from the Plan before the date of service. No referral exception applies. Where authorization was not obtained, a retroactive authorization request supported by a letter of medical necessity may be submitted. Evidence required for an appeal under this section: Retroactive authorization request (RETRO_AUTH_REQUEST), Physician letter of medical necessity (PHYSICIAN_NECESSITY_LETTER).\n\n[CS-HC-002] Past case HC-002. Policyholder: Dev Mehta. Service: Outpatient MRI, service date 2025-07-02 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Outpatient MRI. This service required precertification from the plan, which was not requested. See Section 4.2 (Prior authorization for outpatient MRI) of your LumenCare Silver policy. Evidence submitted on appeal: Specialist referral (SPECIALIST_REFERRAL). Verified outcome: OVERTURNED on 2025-09-15.\n\n[CS-HC-003] Past case HC-003. Policyholder: Hugo Brandt. Service: Outpatient MRI, service date 2024-04-23 (policy V2024). Emergency: no. In network: yes. Denial notice: Service: Outpatient MRI. The required approval was not on file before the procedure, so the claim cannot be paid as submitted. Evidence submitted on appeal: Specialist referral (SPECIALIST_REFERRAL). Verified outcome: OVERTURNED on 2024-07-29.\n\n[CS-HC-004] Past case HC-004. Policyholder: Elif Kaya. Service: Outpatient MRI, service date 2025-03-23 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Outpatient MRI. The required approval was not on file before the procedure, so the claim cannot be paid as submitted. Evidence submitted on appeal: Specialist referral (SPECIALIST_REFERRAL). Verified outcome: OVERTURNED on 2025-06-03.\n\nDecide and write the plan.",
+ "output": {
+  "denial_reason": "PREAUTH_MISSING",
+  "policy_version": "V2024",
+  "cited_section": "4.2",
+  "required_evidence": [
+   "SPECIALIST_REFERRAL"
+  ],
+  "missing_evidence": [],
+  "precedent_case_ids": [
+   "HC-001",
+   "HC-003"
+  ],
+  "disposition": "APPEAL_VIABLE",
+  "summary": "The claim was denied for lack of prior authorization under section 4.2 of the V2024 policy. The policy permits an exception when a board\u2011certified specialist referral is on file, which the claimant already supplied. No additional evidence is required, so an appeal can be filed immediately citing the applicable policy language and supporting precedents where similar appeals were overturned.",
+  "items": [
+   {
+    "kind": "ACTION",
+    "text": "File an appeal asserting the specialist referral satisfies the prior\u2011authorization exception under section 4.2; attach the existing referral document.",
+    "cite_ids": [
+     "CL-C-2024-MRI-PREAUTH",
+     "CS-HC-001"
+    ]
+   }
+  ]
+ },
+ "input_tokens": 2023,
+ "output_tokens": 804
+}

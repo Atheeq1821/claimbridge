@@ -1,0 +1,33 @@
+{
+ "task": "baseline-bge-small",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You help a caseworker respond to a denied health-insurance claim.\nYou get the claim and the passages retrieved from the policy documents (all policy versions) and from\npast case records. Decide:\n- the insurer's denial reason (one code);\n- the policy version in force on the service date (versions run from their effective date until the next one);\n- the evidence an appeal needs under the governing terms, and which of it the claim is missing;\n- which past cases (HC-...) are valid precedents for this claim (empty if none truly apply);\n- the disposition: APPEAL_VIABLE (all required evidence on file), APPEAL_NEEDS_EVIDENCE (an appeal is possible\n  once evidence is added) or NO_BASIS_ESCALATE (the governing terms leave no basis for appeal);\n- a short plan whose items cite the passage IDs they rely on.\nUse only the passages and claim facts. Never promise approval.",
+ "user": "CLAIM:\nClaim ID: EV-M-B2\nService: Ambulance transport\nService date: 2026-02-20\nFiled: 2026-03-02 (10 days after the service)\nEmergency: yes\nIn network: yes\nEvidence already on file: Emergency attestation (EMERGENCY_ATTESTATION)\nDenial notice: Lumen Health Assurance - Notice of claim denial. Claim EV-M-B2. Service: Ambulance transport. Date of service: 2026-02-20. The documentation submitted does not establish that this service was medically necessary. See Section 6.5 (Ambulance transport) of your LumenCare Silver policy. You may appeal this decision within 180 days of this notice.\n\nRETRIEVED PASSAGES:\n[CS-EV-M-A] Past case EV-M-A. Service: Ambulance transport, service date 2025-06-10 (policy V2025). Emergency: yes. In network: yes. Denial notice: Service: Ambulance transport. The documentation submitted does not establish that this service was medically necessary. See Section 6.5 (Ambulance transport) of your LumenCare Silver policy. Evidence submitted on appeal: Emergency attestation (EMERGENCY_ATTESTATION), Itemized bill (ITEMIZED_BILL). Verified outcome: OVERTURNED.\n\n[CL-C-2024-AMBULANCE] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 6.5, Ambulance transport: Ground ambulance transport is covered for emergencies, as documented by an emergency attestation. Evidence required for an appeal under this section: Emergency attestation (EMERGENCY_ATTESTATION).\n\n[CL-C-2025-AMBULANCE] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 6.5, Ambulance transport: Ground ambulance transport is covered for emergencies, as documented by an emergency attestation. Evidence required for an appeal under this section: Emergency attestation (EMERGENCY_ATTESTATION).\n\n[CL-C-2026-AMBULANCE] Policy LumenCare Silver, version V2026 (in force 2026-01-01 to open-ended). Section 6.5, Ambulance transport: Ground ambulance transport is covered for emergencies, as documented by an emergency attestation. Evidence required for an appeal under this section: Emergency attestation (EMERGENCY_ATTESTATION).\n\n[CS-HC-018] Past case HC-018. Policyholder: Nikhil Rao. Service: Emergency room visit, service date 2025-03-17 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Emergency room visit. Clinical review determined the treatment was not medically necessary as documented. See Section 6.1 (Emergency room coverage) of your LumenCare Silver policy. Evidence submitted on appeal: Discharge summary (DISCHARGE_SUMMARY). Verified outcome: OVERTURNED on 2025-05-25.\n\n[CS-HC-019] Past case HC-019. Policyholder: Maya Cohen. Service: Durable medical equipment, service date 2025-06-25 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Durable medical equipment. The documentation submitted does not establish that this service was medically necessary. See Section 5.4 (Durable medical equipment) of your LumenCare Silver policy. Evidence submitted on appeal: Physician letter of medical necessity (PHYSICIAN_NECESSITY_LETTER). Verified outcome: OVERTURNED on 2025-10-11.\n\n[CL-C-2024-ER-NOTIFY] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 6.2, Emergency admission notification: The Plan must be notified of an emergency admission as soon as reasonably possible. Evidence required for an appeal under this section: none.\n\n[CS-HC-023] Past case HC-023. Policyholder: Grace Lin. Service: Emergency room visit, service date 2024-04-18 (policy V2024). Emergency: yes. In network: no. Denial notice: Service: Emergency room visit. Services from non-participating providers are not covered under your plan. See Section 6.3 (Out-of-network services) of your LumenCare Silver policy. Evidence submitted on appeal: Emergency attestation (EMERGENCY_ATTESTATION), Discharge summary (DISCHARGE_SUMMARY). Verified outcome: OVERTURNED on 2024-07-28.\n\nDecide and write the plan.",
+ "output": {
+  "denial_reason": "NOT_MED_NECESSARY",
+  "policy_version": "V2026",
+  "cited_section": "6.5",
+  "required_evidence": [
+   "EMERGENCY_ATTESTATION"
+  ],
+  "missing_evidence": [],
+  "precedent_case_ids": [
+   "EV-M-A"
+  ],
+  "disposition": "APPEAL_VIABLE",
+  "summary": "The claim was denied for lack of documented medical necessity. Policy version V2026 (Section 6.5) covers emergency ground ambulance transport when an emergency attestation is provided, which the claim already includes. No additional evidence is required, making an appeal viable. Past case EV-M-A was similarly overturned after providing the required emergency attestation.",
+  "items": [
+   {
+    "kind": "ACTION",
+    "text": "Submit an appeal using the existing Emergency Attestation, citing policy Section 6.5 and the successful precedent EV-M-A.",
+    "cite_ids": [
+     "CL-C-2026-AMBULANCE",
+     "CS-EV-M-A"
+    ]
+   }
+  ]
+ },
+ "input_tokens": 1962,
+ "output_tokens": 959
+}

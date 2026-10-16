@@ -1,0 +1,49 @@
+{
+ "task": "baseline-bge-small",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You help a caseworker respond to a denied health-insurance claim.\nYou get the claim and the passages retrieved from the policy documents (all policy versions) and from\npast case records. Decide:\n- the insurer's denial reason (one code);\n- the policy version in force on the service date (versions run from their effective date until the next one);\n- the evidence an appeal needs under the governing terms, and which of it the claim is missing;\n- which past cases (HC-...) are valid precedents for this claim (empty if none truly apply);\n- the disposition: APPEAL_VIABLE (all required evidence on file), APPEAL_NEEDS_EVIDENCE (an appeal is possible\n  once evidence is added) or NO_BASIS_ESCALATE (the governing terms leave no basis for appeal);\n- a short plan whose items cite the passage IDs they rely on.\nUse only the passages and claim facts. Never promise approval.",
+ "user": "CLAIM:\nClaim ID: EV-T6-01\nService: Outpatient MRI\nService date: 2026-02-01\nFiled: 2026-06-01 (120 days after the service)\nEmergency: no\nIn network: yes\nEvidence already on file: Itemized bill (ITEMIZED_BILL)\nDenial notice: Lumen Health Assurance - Notice of claim denial. Claim EV-T6-01. Service: Outpatient MRI. Date of service: 2026-02-01. This claim was not submitted within the timely filing limit. See Section 9.1 (Timely filing limit) of your LumenCare Silver policy. You may appeal this decision within 180 days of this notice.\n\nRETRIEVED PASSAGES:\n[CS-HC-031] Past case HC-031. Policyholder: Ben Okafor. Service: Outpatient MRI, service date 2025-02-02 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Outpatient MRI. The claim was received after the filing deadline. See Section 9.1 (Timely filing limit) of your LumenCare Silver policy. Evidence submitted on appeal: Proof of timely filing (PROOF_OF_TIMELY_FILING). Verified outcome: OVERTURNED on 2025-08-02.\n\n[CS-HC-032] Past case HC-032. Policyholder: Olga Petrova. Service: Outpatient MRI, service date 2024-08-16 (policy V2024). Emergency: no. In network: yes. Denial notice: Service: Outpatient MRI. The diagnosis and procedure codes on the claim are inconsistent. See Section 9.4 (Coding corrections) of your LumenCare Silver policy. Evidence submitted on appeal: Itemized bill (ITEMIZED_BILL), Corrected coding submission (CORRECTED_CODING_SUBMISSION). Verified outcome: OVERTURNED on 2024-11-08.\n\n[CS-HC-002] Past case HC-002. Policyholder: Dev Mehta. Service: Outpatient MRI, service date 2025-07-02 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Outpatient MRI. This service required precertification from the plan, which was not requested. See Section 4.2 (Prior authorization for outpatient MRI) of your LumenCare Silver policy. Evidence submitted on appeal: Specialist referral (SPECIALIST_REFERRAL). Verified outcome: OVERTURNED on 2025-09-15.\n\n[CS-HC-052] Past case HC-052. Policyholder: Grace Lin. Service: Outpatient MRI, service date 2025-04-08 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Outpatient MRI. Prior authorization was not obtained before this service was performed. See Section 4.2 (Prior authorization for outpatient MRI) of your LumenCare Silver policy. Evidence submitted on appeal: none. Verified outcome: UPHELD on 2025-06-24.\n\n[CS-HC-034] Past case HC-034. Policyholder: Dev Mehta. Service: Outpatient MRI, service date 2026-08-05 (policy V2026). Emergency: no. In network: yes. Denial notice: Service: Outpatient MRI. The procedure code billed is not valid for the service described. See Section 9.4 (Coding corrections) of your LumenCare Silver policy. Evidence submitted on appeal: Itemized bill (ITEMIZED_BILL), Corrected coding submission (CORRECTED_CODING_SUBMISSION). Verified outcome: OVERTURNED on 2026-10-10.\n\n[CS-HC-045] Past case HC-045. Policyholder: Ines Moreau. Service: Outpatient MRI, service date 2024-03-24 (policy V2024). Emergency: no. In network: yes. Denial notice: Service: Outpatient MRI. The claim was received after the filing deadline. This decision applies the policy terms on timely filing limit. Evidence submitted on appeal: Itemized bill (ITEMIZED_BILL). Verified outcome: UPHELD on 2024-11-26.\n\n[CS-HC-036] Past case HC-036. Policyholder: Jonah Pike. Service: Inpatient surgery, service date 2025-02-28 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Inpatient surgery. The claim was submitted without the documentation required for review. See Section 9.3 (Required claim documentation) of your LumenCare Silver policy. Evidence submitted on appeal: Itemized bill (ITEMIZED_BILL), Discharge summary (DISCHARGE_SUMMARY). Verified outcome: OVERTURNED on 2025-04-27.\n\n[CS-HC-033] Past case HC-033. Policyholder: Grace Lin. Service: Outpatient MRI, service date 2025-05-26 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Outpatient MRI. The claim could not be processed as billed. Evidence submitted on appeal: Itemized bill (ITEMIZED_BILL), Corrected coding submission (CORRECTED_CODING_SUBMISSION). Verified outcome: OVERTURNED on 2025-09-15.\n\nDecide and write the plan.",
+ "output": {
+  "denial_reason": "TIMELY_FILING",
+  "policy_version": "V2026",
+  "cited_section": "9.1",
+  "required_evidence": [
+   "PROOF_OF_TIMELY_FILING"
+  ],
+  "missing_evidence": [
+   "PROOF_OF_TIMELY_FILING"
+  ],
+  "precedent_case_ids": [
+   "HC-031",
+   "HC-045"
+  ],
+  "disposition": "APPEAL_NEEDS_EVIDENCE",
+  "summary": "Claim denied for filing after the 9.1 timely filing limit. Appeal requires proof of timely filing, which is not currently on file.",
+  "items": [
+   {
+    "kind": "EVIDENCE_NEEDED",
+    "text": "Provide proof that the claim was submitted within the policy's timely filing window.",
+    "cite_ids": [
+     "CS-HC-031"
+    ]
+   },
+   {
+    "kind": "ACTION",
+    "text": "Obtain and submit a PROOF_OF_TIMELY_FILING document (e.g., receipt, electronic timestamp) with the appeal.",
+    "cite_ids": [
+     "CS-HC-031"
+    ]
+   },
+   {
+    "kind": "WARNING",
+    "text": "Without PROOF_OF_TIMELY_FILING the appeal will likely be upheld, as shown in HC-045 where only an itemized bill was submitted.",
+    "cite_ids": [
+     "CS-HC-045"
+    ]
+   }
+  ]
+ },
+ "input_tokens": 2103,
+ "output_tokens": 1096
+}

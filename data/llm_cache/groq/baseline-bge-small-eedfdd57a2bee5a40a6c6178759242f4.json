@@ -1,0 +1,32 @@
+{
+ "task": "baseline-bge-small",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You help a caseworker respond to a denied health-insurance claim.\nYou get the claim and the passages retrieved from the policy documents (all policy versions) and from\npast case records. Decide:\n- the insurer's denial reason (one code);\n- the policy version in force on the service date (versions run from their effective date until the next one);\n- the evidence an appeal needs under the governing terms, and which of it the claim is missing;\n- which past cases (HC-...) are valid precedents for this claim (empty if none truly apply);\n- the disposition: APPEAL_VIABLE (all required evidence on file), APPEAL_NEEDS_EVIDENCE (an appeal is possible\n  once evidence is added) or NO_BASIS_ESCALATE (the governing terms leave no basis for appeal);\n- a short plan whose items cite the passage IDs they rely on.\nUse only the passages and claim facts. Never promise approval.",
+ "user": "CLAIM:\nClaim ID: EV-T7-01\nService: Durable medical equipment\nService date: 2025-05-01\nFiled: 2025-05-24 (23 days after the service)\nEmergency: no\nIn network: yes\nEvidence already on file: Itemized bill (ITEMIZED_BILL), Corrected coding submission (CORRECTED_CODING_SUBMISSION)\nDenial notice: Lumen Health Assurance - Notice of claim denial. Claim EV-T7-01. Service: Durable medical equipment. Date of service: 2025-05-01. The diagnosis and procedure codes on the claim are inconsistent. See Section 9.4 (Coding corrections) of your LumenCare Silver policy. You may appeal this decision within 180 days of this notice.\n\nRETRIEVED PASSAGES:\n[CS-HC-020] Past case HC-020. Policyholder: Olga Petrova. Service: Durable medical equipment, service date 2025-08-01 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Durable medical equipment. The services billed exceed what is considered medically necessary for the diagnosis provided. See Section 5.4 (Durable medical equipment) of your LumenCare Silver policy. Evidence submitted on appeal: Physician letter of medical necessity (PHYSICIAN_NECESSITY_LETTER). Verified outcome: OVERTURNED on 2025-10-08.\n\n[CS-HC-019] Past case HC-019. Policyholder: Maya Cohen. Service: Durable medical equipment, service date 2025-06-25 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Durable medical equipment. The documentation submitted does not establish that this service was medically necessary. See Section 5.4 (Durable medical equipment) of your LumenCare Silver policy. Evidence submitted on appeal: Physician letter of medical necessity (PHYSICIAN_NECESSITY_LETTER). Verified outcome: OVERTURNED on 2025-10-11.\n\n[CL-C-2024-DME-NECESSITY] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 5.4, Durable medical equipment: Durable medical equipment is covered when prescribed with a physician letter of medical necessity. Evidence required for an appeal under this section: Physician letter of medical necessity (PHYSICIAN_NECESSITY_LETTER).\n\n[CL-C-2025-DME-NECESSITY] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 5.4, Durable medical equipment: Durable medical equipment is covered when prescribed with a physician letter of medical necessity. Evidence required for an appeal under this section: Physician letter of medical necessity (PHYSICIAN_NECESSITY_LETTER).\n\n[CL-C-2026-DME-NECESSITY] Policy LumenCare Silver, version V2026 (in force 2026-01-01 to open-ended). Section 5.4, Durable medical equipment: Durable medical equipment is covered when prescribed with a physician letter of medical necessity. Evidence required for an appeal under this section: Physician letter of medical necessity (PHYSICIAN_NECESSITY_LETTER).\n\n[CS-HC-049] Past case HC-049. Policyholder: Maya Cohen. Service: Physiotherapy, service date 2025-12-05 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Physiotherapy. The diagnosis and procedure codes on the claim are inconsistent. See Section 9.4 (Coding corrections) of your LumenCare Silver policy. Evidence submitted on appeal: Itemized bill (ITEMIZED_BILL). Verified outcome: PARTIAL on 2026-01-30.\n\n[CS-HC-037] Past case HC-037. Policyholder: Grace Lin. Service: Physiotherapy, service date 2025-04-19 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Physiotherapy. A claim for the same member, provider, date and amount has already been processed. See Section 9.5 (Duplicate claims) of your LumenCare Silver policy. Evidence submitted on appeal: Itemized bill (ITEMIZED_BILL). Verified outcome: OVERTURNED on 2025-06-19.\n\n[CS-HC-036] Past case HC-036. Policyholder: Jonah Pike. Service: Inpatient surgery, service date 2025-02-28 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Inpatient surgery. The claim was submitted without the documentation required for review. See Section 9.3 (Required claim documentation) of your LumenCare Silver policy. Evidence submitted on appeal: Itemized bill (ITEMIZED_BILL), Discharge summary (DISCHARGE_SUMMARY). Verified outcome: OVERTURNED on 2025-04-27.\n\nDecide and write the plan.",
+ "output": {
+  "denial_reason": "CODING_ERROR",
+  "policy_version": "V2025",
+  "cited_section": "9.4",
+  "required_evidence": [
+   "CORRECTED_CODING_SUBMISSION"
+  ],
+  "missing_evidence": [],
+  "precedent_case_ids": [
+   "HC-049"
+  ],
+  "disposition": "APPEAL_VIABLE",
+  "summary": "The claim was denied for coding inconsistency under Section\u202f9.4. Under V2025 the required evidence for a coding\u2011error appeal is a corrected coding submission, which is already on file, so an appeal is viable.",
+  "items": [
+   {
+    "kind": "ACTION",
+    "text": "Submit an appeal within 180\u202fdays referencing Section\u202f9.4 and attach the corrected coding submission and itemized bill already on file.",
+    "cite_ids": [
+     "CS-HC-049"
+    ]
+   }
+  ]
+ },
+ "input_tokens": 2040,
+ "output_tokens": 1198
+}

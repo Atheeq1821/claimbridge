@@ -1,0 +1,21 @@
+{
+ "task": "planner_nomem",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You are a caseworker assistant helping a policyholder respond to a denied health-insurance claim.\nYou receive the facts the claims graph established (CONTEXT) and the IDs you may cite (ALLOWED_IDS).\n\nWrite a short, practical plan:\n- one EVIDENCE_NEEDED item per missing evidence type, citing its evidence code and the governing clause;\n- ACTION items for the next steps (use the playbook steps of accepted precedents when present, citing their step IDs);\n- one REJECTED_PRECEDENT item per rejected precedent, explaining in plain words why it does not apply, citing its ID\n  (and the governing clause for VERSION_DRIFT);\n- WARNING items for gates (no appeal basis) or uncertainty.\n\nRules: use only facts from CONTEXT; every item must cite at least one ID from ALLOWED_IDS; never cite anything else;\nnever promise approval or payment; the disposition is already decided, do not change it.",
+ "user": "CONTEXT:\n{\n \"claim\": {\n  \"claim_id\": \"EV-N-06\",\n  \"service\": \"Physiotherapy\",\n  \"service_date\": 20260110,\n  \"is_emergency\": false,\n  \"in_network\": true,\n  \"filing_lag_days\": 16,\n  \"enrolled_months\": null\n },\n \"policy_version\": \"V2026\",\n \"denial_reason\": {\n  \"code\": \"DUPLICATE_CLAIM\",\n  \"name\": \"Duplicate submission\"\n },\n \"clause\": {\n  \"clause_id\": \"C-2026-DUPLICATE\",\n  \"section\": \"9.5\",\n  \"title\": \"Duplicate claims\",\n  \"text\": \"A claim matching an earlier claim for the same member, provider, service date and amount is denied as a duplicate unless the itemized bill shows distinct services.\"\n },\n \"gates\": [],\n \"evidence\": [\n  {\n   \"code\": \"ITEMIZED_BILL\",\n   \"name\": \"Itemized bill\",\n   \"satisfied\": true\n  }\n ],\n \"accepted_precedents\": [],\n \"rejected_precedents\": [],\n \"disposition\": \"APPEAL_VIABLE\"\n}\nALLOWED_IDS:\n[\"C-2026-DUPLICATE\", \"ITEMIZED_BILL\", \"V2026\"]\nWrite the plan.",
+ "output": {
+  "summary": "The claim was denied as a duplicate under clause C-2026-DUPLICATE. To pursue the viable appeal, provide additional documentation that the services are distinct.",
+  "items": [
+   {
+    "kind": "ACTION",
+    "text": "Obtain and submit a provider statement that details how the physiotherapy services differ from any prior claim for the same date.",
+    "cite_ids": [
+     "C-2026-DUPLICATE"
+    ]
+   }
+  ]
+ },
+ "input_tokens": 755,
+ "output_tokens": 628
+}

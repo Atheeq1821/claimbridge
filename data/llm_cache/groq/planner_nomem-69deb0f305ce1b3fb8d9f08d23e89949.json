@@ -1,0 +1,29 @@
+{
+ "task": "planner_nomem",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You are a caseworker assistant helping a policyholder respond to a denied health-insurance claim.\nYou receive the facts the claims graph established (CONTEXT) and the IDs you may cite (ALLOWED_IDS).\n\nWrite a short, practical plan:\n- one EVIDENCE_NEEDED item per missing evidence type, citing its evidence code and the governing clause;\n- ACTION items for the next steps (use the playbook steps of accepted precedents when present, citing their step IDs);\n- one REJECTED_PRECEDENT item per rejected precedent, explaining in plain words why it does not apply, citing its ID\n  (and the governing clause for VERSION_DRIFT);\n- WARNING items for gates (no appeal basis) or uncertainty.\n\nRules: use only facts from CONTEXT; every item must cite at least one ID from ALLOWED_IDS; never cite anything else;\nnever promise approval or payment; the disposition is already decided, do not change it.",
+ "user": "CONTEXT:\n{\n \"claim\": {\n  \"claim_id\": \"EV-N-04\",\n  \"service\": \"Emergency room visit\",\n  \"service_date\": 20250115,\n  \"is_emergency\": true,\n  \"in_network\": true,\n  \"filing_lag_days\": 30,\n  \"enrolled_months\": null\n },\n \"policy_version\": \"V2025\",\n \"denial_reason\": {\n  \"code\": \"NOT_MED_NECESSARY\",\n  \"name\": \"Not medically necessary\"\n },\n \"clause\": {\n  \"clause_id\": \"C-2025-ER-COVERAGE\",\n  \"section\": \"6.1\",\n  \"title\": \"Emergency room coverage\",\n  \"text\": \"Emergency room services are covered when symptoms would lead a prudent layperson to believe that urgent care was required, as documented in the discharge summary.\"\n },\n \"gates\": [],\n \"evidence\": [\n  {\n   \"code\": \"DISCHARGE_SUMMARY\",\n   \"name\": \"Discharge summary\",\n   \"satisfied\": true\n  }\n ],\n \"accepted_precedents\": [],\n \"rejected_precedents\": [],\n \"disposition\": \"APPEAL_VIABLE\"\n}\nALLOWED_IDS:\n[\"C-2025-ER-COVERAGE\", \"DISCHARGE_SUMMARY\", \"V2025\"]\nWrite the plan.",
+ "output": {
+  "summary": "The claim was denied as not medically necessary, but emergency coverage is possible under clause C-2025-ER-COVERAGE. Gather supporting physician evidence and file an appeal referencing the clause and discharge summary.",
+  "items": [
+   {
+    "kind": "EVIDENCE_NEEDED",
+    "text": "Obtain a physician statement confirming that symptoms would lead a prudent layperson to believe urgent care was required, as required by clause C-2025-ER-COVERAGE.",
+    "cite_ids": [
+     "C-2025-ER-COVERAGE"
+    ]
+   },
+   {
+    "kind": "ACTION",
+    "text": "Prepare and submit an appeal citing clause C-2025-ER-COVERAGE and the already\u2011provided discharge summary (DISCHARGE_SUMMARY) to demonstrate medical necessity.",
+    "cite_ids": [
+     "C-2025-ER-COVERAGE",
+     "DISCHARGE_SUMMARY"
+    ]
+   }
+  ]
+ },
+ "input_tokens": 757,
+ "output_tokens": 745
+}

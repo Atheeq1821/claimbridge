@@ -4,7 +4,7 @@ An AI caseworker for denied health-insurance claims. It remembers verified resol
 
 Built for *Graph Hacks: Context for AI Agents* (WeMakeDevs × FalkorDB), **Track 02: Agent Memory and Coordination**.
 
-> Status: Phases 1–2 complete (agent spine, full agent loop and memory). See [docs/09-phases.md](docs/09-phases.md).
+> Status: Phases 1–3 complete (agent spine, full agent loop and memory, evaluation). See [docs/09-phases.md](docs/09-phases.md) and [eval/results/latest.md](eval/results/latest.md).
 > All data is synthetic and fictional. Recommendations require human approval.
 
 ## Quick start
@@ -19,8 +19,23 @@ cd backend && uv sync
 uv run python -m claimbridge.cli run all      # 35 evaluation claims through the agent pool
 uv run python -m claimbridge.cli show EV-T1-01
 uv run python -m claimbridge.cli gate2        # memory gain, contradiction, kill/resume, staleness
+uv run python -m claimbridge.cli eval all     # vs. no-memory and plain vector RAG -> eval/results/latest.md
 uv run pytest -q                              # offline (fake LLM)
 ```
+
+## Results (synthetic data; see [eval/results/latest.md](eval/results/latest.md))
+
+34 evaluation claims. Every system uses the same LLM and the same documents; only graph reasoning differs.
+
+| | ClaimBridge | Plain vector RAG | Plain RAG, large embeddings |
+|---|---:|---:|---:|
+| Claims fully correct | **100%** | 65% | 65% |
+| Disposition accuracy | **100%** | 79% | 76% |
+| Claims reusing a precedent that doesn't apply | **0%** | 15% | 15% |
+| Stale or contradicted precedent avoided | **100%** | 56% | 56% |
+| Other-tenant case fields exposed | **0** | 9 | 15 |
+
+A much larger embedding model (`mxbai-embed-large`, 1024-dim, vs. `bge-small`, 384-dim) didn't fix the baseline's mistakes; they're reasoning errors about policy versions, conditions and contradictions, not retrieval misses. Under random worker kills, every interrupted step was resumed by another worker, with no duplicate work.
 
 To run the whole stack in containers:
 

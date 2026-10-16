@@ -1,0 +1,37 @@
+{
+ "task": "planner_nomem",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You are a caseworker assistant helping a policyholder respond to a denied health-insurance claim.\nYou receive the facts the claims graph established (CONTEXT) and the IDs you may cite (ALLOWED_IDS).\n\nWrite a short, practical plan:\n- one EVIDENCE_NEEDED item per missing evidence type, citing its evidence code and the governing clause;\n- ACTION items for the next steps (use the playbook steps of accepted precedents when present, citing their step IDs);\n- one REJECTED_PRECEDENT item per rejected precedent, explaining in plain words why it does not apply, citing its ID\n  (and the governing clause for VERSION_DRIFT);\n- WARNING items for gates (no appeal basis) or uncertainty.\n\nRules: use only facts from CONTEXT; every item must cite at least one ID from ALLOWED_IDS; never cite anything else;\nnever promise approval or payment; the disposition is already decided, do not change it.",
+ "user": "CONTEXT:\n{\n \"claim\": {\n  \"claim_id\": \"EV-T6-01\",\n  \"service\": \"Outpatient MRI\",\n  \"service_date\": 20260201,\n  \"is_emergency\": false,\n  \"in_network\": true,\n  \"filing_lag_days\": 120,\n  \"enrolled_months\": null\n },\n \"policy_version\": \"V2026\",\n \"denial_reason\": {\n  \"code\": \"TIMELY_FILING\",\n  \"name\": \"Filed after the deadline\"\n },\n \"clause\": {\n  \"clause_id\": \"C-2026-TIMELY-FILING\",\n  \"section\": \"9.1\",\n  \"title\": \"Timely filing limit\",\n  \"text\": \"Claims must be filed within 90 days of the date of service.\"\n },\n \"gates\": [\n  \"FILED_LATE\"\n ],\n \"evidence\": [\n  {\n   \"code\": \"PROOF_OF_TIMELY_FILING\",\n   \"name\": \"Proof of timely filing\",\n   \"satisfied\": false\n  }\n ],\n \"accepted_precedents\": [],\n \"rejected_precedents\": [],\n \"disposition\": \"NO_BASIS_ESCALATE\"\n}\nALLOWED_IDS:\n[\"C-2026-TIMELY-FILING\", \"PROOF_OF_TIMELY_FILING\", \"V2026\"]\nWrite the plan.",
+ "output": {
+  "summary": "The claim was denied because it was filed beyond the 90\u2011day limit. Gather any proof of timely filing, but note that the denial is considered final with no appeal basis.",
+  "items": [
+   {
+    "kind": "EVIDENCE_NEEDED",
+    "text": "Provide documentation proving the claim was submitted within 90 days of service, such as receipt timestamps or fax logs.",
+    "cite_ids": [
+     "PROOF_OF_TIMELY_FILING",
+     "C-2026-TIMELY-FILING"
+    ]
+   },
+   {
+    "kind": "ACTION",
+    "text": "Obtain the required proof from the provider and submit it to the insurer for reconsideration, referencing clause 9.1.",
+    "cite_ids": [
+     "C-2026-TIMELY-FILING"
+    ]
+   },
+   {
+    "kind": "WARNING",
+    "text": "Because the claim was filed 120 days after service, it exceeds the 90\u2011day filing limit, so there is no basis for an appeal under the policy.",
+    "cite_ids": [
+     "C-2026-TIMELY-FILING",
+     "V2026"
+    ]
+   }
+  ]
+ },
+ "input_tokens": 759,
+ "output_tokens": 850
+}

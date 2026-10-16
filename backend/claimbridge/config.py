@@ -30,6 +30,15 @@ EMBED_CACHE = os.getenv("EMBED_CACHE", str(REPO_DIR / ".fastembed_cache"))
 # Retrieval
 MAX_CANDIDATES = 8
 VECTOR_NEIGHBORS = 10
+# Ablation: hide semantic memory (Findings) from Retrieval. Used by the evaluation.
+NO_MEMORY = os.getenv("CB_NO_MEMORY", "0") == "1"
+
+# Evaluation
+RESULTS_DIR = Path(os.getenv("CB_RESULTS_DIR", REPO_DIR / "eval" / "results"))
+# The baseline uses ClaimBridge's own embedding model by default, so only graph reasoning differs.
+BASELINE_EMBED_MODEL = os.getenv("BASELINE_EMBED_MODEL", EMBED_MODEL)
+BASELINE_STRONG_EMBED_MODEL = os.getenv("BASELINE_STRONG_EMBED_MODEL", "mixedbread-ai/mxbai-embed-large-v1")
+BASELINE_TOP_K = int(os.getenv("BASELINE_TOP_K", "8"))
 
 # LLM
 #   LLM_PLATFORM: groq | openai | claude | fake (deterministic stub for tests)

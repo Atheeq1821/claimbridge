@@ -20,6 +20,10 @@ Claims
   approve <claim_id>          human approval of the recommendation
   outcome <claim_id> <OVERTURNED|UPHELD|PARTIAL>   record the real result
 
+Evaluation
+  eval [all|claimbridge|no_memory|baseline|baseline_strong|chaos|report]
+                              run the evaluation step(s); results in eval/results/
+
 Gates
   gate                        Phase 1: traps end to end + crash/resume
   gate2                       Phase 2: full loop, guard, memory gain, contradiction,
@@ -391,6 +395,9 @@ def main(argv=None):
     oc.add_argument("--reviewer", default="reviewer-cli")
     sub.add_parser("gate")
     sub.add_parser("gate2")
+    ev = sub.add_parser("eval")
+    ev.add_argument("steps", nargs="*", default=["all"],
+                    choices=["all", "claimbridge", "no_memory", "baseline", "baseline_strong", "chaos", "report"])
     a = p.parse_args(argv)
 
     for stream in (sys.stdout, sys.stderr):
@@ -445,6 +452,38 @@ def main(argv=None):
         sys.exit(0 if gate() else 1)
     elif a.cmd == "gate2":
         sys.exit(0 if gate2() else 1)
+    elif a.cmd == "eval":
+        run_eval(a.steps)
+
+
+def run_eval(steps: list[str]):
+    from claimbridge.evaluation import harness
+    from claimbridge.seed.load import reset
+    order = ["claimbridge", "no_memory", "baseline", "baseline_strong", "chaos"]
+    todo = order if "all" in steps else [s for s in order if s in steps]
+    for s in todo:
+        print(f"== eval: {s}", flush=True)
+        t0 = time.time()
+        if s == "claimbridge":
+            harness.run_claimbridge()
+        elif s == "no_memory":
+            harness.run_claimbridge(no_memory=True)
+        elif s == "baseline":
+            harness.run_baseline(config.BASELINE_EMBED_MODEL, "baseline_rag")
+        elif s == "baseline_strong":
+            harness.run_baseline(config.BASELINE_STRONG_EMBED_MODEL, "baseline_rag_strong")
+        elif s == "chaos":
+            harness.run_chaos()
+        print(f"   done in {time.time() - t0:.0f} s", flush=True)
+    if todo:
+        reset()  # leave the main graph in its seeded state
+    out = harness.build_report()
+    path = config.RESULTS_DIR / "latest.md"
+    print(f"\nreport: {path}\n")
+    for s, d in out["systems"].items():
+        m = d["metrics"]
+        print(f"  {d['label']:34} correct {m['all_correct']}  wrong-precedent {m['M4_wrong_precedent_rate']}  "
+              f"disposition {m['M6_disposition_accuracy']}  version {m['M2_version_accuracy']}")
 
 
 if __name__ == "__main__":

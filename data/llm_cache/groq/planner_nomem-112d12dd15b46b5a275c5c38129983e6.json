@@ -1,0 +1,37 @@
+{
+ "task": "planner_nomem",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You are a caseworker assistant helping a policyholder respond to a denied health-insurance claim.\nYou receive the facts the claims graph established (CONTEXT) and the IDs you may cite (ALLOWED_IDS).\n\nWrite a short, practical plan:\n- one EVIDENCE_NEEDED item per missing evidence type, citing its evidence code and the governing clause;\n- ACTION items for the next steps (use the playbook steps of accepted precedents when present, citing their step IDs);\n- one REJECTED_PRECEDENT item per rejected precedent, explaining in plain words why it does not apply, citing its ID\n  (and the governing clause for VERSION_DRIFT);\n- WARNING items for gates (no appeal basis) or uncertainty.\n\nRules: use only facts from CONTEXT; every item must cite at least one ID from ALLOWED_IDS; never cite anything else;\nnever promise approval or payment; the disposition is already decided, do not change it.",
+ "user": "CONTEXT:\n{\n \"claim\": {\n  \"claim_id\": \"EV-N-05\",\n  \"service\": \"Inpatient surgery\",\n  \"service_date\": 20260425,\n  \"is_emergency\": false,\n  \"in_network\": true,\n  \"filing_lag_days\": 11,\n  \"enrolled_months\": null\n },\n \"policy_version\": \"V2026\",\n \"denial_reason\": {\n  \"code\": \"INCOMPLETE_DOCS\",\n  \"name\": \"Incomplete documentation\"\n },\n \"clause\": {\n  \"clause_id\": \"C-2026-ITEMIZED-BILL\",\n  \"section\": \"9.3\",\n  \"title\": \"Required claim documentation\",\n  \"text\": \"Every claim must include an itemized bill. Inpatient and emergency claims must also include a discharge summary.\"\n },\n \"gates\": [],\n \"evidence\": [\n  {\n   \"code\": \"DISCHARGE_SUMMARY\",\n   \"name\": \"Discharge summary\",\n   \"satisfied\": false\n  },\n  {\n   \"code\": \"ITEMIZED_BILL\",\n   \"name\": \"Itemized bill\",\n   \"satisfied\": true\n  }\n ],\n \"accepted_precedents\": [],\n \"rejected_precedents\": [],\n \"disposition\": \"APPEAL_NEEDS_EVIDENCE\"\n}\nALLOWED_IDS:\n[\"C-2026-ITEMIZED-BILL\", \"DISCHARGE_SUMMARY\", \"ITEMIZED_BILL\", \"V2026\"]\nWrite the plan.",
+ "output": {
+  "summary": "The claim is pending because the discharge summary is missing. Supplying that document is required to move forward.",
+  "items": [
+   {
+    "kind": "EVIDENCE_NEEDED",
+    "text": "Provide the required discharge summary for the inpatient surgery.",
+    "cite_ids": [
+     "C-2026-ITEMIZED-BILL",
+     "DISCHARGE_SUMMARY"
+    ]
+   },
+   {
+    "kind": "ACTION",
+    "text": "Contact the treating hospital and request the discharge summary to be submitted within the policy\u2019s filing window.",
+    "cite_ids": [
+     "C-2026-ITEMIZED-BILL",
+     "V2026"
+    ]
+   },
+   {
+    "kind": "WARNING",
+    "text": "Without the discharge summary, the claim cannot be processed and will remain denied.",
+    "cite_ids": [
+     "C-2026-ITEMIZED-BILL"
+    ]
+   }
+  ]
+ },
+ "input_tokens": 787,
+ "output_tokens": 542
+}

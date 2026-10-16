@@ -8,7 +8,7 @@ plan is used, so a claim never stalls on an LLM outage.
 import json
 import logging
 
-from claimbridge import db, guard, llm
+from claimbridge import config, db, guard, llm
 from claimbridge.agents.base import Context, StepResult, Worker
 from claimbridge.llm.schemas import PlanDraft
 from claimbridge.tools import coordination as coord
@@ -68,7 +68,8 @@ def draft_plan(ctx: dict, allowed: dict, disposition: str) -> tuple[list[dict], 
     user = (f"CONTEXT:\n{json.dumps({**ctx, 'disposition': disposition}, indent=1)}\n"
             f"ALLOWED_IDS:\n{json.dumps(sorted(allowed))}\n"
             "Write the plan.")
-    draft, meta = llm.complete("planner", SYSTEM, user, PlanDraft, effort="medium")
+    task = "planner_nomem" if config.NO_MEMORY else "planner"
+    draft, meta = llm.complete(task, SYSTEM, user, PlanDraft, effort="medium")
     items = [i.model_dump() for i in draft.items]
     return items, draft.summary, {"platform": meta.platform, "model": meta.model, "cached": meta.cached}
 

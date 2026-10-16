@@ -1,0 +1,41 @@
+{
+ "task": "baseline-bge-small",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You help a caseworker respond to a denied health-insurance claim.\nYou get the claim and the passages retrieved from the policy documents (all policy versions) and from\npast case records. Decide:\n- the insurer's denial reason (one code);\n- the policy version in force on the service date (versions run from their effective date until the next one);\n- the evidence an appeal needs under the governing terms, and which of it the claim is missing;\n- which past cases (HC-...) are valid precedents for this claim (empty if none truly apply);\n- the disposition: APPEAL_VIABLE (all required evidence on file), APPEAL_NEEDS_EVIDENCE (an appeal is possible\n  once evidence is added) or NO_BASIS_ESCALATE (the governing terms leave no basis for appeal);\n- a short plan whose items cite the passage IDs they rely on.\nUse only the passages and claim facts. Never promise approval.",
+ "user": "CLAIM:\nClaim ID: EV-T7-02\nService: Emergency room visit\nService date: 2025-09-22\nFiled: 2025-10-12 (20 days after the service)\nEmergency: yes\nIn network: no\nEvidence already on file: Emergency attestation (EMERGENCY_ATTESTATION), Discharge summary (DISCHARGE_SUMMARY)\nDenial notice: Lumen Health Assurance - Notice of claim denial. Claim EV-T7-02. Service: Emergency room visit. Date of service: 2025-09-22. The provider who rendered this service is not part of the Lumen network. This decision applies the policy terms on out-of-network services. You may appeal this decision within 180 days of this notice.\n\nRETRIEVED PASSAGES:\n[CS-HC-021] Past case HC-021. Policyholder: Luca Romano. Service: Emergency room visit, service date 2024-04-19 (policy V2024). Emergency: yes. In network: no. Denial notice: Service: Emergency room visit. The provider who rendered this service is not part of the Lumen network. See Section 6.3 (Out-of-network services) of your LumenCare Silver policy. Evidence submitted on appeal: Emergency attestation (EMERGENCY_ATTESTATION), Discharge summary (DISCHARGE_SUMMARY). Verified outcome: OVERTURNED on 2024-08-03.\n\n[CS-HC-023] Past case HC-023. Policyholder: Grace Lin. Service: Emergency room visit, service date 2024-04-18 (policy V2024). Emergency: yes. In network: no. Denial notice: Service: Emergency room visit. Services from non-participating providers are not covered under your plan. See Section 6.3 (Out-of-network services) of your LumenCare Silver policy. Evidence submitted on appeal: Emergency attestation (EMERGENCY_ATTESTATION), Discharge summary (DISCHARGE_SUMMARY). Verified outcome: OVERTURNED on 2024-07-28.\n\n[CS-HC-018] Past case HC-018. Policyholder: Nikhil Rao. Service: Emergency room visit, service date 2025-03-17 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Emergency room visit. Clinical review determined the treatment was not medically necessary as documented. See Section 6.1 (Emergency room coverage) of your LumenCare Silver policy. Evidence submitted on appeal: Discharge summary (DISCHARGE_SUMMARY). Verified outcome: OVERTURNED on 2025-05-25.\n\n[CL-C-2024-OON-EMERGENCY] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 6.3, Out-of-network services: Services from out-of-network providers are not covered, except emergency services, which are covered at the in-network rate when an emergency attestation is filed within 72 hours of admission. Evidence required for an appeal under this section: Emergency attestation (EMERGENCY_ATTESTATION), Discharge summary (DISCHARGE_SUMMARY).\n\n[CL-C-2025-OON-EMERGENCY] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 6.3, Out-of-network services: Services from out-of-network providers are not covered, except emergency services, which are covered at the in-network rate when an emergency attestation is filed within 72 hours of admission. Evidence required for an appeal under this section: Emergency attestation (EMERGENCY_ATTESTATION), Discharge summary (DISCHARGE_SUMMARY).\n\n[CL-C-2026-OON-EMERGENCY] Policy LumenCare Silver, version V2026 (in force 2026-01-01 to open-ended). Section 6.3, Out-of-network services: Services from out-of-network providers are not covered, except emergency services, which are covered at the in-network rate when an emergency attestation is filed within 48 hours of admission. Evidence required for an appeal under this section: Emergency attestation (EMERGENCY_ATTESTATION), Discharge summary (DISCHARGE_SUMMARY).\n\n[CL-C-2024-ER-NOTIFY] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 6.2, Emergency admission notification: The Plan must be notified of an emergency admission as soon as reasonably possible. Evidence required for an appeal under this section: none.\n\n[CS-HC-052] Past case HC-052. Policyholder: Grace Lin. Service: Outpatient MRI, service date 2025-04-08 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Outpatient MRI. Prior authorization was not obtained before this service was performed. See Section 4.2 (Prior authorization for outpatient MRI) of your LumenCare Silver policy. Evidence submitted on appeal: none. Verified outcome: UPHELD on 2025-06-24.\n\nDecide and write the plan.",
+ "output": {
+  "denial_reason": "OUT_OF_NETWORK",
+  "policy_version": "V2025",
+  "cited_section": "6.3",
+  "required_evidence": [
+   "EMERGENCY_ATTESTATION",
+   "DISCHARGE_SUMMARY"
+  ],
+  "missing_evidence": [],
+  "precedent_case_ids": [
+   "HC-021",
+   "HC-023"
+  ],
+  "disposition": "APPEAL_VIABLE",
+  "summary": "The claim was denied as out\u2011of\u2011network, but the policy (V2025 Section 6.3) allows coverage for emergency out\u2011of\u2011network visits when an emergency attestation and discharge summary are provided. Both pieces of evidence are already on file, matching prior successful appeals (HC\u2011021, HC\u2011023).",
+  "items": [
+   {
+    "kind": "ACTION",
+    "text": "File an appeal referencing Section 6.3 (Out\u2011of\u2011network services) and attach the Emergency attestation and Discharge summary already on file.",
+    "cite_ids": [
+     "CL-C-2025-OON-EMERGENCY"
+    ]
+   },
+   {
+    "kind": "WARNING",
+    "text": "Confirm that the Emergency attestation was submitted within the 72\u2011hour window required by Section 6.3; otherwise the appeal may be rejected.",
+    "cite_ids": [
+     "CL-C-2025-OON-EMERGENCY"
+    ]
+   }
+  ]
+ },
+ "input_tokens": 2066,
+ "output_tokens": 1251
+}

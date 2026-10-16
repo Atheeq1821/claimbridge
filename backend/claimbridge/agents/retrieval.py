@@ -16,6 +16,9 @@ class Retrieval(Worker):
     def work(self, ctx: Context) -> StepResult:
         g, cid, me = ctx.g, ctx.claim_id, ctx.me
         cands: dict[str, dict] = {}
+        if config.NO_MEMORY:  # evaluation ablation: semantic memory hidden
+            retrieval.write_candidates(g, cid, [], me)
+            return StepResult(payload={"candidates": [], "written": 0, "no_memory": True})
         for c in retrieval.graph_candidates(g, cid):
             cands[c["finding_id"]] = {"finding_id": c["finding_id"], "source": "graph",
                                       "score": 1.0 if c["same_lineage"] else 0.5}

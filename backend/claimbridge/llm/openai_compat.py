@@ -24,17 +24,22 @@ class _ChatProvider:
         kwargs = {}
         if self.sends_reasoning_effort and effort:
             kwargs["reasoning_effort"] = effort
-        try:
-            resp = self.client.chat.completions.create(
-                model=model,
-                messages=[{"role": "system", "content": system},
-                          {"role": "user", "content": user}],
-                response_format={"type": "json_schema", "json_schema": {
-                    "name": schema.__name__, "strict": True, "schema": strict_schema(schema)}},
-                **kwargs,
-            )
-        except APIStatusError as e:
-            raise LLMError(f"{type(self).__name__} {e.status_code}: {e.message}") from e
+        for attempt in (1, 2):
+            try:
+                resp = self.client.chat.completions.create(
+                    model=model,
+                    messages=[{"role": "system", "content": system},
+                              {"role": "user", "content": user}],
+                    response_format={"type": "json_schema", "json_schema": {
+                        "name": schema.__name__, "strict": True, "schema": strict_schema(schema)}},
+                    **kwargs,
+                )
+                break
+            except APIStatusError as e:
+                # A generation that broke off mid-JSON is transient: try once more.
+                if attempt == 1 and e.status_code == 400 and "json_validate_failed" in str(e.body or e.message):
+                    continue
+                raise LLMError(f"{type(self).__name__} {e.status_code}: {e.message}") from e
         choice = resp.choices[0]
         if choice.finish_reason not in ("stop", None):
             raise LLMError(f"generation stopped: {choice.finish_reason}")

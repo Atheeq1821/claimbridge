@@ -4,7 +4,7 @@
 |---|---|---|---|---|
 | **1** | Foundation and spine | Thu Oct 16 | T1 runs end to end across separate processes with correct rejection | ✅ **Done** |
 | 2 | Full agent loop and memory | Fri Oct 17, morning | Plan → approve → learn → stale → contradict. Kill-and-resume through the Supervisor. | ✅ **Done** |
-| 3 | Evaluation | Fri Oct 17, afternoon | `make eval` prints ClaimBridge vs. no-memory vs. baseline RAG, failures included | Next |
+| 3 | Evaluation | Fri Oct 17, afternoon | `make eval` prints ClaimBridge vs. no-memory vs. baseline RAG, failures included | ✅ **Done** |
 | 4 | API and UI | Fri evening to Sat morning | Every demo step can be clicked through live | |
 | 5 | Deploy and harden | Sat Oct 18, morning | Live URL works from a phone. Feature freeze at 1:00 PM IST. | |
 | 6 | Docs, video, submit | Sat Oct 18, afternoon | Submitted by 9:00 PM IST | |
@@ -106,10 +106,45 @@ uv run python -m claimbridge.cli reset --upto V2025 && uv run python -m claimbri
 
 ---
 
-## Phase 3 — Evaluation (next)
+## Phase 3 — Evaluation ✅
 
-| # | Deliverable | Exit criterion |
-|---|---|---|
-| 3.1 | Baseline RAG: same LLM, vector top-k over all policy text and case summaries, in a separate graph with no relationships | Runs on all 35 claims |
-| 3.2 | No-memory ablation (Findings hidden) | Runs on all 35 claims |
-| 3.3 | `make eval`: metrics M1–M12 from docs/07, per-trap table, failures | Results table in `eval/results/latest.md` |
+### Deliverables
+
+| # | Deliverable | Where | Status |
+|---|---|---|---|
+| 3.1 | Baseline RAG: same LLM, same documents, vector top-8 in its own relationship-free graph | `evaluation/baseline.py` | ✅ 34/34 |
+| 3.2 | Large-embedding baseline check (`mxbai-embed-large-v1`, 1024-dim) | `eval baseline_strong` | ✅ 34/34 |
+| 3.3 | No-memory ablation (`CB_NO_MEMORY=1`) | `agents/retrieval.py` | ✅ 34/34 |
+| 3.4 | Scorer for M1–M9, M12 and per-trap breakdown; M10 chaos run; M11 memory gain | `evaluation/score.py`, `harness.py` | ✅ |
+| 3.5 | Tenant-scoped precedent lookup (Q11) for M9 | `tools/tenancy.py` | ✅ |
+| 3.6 | Report: `eval/results/latest.md` and `latest.json` | `cli eval report` | ✅ |
+
+### Results (all 34 claims, Groq `gpt-oss-120b` for every system; full report in `eval/results/latest.md`)
+
+| | ClaimBridge | No-memory | Baseline RAG | Baseline RAG, large embeddings |
+|---|---:|---:|---:|---:|
+| Claims fully correct | **100%** | 38% (no precedents, by design) | 65% | 65% |
+| Disposition accuracy | **100%** | 100% | 79% | 76% |
+| Wrong-precedent rate | **0%** | 0% | 15% | 15% |
+| Stale or contradicted precedent avoided | **100%** | 100% (uses none) | 56% | 56% |
+| …and explained with the right reason | **100%** | 0% | 0% | 0% |
+| Unsupported plan items | **0%** | 0% | 5% | 9% |
+| Other-tenant case fields exposed (T7) | **0** | 0 | 9 | 15 |
+| T6 "no basis" traps correct | **3/3** | 3/3 | 0/3 | 0/3 |
+| T4 contradicted-memory traps correct | **2/2** | 2/2 | 0/2 | 0/2 |
+| LLM tokens per claim | 2,536 | 1,733 | 3,238 | 3,205 |
+
+**What the numbers say:**
+- **Embeddings aren't the bottleneck.** Moving the baseline from `bge-small` (384-dim) to `mxbai-embed-large` (1024-dim) raised precedent recall (81% → 90%) but left full correctness at 65% and the wrong-precedent rate at 15%. Disposition accuracy even dropped (79% → 76%). Its errors are reasoning errors. Its own summaries cite the governing section, yet it:
+  - reused the 72-hour emergency precedent under the 48-hour 2026 clause;
+  - reused the contradicted sleep-study precedent;
+  - treated a 2024 exclusion and an unmet waiting period as appealable;
+  - applied 180-day filing precedents to a 90-day rule.
+- **What memory adds:** versioned clauses and clause gates alone get every *disposition* right on this dataset, as the no-memory ablation shows. What memory adds is the precedent: which verified win applies, how confident to be, which old one must not be reused and why (100% explained, versus 0% for every other system), and learning from new outcomes.
+- **Learning from a new outcome (M11):** ClaimBridge learned `F-L-AMBULANCE-1` from EV-M-A's verified win, and EV-M-B2 reused it (confidence 0.4 → 1.0, scoped to the policy versions where the clause is unchanged). The baseline also reused EV-M-A once that case record was added to its corpus. Plain RAG can pick up new cases too; what it can't do is scope them to policy versions, weigh them against contradictions, or say when they stop applying (the T1 and T4 results).
+- **Coordination under failure (M10):** 10 hard kills; 7 interrupted a step in progress and all 7 were resumed by another worker. Mean kill-to-completion was 8.3 s, including the 4 s lease timeout. 12/12 claims were completed and correct, with 0 duplicate outputs.
+- **Tests:** 32 passed.
+
+### Notes
+- Groq's free tier allows 200K tokens a day for `gpt-oss-120b`, refilling at about 139 tokens a minute. A full evaluation from scratch needs about 400K tokens. Every answer is recorded under `data/llm_cache/groq/`, so `cli eval all` now replays in a few minutes with no LLM calls.
+- The OpenAI-compatible provider retries once when a generation breaks off mid-JSON (`json_validate_failed`). This happened once in about 140 baseline calls.

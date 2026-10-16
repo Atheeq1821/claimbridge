@@ -35,3 +35,10 @@ agents:        ## supervisor + worker pool in the foreground
 
 gate2:         ## Phase 2 gate: full loop, guard, memory, contradiction, kill/resume, staleness
 	$(CB) gate2
+
+.PHONY: eval eval-report
+eval:          ## Phase 3: ClaimBridge vs no-memory vs baseline RAG (+ large embeddings), chaos run
+	$(CB) eval all
+
+eval-report:   ## rebuild eval/results/latest.md from saved raw results
+	$(CB) eval report

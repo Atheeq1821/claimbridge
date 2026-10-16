@@ -1,0 +1,59 @@
+{
+ "task": "baseline-mxbai-large-v1",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You help a caseworker respond to a denied health-insurance claim.\nYou get the claim and the passages retrieved from the policy documents (all policy versions) and from\npast case records. Decide:\n- the insurer's denial reason (one code);\n- the policy version in force on the service date (versions run from their effective date until the next one);\n- the evidence an appeal needs under the governing terms, and which of it the claim is missing;\n- which past cases (HC-...) are valid precedents for this claim (empty if none truly apply);\n- the disposition: APPEAL_VIABLE (all required evidence on file), APPEAL_NEEDS_EVIDENCE (an appeal is possible\n  once evidence is added) or NO_BASIS_ESCALATE (the governing terms leave no basis for appeal);\n- a short plan whose items cite the passage IDs they rely on.\nUse only the passages and claim facts. Never promise approval.",
+ "user": "CLAIM:\nClaim ID: EV-N-05\nService: Inpatient surgery\nService date: 2026-04-25\nFiled: 2026-05-06 (11 days after the service)\nEmergency: no\nIn network: yes\nEvidence already on file: Itemized bill (ITEMIZED_BILL)\nDenial notice: Lumen Health Assurance - Notice of claim denial. Claim EV-N-05. Service: Inpatient surgery. Date of service: 2026-04-25. We could not complete our review because some records were not received. You may appeal this decision within 180 days of this notice.\n\nRETRIEVED PASSAGES:\n[CS-HC-035] Past case HC-035. Policyholder: Olga Petrova. Service: Inpatient surgery, service date 2024-01-19 (policy V2024). Emergency: no. In network: yes. Denial notice: Service: Inpatient surgery. We could not complete our review because some records were not received. Evidence submitted on appeal: Itemized bill (ITEMIZED_BILL), Discharge summary (DISCHARGE_SUMMARY). Verified outcome: OVERTURNED on 2024-04-03.\n\n[CS-HC-007] Past case HC-007. Policyholder: Asha Varma. Service: Inpatient surgery, service date 2026-06-19 (policy V2026). Emergency: no. In network: yes. Denial notice: Service: Inpatient surgery. Our records show no pre-approval on file for this service. See Section 4.1 (Prior authorization for inpatient surgery) of your LumenCare Silver policy. Evidence submitted on appeal: Retroactive authorization request (RETRO_AUTH_REQUEST), Discharge summary (DISCHARGE_SUMMARY). Verified outcome: OVERTURNED on 2026-09-22.\n\n[CS-HC-005] Past case HC-005. Policyholder: Nikhil Rao. Service: Inpatient surgery, service date 2024-02-13 (policy V2024). Emergency: no. In network: yes. Denial notice: Service: Inpatient surgery. Our records show no pre-approval on file for this service. See Section 4.1 (Prior authorization for inpatient surgery) of your LumenCare Silver policy. Evidence submitted on appeal: Retroactive authorization request (RETRO_AUTH_REQUEST), Discharge summary (DISCHARGE_SUMMARY). Verified outcome: OVERTURNED on 2024-05-27.\n\n[CL-C-2025-INPATIENT-PREAUTH] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 4.1, Prior authorization for inpatient surgery: Planned inpatient surgery requires prior authorization. If authorization was not obtained, a retroactive authorization request with the discharge summary may be submitted within the appeal window. Evidence required for an appeal under this section: Retroactive authorization request (RETRO_AUTH_REQUEST), Discharge summary (DISCHARGE_SUMMARY).\n\n[CL-C-2024-INPATIENT-PREAUTH] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 4.1, Prior authorization for inpatient surgery: Planned inpatient surgery requires prior authorization. If authorization was not obtained, a retroactive authorization request with the discharge summary may be submitted within the appeal window. Evidence required for an appeal under this section: Retroactive authorization request (RETRO_AUTH_REQUEST), Discharge summary (DISCHARGE_SUMMARY).\n\n[CL-C-2026-INPATIENT-PREAUTH] Policy LumenCare Silver, version V2026 (in force 2026-01-01 to open-ended). Section 4.1, Prior authorization for inpatient surgery: Planned inpatient surgery requires prior authorization. If authorization was not obtained, a retroactive authorization request with the discharge summary may be submitted within the appeal window. Evidence required for an appeal under this section: Retroactive authorization request (RETRO_AUTH_REQUEST), Discharge summary (DISCHARGE_SUMMARY).\n\n[CS-HC-006] Past case HC-006. Policyholder: Ben Okafor. Service: Inpatient surgery, service date 2025-08-18 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Inpatient surgery. This service required precertification from the plan, which was not requested. See Section 4.1 (Prior authorization for inpatient surgery) of your LumenCare Silver policy. Evidence submitted on appeal: Retroactive authorization request (RETRO_AUTH_REQUEST), Discharge summary (DISCHARGE_SUMMARY). Verified outcome: OVERTURNED on 2025-12-29.\n\n[CS-HC-036] Past case HC-036. Policyholder: Jonah Pike. Service: Inpatient surgery, service date 2025-02-28 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Inpatient surgery. The claim was submitted without the documentation required for review. See Section 9.3 (Required claim documentation) of your LumenCare Silver policy. Evidence submitted on appeal: Itemized bill (ITEMIZED_BILL), Discharge summary (DISCHARGE_SUMMARY). Verified outcome: OVERTURNED on 2025-04-27.\n\nDecide and write the plan.",
+ "output": {
+  "denial_reason": "INCOMPLETE_DOCS",
+  "policy_version": "V2026",
+  "cited_section": "4.1",
+  "required_evidence": [
+   "RETRO_AUTH_REQUEST",
+   "DISCHARGE_SUMMARY"
+  ],
+  "missing_evidence": [
+   "RETRO_AUTH_REQUEST",
+   "DISCHARGE_SUMMARY"
+  ],
+  "precedent_case_ids": [
+   "HC-035",
+   "HC-036"
+  ],
+  "disposition": "APPEAL_NEEDS_EVIDENCE",
+  "summary": "The claim was denied due to missing records. Under V2026 Section\u202f4.1, an appeal requires a retroactive authorization request and a discharge summary, both of which are currently absent. Similar cases (HC\u2011035, HC\u2011036) were overturned after providing the required documents.",
+  "items": [
+   {
+    "kind": "EVIDENCE_NEEDED",
+    "text": "Submit a retroactive authorization request (RETRO_AUTH_REQUEST) and the discharge summary (DISCHARGE_SUMMARY) as required for appeals of inpatient surgery under Section\u202f4.1.",
+    "cite_ids": [
+     "CL-C-2026-INPATIENT-PREAUTH"
+    ]
+   },
+   {
+    "kind": "ACTION",
+    "text": "Gather and upload the missing documents to the claim portal within the 180\u2011day appeal window.",
+    "cite_ids": [
+     "CS-HC-035"
+    ]
+   },
+   {
+    "kind": "REJECTED_PRECEDENT",
+    "text": "Past case HC-035 (V2024) was overturned after providing ITEMIZED_BILL and DISCHARGE_SUMMARY; similarly HC-036 (V2025) required DISCHARGE_SUMMARY to overturn a denial for missing records.",
+    "cite_ids": [
+     "CS-HC-035",
+     "CS-HC-036"
+    ]
+   },
+   {
+    "kind": "WARNING",
+    "text": "Future inpatient surgeries require prior authorization; failure to obtain may result in denial per Section\u202f4.1.",
+    "cite_ids": [
+     "CL-C-2026-INPATIENT-PREAUTH"
+    ]
+   }
+  ]
+ },
+ "input_tokens": 2088,
+ "output_tokens": 1615
+}

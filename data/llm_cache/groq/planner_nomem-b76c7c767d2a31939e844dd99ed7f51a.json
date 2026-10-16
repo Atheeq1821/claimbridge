@@ -1,0 +1,30 @@
+{
+ "task": "planner_nomem",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You are a caseworker assistant helping a policyholder respond to a denied health-insurance claim.\nYou receive the facts the claims graph established (CONTEXT) and the IDs you may cite (ALLOWED_IDS).\n\nWrite a short, practical plan:\n- one EVIDENCE_NEEDED item per missing evidence type, citing its evidence code and the governing clause;\n- ACTION items for the next steps (use the playbook steps of accepted precedents when present, citing their step IDs);\n- one REJECTED_PRECEDENT item per rejected precedent, explaining in plain words why it does not apply, citing its ID\n  (and the governing clause for VERSION_DRIFT);\n- WARNING items for gates (no appeal basis) or uncertainty.\n\nRules: use only facts from CONTEXT; every item must cite at least one ID from ALLOWED_IDS; never cite anything else;\nnever promise approval or payment; the disposition is already decided, do not change it.",
+ "user": "CONTEXT:\n{\n \"claim\": {\n  \"claim_id\": \"EV-N-02\",\n  \"service\": \"Outpatient MRI\",\n  \"service_date\": 20240920,\n  \"is_emergency\": false,\n  \"in_network\": true,\n  \"filing_lag_days\": 9,\n  \"enrolled_months\": null\n },\n \"policy_version\": \"V2024\",\n \"denial_reason\": {\n  \"code\": \"PREAUTH_MISSING\",\n  \"name\": \"Prior authorization not obtained\"\n },\n \"clause\": {\n  \"clause_id\": \"C-2024-MRI-PREAUTH\",\n  \"section\": \"4.2\",\n  \"title\": \"Prior authorization for outpatient MRI\",\n  \"text\": \"Outpatient magnetic resonance imaging requires prior authorization from the Plan. Prior authorization is not required where the MRI was ordered on the written referral of a board-certified specialist.\"\n },\n \"gates\": [],\n \"evidence\": [\n  {\n   \"code\": \"SPECIALIST_REFERRAL\",\n   \"name\": \"Specialist referral\",\n   \"satisfied\": true\n  }\n ],\n \"accepted_precedents\": [],\n \"rejected_precedents\": [],\n \"disposition\": \"APPEAL_VIABLE\"\n}\nALLOWED_IDS:\n[\"C-2024-MRI-PREAUTH\", \"SPECIALIST_REFERRAL\", \"V2024\"]\nWrite the plan.",
+ "output": {
+  "summary": "The denial can be challenged by showing that the MRI was ordered on a board\u2011certified specialist\u2019s written referral, which removes the prior\u2011auth requirement. Submit the appeal with that referral and cite the relevant clause and policy version.",
+  "items": [
+   {
+    "kind": "EVIDENCE_NEEDED",
+    "text": "Provide a copy of the written specialist referral that identifies the ordering physician as a board\u2011certified specialist.",
+    "cite_ids": [
+     "SPECIALIST_REFERRAL",
+     "C-2024-MRI-PREAUTH"
+    ]
+   },
+   {
+    "kind": "ACTION",
+    "text": "File an appeal attaching the referral copy and reference clause C-2024-MRI-PREAUTH and policy version V2024 to demonstrate the prior\u2011auth exemption.",
+    "cite_ids": [
+     "C-2024-MRI-PREAUTH",
+     "V2024"
+    ]
+   }
+  ]
+ },
+ "input_tokens": 762,
+ "output_tokens": 747
+}

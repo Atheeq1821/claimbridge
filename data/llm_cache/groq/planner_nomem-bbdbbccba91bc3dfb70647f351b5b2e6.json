@@ -1,0 +1,31 @@
+{
+ "task": "planner_nomem",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You are a caseworker assistant helping a policyholder respond to a denied health-insurance claim.\nYou receive the facts the claims graph established (CONTEXT) and the IDs you may cite (ALLOWED_IDS).\n\nWrite a short, practical plan:\n- one EVIDENCE_NEEDED item per missing evidence type, citing its evidence code and the governing clause;\n- ACTION items for the next steps (use the playbook steps of accepted precedents when present, citing their step IDs);\n- one REJECTED_PRECEDENT item per rejected precedent, explaining in plain words why it does not apply, citing its ID\n  (and the governing clause for VERSION_DRIFT);\n- WARNING items for gates (no appeal basis) or uncertainty.\n\nRules: use only facts from CONTEXT; every item must cite at least one ID from ALLOWED_IDS; never cite anything else;\nnever promise approval or payment; the disposition is already decided, do not change it.",
+ "user": "CONTEXT:\n{\n \"claim\": {\n  \"claim_id\": \"EV-N-01\",\n  \"service\": \"Outpatient MRI\",\n  \"service_date\": 20250305,\n  \"is_emergency\": false,\n  \"in_network\": true,\n  \"filing_lag_days\": 14,\n  \"enrolled_months\": null\n },\n \"policy_version\": \"V2025\",\n \"denial_reason\": {\n  \"code\": \"PREAUTH_MISSING\",\n  \"name\": \"Prior authorization not obtained\"\n },\n \"clause\": {\n  \"clause_id\": \"C-2025-MRI-PREAUTH\",\n  \"section\": \"4.2\",\n  \"title\": \"Prior authorization for outpatient MRI\",\n  \"text\": \"Outpatient magnetic resonance imaging requires prior authorization from the Plan. Prior authorization is not required where the MRI was ordered on the written referral of a board-certified specialist.\"\n },\n \"gates\": [],\n \"evidence\": [\n  {\n   \"code\": \"SPECIALIST_REFERRAL\",\n   \"name\": \"Specialist referral\",\n   \"satisfied\": false\n  }\n ],\n \"accepted_precedents\": [],\n \"rejected_precedents\": [],\n \"disposition\": \"APPEAL_NEEDS_EVIDENCE\"\n}\nALLOWED_IDS:\n[\"C-2025-MRI-PREAUTH\", \"SPECIALIST_REFERRAL\", \"V2025\"]\nWrite the plan.",
+ "output": {
+  "summary": "The denial was based on missing prior authorization. To proceed, provide a specialist referral as required by clause C-2025-MRI-PREAUTH.",
+  "items": [
+   {
+    "kind": "EVIDENCE_NEEDED",
+    "text": "Provide the written referral from a board\u2011certified specialist ordering the MRI.",
+    "cite_ids": [
+     "C-2025-MRI-PREAUTH",
+     "SPECIALIST_REFERRAL",
+     "V2025"
+    ]
+   },
+   {
+    "kind": "ACTION",
+    "text": "Submit the specialist referral with the appeal to satisfy the prior\u2011authorization requirement.",
+    "cite_ids": [
+     "C-2025-MRI-PREAUTH",
+     "V2025"
+    ]
+   }
+  ]
+ },
+ "input_tokens": 765,
+ "output_tokens": 517
+}

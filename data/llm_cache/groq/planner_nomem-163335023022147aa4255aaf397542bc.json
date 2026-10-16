@@ -1,0 +1,29 @@
+{
+ "task": "planner_nomem",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You are a caseworker assistant helping a policyholder respond to a denied health-insurance claim.\nYou receive the facts the claims graph established (CONTEXT) and the IDs you may cite (ALLOWED_IDS).\n\nWrite a short, practical plan:\n- one EVIDENCE_NEEDED item per missing evidence type, citing its evidence code and the governing clause;\n- ACTION items for the next steps (use the playbook steps of accepted precedents when present, citing their step IDs);\n- one REJECTED_PRECEDENT item per rejected precedent, explaining in plain words why it does not apply, citing its ID\n  (and the governing clause for VERSION_DRIFT);\n- WARNING items for gates (no appeal basis) or uncertainty.\n\nRules: use only facts from CONTEXT; every item must cite at least one ID from ALLOWED_IDS; never cite anything else;\nnever promise approval or payment; the disposition is already decided, do not change it.",
+ "user": "CONTEXT:\n{\n \"claim\": {\n  \"claim_id\": \"EV-T2-02\",\n  \"service\": \"Durable medical equipment\",\n  \"service_date\": 20250820,\n  \"is_emergency\": false,\n  \"in_network\": true,\n  \"filing_lag_days\": 21,\n  \"enrolled_months\": null\n },\n \"policy_version\": \"V2025\",\n \"denial_reason\": {\n  \"code\": \"NOT_MED_NECESSARY\",\n  \"name\": \"Not medically necessary\"\n },\n \"clause\": {\n  \"clause_id\": \"C-2025-DME-NECESSITY\",\n  \"section\": \"5.4\",\n  \"title\": \"Durable medical equipment\",\n  \"text\": \"Durable medical equipment is covered when prescribed with a physician letter of medical necessity.\"\n },\n \"gates\": [],\n \"evidence\": [\n  {\n   \"code\": \"PHYSICIAN_NECESSITY_LETTER\",\n   \"name\": \"Physician letter of medical necessity\",\n   \"satisfied\": true\n  }\n ],\n \"accepted_precedents\": [],\n \"rejected_precedents\": [],\n \"disposition\": \"APPEAL_VIABLE\"\n}\nALLOWED_IDS:\n[\"C-2025-DME-NECESSITY\", \"PHYSICIAN_NECESSITY_LETTER\", \"V2025\"]\nWrite the plan.",
+ "output": {
+  "summary": "The claim was denied for medical necessity even though a physician's letter of necessity was provided. You can appeal by referencing the policy clause and the submitted letter, and ensure the appeal is filed promptly.",
+  "items": [
+   {
+    "kind": "ACTION",
+    "text": "Prepare and submit an appeal referencing the physician's letter of medical necessity and clause C-2025-DME-NECESSITY to show the equipment meets coverage criteria.",
+    "cite_ids": [
+     "C-2025-DME-NECESSITY",
+     "PHYSICIAN_NECESSITY_LETTER"
+    ]
+   },
+   {
+    "kind": "WARNING",
+    "text": "Confirm the appeal is filed within the policy's appeal deadline to avoid a procedural rejection.",
+    "cite_ids": [
+     "V2025"
+    ]
+   }
+  ]
+ },
+ "input_tokens": 765,
+ "output_tokens": 578
+}

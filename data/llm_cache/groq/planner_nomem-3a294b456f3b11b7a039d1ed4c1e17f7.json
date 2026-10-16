@@ -1,0 +1,36 @@
+{
+ "task": "planner_nomem",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You are a caseworker assistant helping a policyholder respond to a denied health-insurance claim.\nYou receive the facts the claims graph established (CONTEXT) and the IDs you may cite (ALLOWED_IDS).\n\nWrite a short, practical plan:\n- one EVIDENCE_NEEDED item per missing evidence type, citing its evidence code and the governing clause;\n- ACTION items for the next steps (use the playbook steps of accepted precedents when present, citing their step IDs);\n- one REJECTED_PRECEDENT item per rejected precedent, explaining in plain words why it does not apply, citing its ID\n  (and the governing clause for VERSION_DRIFT);\n- WARNING items for gates (no appeal basis) or uncertainty.\n\nRules: use only facts from CONTEXT; every item must cite at least one ID from ALLOWED_IDS; never cite anything else;\nnever promise approval or payment; the disposition is already decided, do not change it.",
+ "user": "CONTEXT:\n{\n \"claim\": {\n  \"claim_id\": \"EV-N-09\",\n  \"service\": \"Maternity care\",\n  \"service_date\": 20260402,\n  \"is_emergency\": false,\n  \"in_network\": true,\n  \"filing_lag_days\": 40,\n  \"enrolled_months\": 10\n },\n \"policy_version\": \"V2026\",\n \"denial_reason\": {\n  \"code\": \"WAITING_PERIOD\",\n  \"name\": \"Waiting period not satisfied\"\n },\n \"clause\": {\n  \"clause_id\": \"C-2026-MATERNITY-WAIT\",\n  \"section\": \"3.2\",\n  \"title\": \"Maternity waiting period\",\n  \"text\": \"Maternity benefits are available after the member has been continuously enrolled for 9 months.\"\n },\n \"gates\": [],\n \"evidence\": [\n  {\n   \"code\": \"ENROLLMENT_RECORD\",\n   \"name\": \"Enrollment record\",\n   \"satisfied\": false\n  }\n ],\n \"accepted_precedents\": [],\n \"rejected_precedents\": [],\n \"disposition\": \"APPEAL_NEEDS_EVIDENCE\"\n}\nALLOWED_IDS:\n[\"C-2026-MATERNITY-WAIT\", \"ENROLLMENT_RECORD\", \"V2026\"]\nWrite the plan.",
+ "output": {
+  "summary": "The claim was denied because the required 9\u2011month continuous enrollment was not demonstrated. Provide the missing enrollment record to satisfy the maternity waiting\u2011period clause.",
+  "items": [
+   {
+    "kind": "EVIDENCE_NEEDED",
+    "text": "Obtain and submit an official enrollment record showing continuous coverage for at least nine months prior to the service date.",
+    "cite_ids": [
+     "ENROLLMENT_RECORD",
+     "C-2026-MATERNITY-WAIT"
+    ]
+   },
+   {
+    "kind": "ACTION",
+    "text": "Contact the member\u2019s employer or benefits administrator to request the enrollment verification and forward it to the insurer within the appeal window.",
+    "cite_ids": [
+     "V2026"
+    ]
+   },
+   {
+    "kind": "WARNING",
+    "text": "If the enrollment record cannot be provided, the appeal will likely be denied because the waiting\u2011period requirement remains unmet.",
+    "cite_ids": [
+     "C-2026-MATERNITY-WAIT"
+    ]
+   }
+  ]
+ },
+ "input_tokens": 748,
+ "output_tokens": 473
+}

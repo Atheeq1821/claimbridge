@@ -8,7 +8,7 @@ import re
 
 from pydantic import BaseModel
 
-from claimbridge.llm.schemas import IntakeExtraction, PlanDraft, PlanItem
+from claimbridge.llm.schemas import BaselineAnswer, BaselineItem, IntakeExtraction, PlanDraft, PlanItem
 
 KEYWORDS = [
     ("TIMELY_FILING", ("filing deadline", "timely filing", "too late")),
@@ -29,7 +29,23 @@ class FakeProvider:
             return self._intake(user), (None, None)
         if schema is PlanDraft:
             return self._plan(user), (None, None)
+        if schema is BaselineAnswer:
+            return self._baseline(user), (None, None)
         raise NotImplementedError(schema.__name__)
+
+    def _baseline(self, user: str) -> BaselineAnswer:
+        """Naive RAG behaviour: reuse the first retrieved past case, as a weak retriever would."""
+        ext = self._intake(user)
+        year = re.search(r"Service date: (\d{4})", user)
+        cases = re.findall(r"\[(CS-(HC-\d+))\]", user)
+        passages = re.findall(r"\[((?:CL|CS)-[^\]]+)\]", user)
+        return BaselineAnswer(
+            denial_reason=ext.denial_reason,
+            policy_version=f"V{year.group(1)}" if year else "V2026",
+            cited_section=ext.cited_section, required_evidence=[], missing_evidence=[],
+            precedent_case_ids=[cases[0][1]] if cases else [],
+            disposition="APPEAL_VIABLE", summary="naive",
+            items=[BaselineItem(kind="ACTION", text="Appeal.", cite_ids=passages[:1])])
 
     def _intake(self, user: str) -> IntakeExtraction:
         low = user.lower()

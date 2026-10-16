@@ -1,0 +1,37 @@
+{
+ "task": "baseline-mxbai-large-v1",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You help a caseworker respond to a denied health-insurance claim.\nYou get the claim and the passages retrieved from the policy documents (all policy versions) and from\npast case records. Decide:\n- the insurer's denial reason (one code);\n- the policy version in force on the service date (versions run from their effective date until the next one);\n- the evidence an appeal needs under the governing terms, and which of it the claim is missing;\n- which past cases (HC-...) are valid precedents for this claim (empty if none truly apply);\n- the disposition: APPEAL_VIABLE (all required evidence on file), APPEAL_NEEDS_EVIDENCE (an appeal is possible\n  once evidence is added) or NO_BASIS_ESCALATE (the governing terms leave no basis for appeal);\n- a short plan whose items cite the passage IDs they rely on.\nUse only the passages and claim facts. Never promise approval.",
+ "user": "CLAIM:\nClaim ID: EV-N-08\nService: Genetic testing\nService date: 2026-07-08\nFiled: 2026-07-21 (13 days after the service)\nEmergency: no\nIn network: yes\nEvidence already on file: Genetic counselor referral (GENETIC_COUNSELOR_REFERRAL)\nDenial notice: Lumen Health Assurance - Notice of claim denial. Claim EV-N-08. Service: Genetic testing. Date of service: 2026-07-08. Your policy lists this service as a non-covered exclusion. See Section 7.6 (Genetic testing) of your LumenCare Silver policy. You may appeal this decision within 180 days of this notice.\n\nRETRIEVED PASSAGES:\n[CS-HC-043] Past case HC-043. Policyholder: Ines Moreau. Service: Genetic testing, service date 2024-12-11 (policy V2024). Emergency: no. In network: yes. Denial notice: Service: Genetic testing. This service is not a covered benefit under your plan. See Section 8.2 (Experimental and investigational services) of your LumenCare Silver policy. Evidence submitted on appeal: Lab report (LAB_REPORT). Verified outcome: UPHELD on 2025-03-14.\n\n[CL-C-2024-EXPERIMENTAL-EXCL] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 8.2, Experimental and investigational services: Experimental or investigational services, including genetic testing not otherwise listed as covered, are excluded. Evidence required for an appeal under this section: none.\n\n[CL-C-2025-EXPERIMENTAL-EXCL] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 8.2, Experimental and investigational services: Experimental or investigational services, including genetic testing not otherwise listed as covered, are excluded. Evidence required for an appeal under this section: none.\n\n[CL-C-2026-EXPERIMENTAL-EXCL] Policy LumenCare Silver, version V2026 (in force 2026-01-01 to open-ended). Section 8.2, Experimental and investigational services: Experimental or investigational services, including genetic testing not otherwise listed as covered, are excluded. Evidence required for an appeal under this section: none.\n\n[CL-C-2025-GENETIC-TEST] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 7.6, Genetic testing: Diagnostic genetic testing is covered when ordered following a referral from a certified genetic counselor. Evidence required for an appeal under this section: Genetic counselor referral (GENETIC_COUNSELOR_REFERRAL).\n\n[CL-C-2026-GENETIC-TEST] Policy LumenCare Silver, version V2026 (in force 2026-01-01 to open-ended). Section 7.6, Genetic testing: Diagnostic genetic testing is covered when ordered following a referral from a certified genetic counselor. Evidence required for an appeal under this section: Genetic counselor referral (GENETIC_COUNSELOR_REFERRAL).\n\n[CL-C-2025-COSMETIC-EXCL] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 8.1, Cosmetic services: Cosmetic procedures are excluded. Evidence required for an appeal under this section: none.\n\n[CL-C-2024-COSMETIC-EXCL] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 8.1, Cosmetic services: Cosmetic procedures are excluded. Evidence required for an appeal under this section: none.\n\nDecide and write the plan.",
+ "output": {
+  "denial_reason": "EXCLUDED_SERVICE",
+  "policy_version": "V2026",
+  "cited_section": "7.6",
+  "required_evidence": [
+   "GENETIC_COUNSELOR_REFERRAL"
+  ],
+  "missing_evidence": [],
+  "precedent_case_ids": [],
+  "disposition": "APPEAL_VIABLE",
+  "summary": "The claim was denied as an excluded service under Section 7.6, but the policy (V2026) covers diagnostic genetic testing when a certified genetic counselor referral is provided. The required referral is already on file, so an appeal can be made without additional evidence.",
+  "items": [
+   {
+    "kind": "EVIDENCE_NEEDED",
+    "text": "An appeal under Section 7.6 requires a certified genetic counselor referral, which is already submitted.",
+    "cite_ids": [
+     "CL-C-2026-GENETIC-TEST"
+    ]
+   },
+   {
+    "kind": "ACTION",
+    "text": "File an appeal within the 180\u2011day window, citing the existing genetic counselor referral to satisfy the evidence requirement.",
+    "cite_ids": [
+     "CL-C-2026-EXPERIMENTAL-EXCL"
+    ]
+   }
+  ]
+ },
+ "input_tokens": 1800,
+ "output_tokens": 1207
+}

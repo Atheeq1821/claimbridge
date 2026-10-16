@@ -1,0 +1,40 @@
+{
+ "task": "baseline-mxbai-large-v1",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You help a caseworker respond to a denied health-insurance claim.\nYou get the claim and the passages retrieved from the policy documents (all policy versions) and from\npast case records. Decide:\n- the insurer's denial reason (one code);\n- the policy version in force on the service date (versions run from their effective date until the next one);\n- the evidence an appeal needs under the governing terms, and which of it the claim is missing;\n- which past cases (HC-...) are valid precedents for this claim (empty if none truly apply);\n- the disposition: APPEAL_VIABLE (all required evidence on file), APPEAL_NEEDS_EVIDENCE (an appeal is possible\n  once evidence is added) or NO_BASIS_ESCALATE (the governing terms leave no basis for appeal);\n- a short plan whose items cite the passage IDs they rely on.\nUse only the passages and claim facts. Never promise approval.",
+ "user": "CLAIM:\nClaim ID: EV-T4-01\nService: Sleep study\nService date: 2025-07-15\nFiled: 2025-08-14 (30 days after the service)\nEmergency: no\nIn network: yes\nEvidence already on file: Retroactive authorization request (RETRO_AUTH_REQUEST)\nDenial notice: Lumen Health Assurance - Notice of claim denial. Claim EV-T4-01. Service: Sleep study. Date of service: 2025-07-15. This service required precertification from the plan, which was not requested. See Section 4.4 (Prior authorization for sleep studies) of your LumenCare Silver policy. You may appeal this decision within 180 days of this notice.\n\nRETRIEVED PASSAGES:\n[CS-HC-008] Past case HC-008. Policyholder: Elif Kaya. Service: Sleep study, service date 2024-04-28 (policy V2024). Emergency: no. In network: yes. Denial notice: Service: Sleep study. Our records show no pre-approval on file for this service. See Section 4.4 (Prior authorization for sleep studies) of your LumenCare Silver policy. Evidence submitted on appeal: Retroactive authorization request (RETRO_AUTH_REQUEST). Verified outcome: OVERTURNED on 2024-07-24.\n\n[CS-HC-011] Past case HC-011. Policyholder: Dev Mehta. Service: Sleep study, service date 2025-11-27 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Sleep study. Our records show no pre-approval on file for this service. See Section 4.4 (Prior authorization for sleep studies) of your LumenCare Silver policy. Evidence submitted on appeal: Retroactive authorization request (RETRO_AUTH_REQUEST). Verified outcome: UPHELD on 2026-02-02.\n\n[CS-HC-010] Past case HC-010. Policyholder: Olga Petrova. Service: Sleep study, service date 2025-12-13 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Sleep study. This service required precertification from the plan, which was not requested. See Section 4.4 (Prior authorization for sleep studies) of your LumenCare Silver policy. Evidence submitted on appeal: Retroactive authorization request (RETRO_AUTH_REQUEST). Verified outcome: UPHELD on 2026-03-25.\n\n[CL-C-2025-SLEEP-STUDY-PREAUTH] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 4.4, Prior authorization for sleep studies: Facility-based sleep studies require prior authorization. A retroactive authorization request may be considered. Evidence required for an appeal under this section: Retroactive authorization request (RETRO_AUTH_REQUEST).\n\n[CL-C-2024-SLEEP-STUDY-PREAUTH] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 4.4, Prior authorization for sleep studies: Facility-based sleep studies require prior authorization. A retroactive authorization request may be considered. Evidence required for an appeal under this section: Retroactive authorization request (RETRO_AUTH_REQUEST).\n\n[CL-C-2026-SLEEP-STUDY-PREAUTH] Policy LumenCare Silver, version V2026 (in force 2026-01-01 to open-ended). Section 4.4, Prior authorization for sleep studies: Facility-based sleep studies require prior authorization. A retroactive authorization request may be considered. Evidence required for an appeal under this section: Retroactive authorization request (RETRO_AUTH_REQUEST).\n\n[CS-HC-009] Past case HC-009. Policyholder: Jonah Pike. Service: Sleep study, service date 2025-06-07 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Sleep study. This service required precertification from the plan, which was not requested. This decision applies the policy terms on prior authorization for sleep studies. Evidence submitted on appeal: Retroactive authorization request (RETRO_AUTH_REQUEST). Verified outcome: OVERTURNED on 2025-08-02.\n\n[CS-HC-052] Past case HC-052. Policyholder: Grace Lin. Service: Outpatient MRI, service date 2025-04-08 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Outpatient MRI. Prior authorization was not obtained before this service was performed. See Section 4.2 (Prior authorization for outpatient MRI) of your LumenCare Silver policy. Evidence submitted on appeal: none. Verified outcome: UPHELD on 2025-06-24.\n\nDecide and write the plan.",
+ "output": {
+  "denial_reason": "PREAUTH_MISSING",
+  "policy_version": "V2025",
+  "cited_section": "4.4",
+  "required_evidence": [
+   "RETRO_AUTH_REQUEST"
+  ],
+  "missing_evidence": [],
+  "precedent_case_ids": [
+   "HC-009"
+  ],
+  "disposition": "APPEAL_VIABLE",
+  "summary": "Denial is for missing prior authorization; the retroactive authorization request already on file meets the evidence requirement under Section\u202f4.4 of the V2025 policy, making an appeal viable.",
+  "items": [
+   {
+    "kind": "ACTION",
+    "text": "Prepare and submit an appeal using the retroactive authorization request already provided.",
+    "cite_ids": [
+     "CL-C-2025-SLEEP-STUDY-PREAUTH",
+     "CS-HC-009"
+    ]
+   },
+   {
+    "kind": "WARNING",
+    "text": "File the appeal within 180 days of the denial notice.",
+    "cite_ids": [
+     "CL-C-2025-SLEEP-STUDY-PREAUTH"
+    ]
+   }
+  ]
+ },
+ "input_tokens": 1995,
+ "output_tokens": 1248
+}
