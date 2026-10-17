@@ -1,0 +1,6 @@
+{"id":"image_001","type":"image","path":"assets/agents.png","source":"existing","description":"agents","provenance":{"provider":"local","adopted":true}}
+{"id":"image_002","type":"image","path":"assets/memory-after.png","source":"existing","description":"memory after","provenance":{"provider":"local","adopted":true}}
+{"id":"image_003","type":"image","path":"assets/memory-before.png","source":"existing","description":"memory before","provenance":{"provider":"local","adopted":true}}
+{"id":"image_004","type":"image","path":"assets/memory-outcome.png","source":"existing","description":"memory outcome","provenance":{"provider":"local","adopted":true}}
+{"id":"image_005","type":"image","path":"assets/policy-case.png","source":"existing","description":"policy case","provenance":{"provider":"local","adopted":true}}
+{"id":"image_006","type":"image","path":"assets/policy-graph.png","source":"existing","description":"policy graph","provenance":{"provider":"local","adopted":true}}

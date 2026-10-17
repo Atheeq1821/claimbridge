@@ -1,0 +1,44 @@
+{
+ "task": "baseline-bge-small",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You help a caseworker respond to a denied health-insurance claim.\nYou get the claim and the passages retrieved from the policy documents (all policy versions) and from\npast case records. Decide:\n- the insurer's denial reason (one code);\n- the policy version in force on the service date (versions run from their effective date until the next one);\n- the evidence an appeal needs under the governing terms, and which of it the claim is missing;\n- which past cases (HC-...) are valid precedents for this claim (empty if none truly apply);\n- the disposition: APPEAL_VIABLE (all required evidence on file), APPEAL_NEEDS_EVIDENCE (an appeal is possible\n  once evidence is added) or NO_BASIS_ESCALATE (the governing terms leave no basis for appeal);\n- a short plan whose items cite the passage IDs they rely on.\nUse only the passages and claim facts. Never promise approval.",
+ "user": "CLAIM:\nClaim ID: EV-T4-02\nService: Sleep study\nService date: 2026-02-10\nFiled: 2026-02-27 (17 days after the service)\nEmergency: no\nIn network: yes\nEvidence already on file: none\nDenial notice: Lumen Health Assurance - Notice of claim denial. Claim EV-T4-02. Service: Sleep study. Date of service: 2026-02-10. The required approval was not on file before the procedure, so the claim cannot be paid as submitted. You may appeal this decision within 180 days of this notice.\n\nRETRIEVED PASSAGES:\n[CL-C-2024-SLEEP-STUDY-PREAUTH] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 4.4, Prior authorization for sleep studies: Facility-based sleep studies require prior authorization. A retroactive authorization request may be considered. Evidence required for an appeal under this section: Retroactive authorization request (RETRO_AUTH_REQUEST).\n\n[CL-C-2025-SLEEP-STUDY-PREAUTH] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 4.4, Prior authorization for sleep studies: Facility-based sleep studies require prior authorization. A retroactive authorization request may be considered. Evidence required for an appeal under this section: Retroactive authorization request (RETRO_AUTH_REQUEST).\n\n[CL-C-2026-SLEEP-STUDY-PREAUTH] Policy LumenCare Silver, version V2026 (in force 2026-01-01 to open-ended). Section 4.4, Prior authorization for sleep studies: Facility-based sleep studies require prior authorization. A retroactive authorization request may be considered. Evidence required for an appeal under this section: Retroactive authorization request (RETRO_AUTH_REQUEST).\n\n[CL-C-2026-OON-EMERGENCY] Policy LumenCare Silver, version V2026 (in force 2026-01-01 to open-ended). Section 6.3, Out-of-network services: Services from out-of-network providers are not covered, except emergency services, which are covered at the in-network rate when an emergency attestation is filed within 48 hours of admission. Evidence required for an appeal under this section: Emergency attestation (EMERGENCY_ATTESTATION), Discharge summary (DISCHARGE_SUMMARY).\n\n[CL-C-2025-OON-EMERGENCY] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 6.3, Out-of-network services: Services from out-of-network providers are not covered, except emergency services, which are covered at the in-network rate when an emergency attestation is filed within 72 hours of admission. Evidence required for an appeal under this section: Emergency attestation (EMERGENCY_ATTESTATION), Discharge summary (DISCHARGE_SUMMARY).\n\n[CL-C-2024-OON-EMERGENCY] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 6.3, Out-of-network services: Services from out-of-network providers are not covered, except emergency services, which are covered at the in-network rate when an emergency attestation is filed within 72 hours of admission. Evidence required for an appeal under this section: Emergency attestation (EMERGENCY_ATTESTATION), Discharge summary (DISCHARGE_SUMMARY).\n\n[CL-C-2025-ER-COVERAGE] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 6.1, Emergency room coverage: Emergency room services are covered when symptoms would lead a prudent layperson to believe that urgent care was required, as documented in the discharge summary. Evidence required for an appeal under this section: Discharge summary (DISCHARGE_SUMMARY).\n\n[CL-C-2024-ER-COVERAGE] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 6.1, Emergency room coverage: Emergency room services are covered when symptoms would lead a prudent layperson to believe that urgent care was required, as documented in the discharge summary. Evidence required for an appeal under this section: Discharge summary (DISCHARGE_SUMMARY).\n\nDecide and write the plan.",
+ "output": {
+  "denial_reason": "PREAUTH_MISSING",
+  "policy_version": "V2026",
+  "cited_section": "4.4",
+  "required_evidence": [
+   "RETRO_AUTH_REQUEST"
+  ],
+  "missing_evidence": [
+   "RETRO_AUTH_REQUEST"
+  ],
+  "precedent_case_ids": [],
+  "disposition": "APPEAL_NEEDS_EVIDENCE",
+  "summary": "Denial was due to missing prior authorization; a retroactive authorization request is needed to appeal.",
+  "items": [
+   {
+    "kind": "EVIDENCE_NEEDED",
+    "text": "Retroactive authorization request (RETRO_AUTH_REQUEST) is required for an appeal under Section 4.4.",
+    "cite_ids": [
+     "CL-C-2026-SLEEP-STUDY-PREAUTH"
+    ]
+   },
+   {
+    "kind": "ACTION",
+    "text": "Prepare and submit the retroactive authorization request to the insurer.",
+    "cite_ids": [
+     "CL-C-2026-SLEEP-STUDY-PREAUTH"
+    ]
+   },
+   {
+    "kind": "WARNING",
+    "text": "Appeal must be filed within 180 days of the denial notice.",
+    "cite_ids": []
+   }
+  ]
+ },
+ "input_tokens": 1921,
+ "output_tokens": 957
+}

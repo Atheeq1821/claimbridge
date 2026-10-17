@@ -1,6 +1,7 @@
 // Evidence-graph replay: plays one claim's processing as the agents did it, step by step,
 // from the graph the API returns. Imperative SVG (no React state per frame) so motion is smooth.
 import type { ClaimDetail, GraphEdge, GraphNode } from "./api";
+import { LEARNED_CAVEAT, conditionFailure, requirementOrigin, splitSources, supportView } from "./explain";
 
 type Sig = "pos" | "neg" | "cau" | "neu";
 const SIGNAL: Record<string, Sig> = {
@@ -60,9 +61,9 @@ export function buildScript(d: ClaimDetail, gr: { nodes: GraphNode[]; edges: Gra
   };
   if (d.clause && clauseId) info[clauseId] = {
     kind: "Cited clause", title: `§${d.clause.section} ${d.clause.title}${d.version ? ` (${d.version.label})` : ""}`,
-    lead: `The denial notice cites Section ${d.clause.section}; Intake resolved it to this clause in the governing version. It sets the evidence an appeal needs.`,
+    lead: `The denial notice cites Section ${d.clause.section}; Intake resolved it to this clause in the governing version. Its terms set the policy's evidence requirements.`,
     quote: d.clause.text,
-    facts: [["Requires", d.requirements.map((r) => r.name).join(", ") || "nothing"]],
+    facts: [["Policy requires", d.requirements.filter((r) => requirementOrigin(r) !== "learned").map((r) => r.name).join(", ") || "nothing"]],
     cypher: "MATCH (c:Claim {claim_id: $cid})-[:GOVERNED_BY]->(:PolicyVersion)\n      -[:CONTAINS]->(cl:Clause {section: $section})\nMERGE (notice)-[:CITES]->(cl)",
   };
 
@@ -73,16 +74,16 @@ export function buildScript(d: ClaimDetail, gr: { nodes: GraphNode[]; edges: Gra
     const why: Record<string, string> = {
       VERSION_DRIFT: `Superseded by §${v.learned_section} (${year(v.governing)}). It was learned under the ${year(v.learned_on)} clause, which the policy in force has changed.`,
       CONTRADICTED: `Contradicted: ${v.contradicted_by.length} later verified appeal${v.contradicted_by.length === 1 ? " was" : "s were"} upheld on the same facts.`,
-      CONDITION_UNMET: "Distinguished: it won only in emergencies, and this claim was not one.",
+      CONDITION_UNMET: `Distinguished: ${conditionFailure(v, d.claim)}.`,
       LINEAGE_MISMATCH: `Distinguished: it concerns §${v.learned_section}, a different clause from the one this denial cites.`,
-      ACCEPTED: `Followed: good law under the policy in force (valid in ${v.valid_in.join(", ")}).`,
+      ACCEPTED: `Followed: it applies under the policy in force (checked for ${v.valid_in.join(", ") || "no version"}), and this claim meets its conditions.`,
       CANDIDATE: "Retrieved from memory; the Verifier has not ruled yet.",
     };
     info[n.id] = {
       kind: "Precedent (Finding)", title: n.id, signal: SIGNAL[v.code], verdict: LABEL[v.code], lead: v.statement, why: why[v.code],
-      facts: [["Verified wins", String(v.support)], ["Confidence", `${Math.round((v.confidence || 0) * 100)}%`],
-        ["Good law in", v.valid_in.join(", ") || "—"], ["Found by", v.source]],
-      cypher: "MATCH (c)-[k:CONSIDERED]->(f:Finding)-[:ON_LINEAGE]->(fl:Clause)\nOPTIONAL MATCH (f)-[vi:VALID_IN]->(v)   // v = governing version\nRETURN CASE\n  WHEN fl.lineage_id <> cc.lineage_id THEN 'LINEAGE_MISMATCH'\n  WHEN vi IS NULL THEN 'VERSION_DRIFT'\n  WHEN f.status = 'CONTRADICTED' THEN 'CONTRADICTED'\n  WHEN f.req_emergency <> c.is_emergency THEN 'CONDITION_UNMET'\n  ELSE 'ACCEPTED' END",
+      facts: [["Recorded wins", String(v.support)], ["Contradicted by", String(v.contradicted_by.length)], ["Support score", v.support > 0 ? `${Math.round((v.confidence || 0) * 100)}%` : "none yet"],
+        ["Applies in", v.valid_in.join(", ") || "—"], ["Found by", v.source]],
+      cypher: "MATCH (c)-[k:CONSIDERED]->(f:Finding)-[:ON_LINEAGE]->(fl:Clause)\nOPTIONAL MATCH (f)-[vi:VALID_IN]->(v)   // v = governing version\nRETURN CASE\n  WHEN fl.lineage_id <> cc.lineage_id THEN 'LINEAGE_MISMATCH'\n  WHEN vi IS NULL THEN 'VERSION_DRIFT'\n  WHEN f.status = 'CONTRADICTED' THEN 'CONTRADICTED'\n  WHEN f.req_emergency <> c.is_emergency THEN 'CONDITION_UNMET'\n  WHEN f.req_in_network <> c.in_network THEN 'CONDITION_UNMET'\n  ELSE 'ACCEPTED' END",
     };
   });
   gr.nodes.filter((n) => n.kind === "clause" && n.id !== clauseId).forEach((n) => {
@@ -97,17 +98,27 @@ export function buildScript(d: ClaimDetail, gr: { nodes: GraphNode[]; edges: Gra
   });
   gr.nodes.filter((n) => n.kind === "evidence").forEach((n) => {
     const r = req[n.id];
+    const origin = r ? requirementOrigin(r) : "policy";
+    const { policy, learned } = splitSources(r?.sources);
+    const status = r?.satisfied ? "on file" : noBasis ? "not needed" : "missing";
+    const tail = r?.satisfied ? "It is on file." : noBasis ? "It is moot: there is no basis for an appeal." : "It is missing, so it goes into the plan.";
+    let lead: string;
+    if (origin === "learned") lead = `Suggested by precedent ${learned.join(", ")}: ${LEARNED_CAVEAT}. ${r?.satisfied ? "It is already on file." : noBasis ? "It is moot: there is no basis for an appeal." : "It is missing, so the plan asks a caseworker whether to include it."}`;
+    else if (origin === "both") lead = `Required by the governing clause${d.clause ? ` (§${d.clause.section})` : ""}, and also suggested by precedent ${learned.join(", ")}. ${tail}`;
+    else lead = `Required by the governing clause${d.clause ? ` (§${d.clause.section})` : ""}. ${tail}`;
     info[n.id] = {
-      kind: "Required evidence", title: n.label,
-      lead: r?.satisfied ? "Required by the governing clause, and already on file." : noBasis ? "Required by the clause, but moot: there is no basis for an appeal." : "Required by the governing clause and missing — it goes into the plan.",
-      facts: [["Status", r?.satisfied ? "on file" : noBasis ? "not needed" : "missing"]],
-      cypher: "MATCH (c)-[:HAS_NOTICE]->()-[:CITES]->(cl:Clause)-[:REQUIRES]->(e:EvidenceType)\nOPTIONAL MATCH (c)-[:HAS_EVIDENCE]->(:Evidence)-[:OF_TYPE]->(e)\nRETURN e.code, count(*) > 0 AS satisfied",
+      kind: origin === "learned" ? "Suggested evidence (learned)" : "Policy requirement", title: n.label, lead,
+      facts: [["Status", status], ["Basis", origin === "learned" ? "Observed association" : origin === "both" ? "Policy and observed association" : "Policy requirement"],
+        ["Source", [...policy.map((x) => `clause ${x}`), ...learned.map((x) => `precedent ${x}`)].join(" · ") || "—"]],
+      cypher: origin === "learned"
+        ? "MATCH (c)-[:CONSIDERED {verdict: 'ACCEPTED'}]->(f:Finding)-[:NEEDS_EVIDENCE]->(e:EvidenceType)\nOPTIONAL MATCH (c)-[:HAS_EVIDENCE]->(:Evidence)-[:OF_TYPE]->(e)\nRETURN e.code, f.finding_id, count(*) > 0 AS satisfied"
+        : "MATCH (c)-[:HAS_NOTICE]->()-[:CITES]->(cl:Clause)-[:REQUIRES]->(e:EvidenceType)\nOPTIONAL MATCH (c)-[:HAS_EVIDENCE]->(:Evidence)-[:OF_TYPE]->(e)\nRETURN e.code, cl.clause_id, count(*) > 0 AS satisfied" + (origin === "both" ? "\n// plus any accepted Finding -[:NEEDS_EVIDENCE]-> e" : ""),
     };
   });
   if (rec) info[PLAN] = {
     kind: "Recommendation", title: DISPO_TEXT[rec.disposition] || "Plan", lead: rec.summary,
     items: rec.items.map((i) => [i.kind, i.text, i.cites]),
-    facts: [["Precedent confidence", `${Math.round((rec.confidence || 0) * 100)}%`], ["Wording", rec.llm_model || "template"],
+    facts: [["Precedent support score", `${supportView(rec, d.verdicts).value}${supportView(rec, d.verdicts).detail ? ` (${supportView(rec, d.verdicts).detail})` : ""}`], ["Published plan", "Graph templates"],
       ["Citation guard", `dropped ${rec.guard_dropped || 0}, added ${rec.guard_added || 0}`]],
   };
 
@@ -126,7 +137,19 @@ export function buildScript(d: ClaimDetail, gr: { nodes: GraphNode[]; edges: Gra
     steps.push({ agent: "Verifier", who: ev("VERIFIER_DONE")?.agent, title: `Rules on ${f.id}: ${LABEL[v.code]}`, ts: ev("VERIFIER_DONE")?.ts, show: extraNodes, edges: extraEdges, verdict: [f.id, v.code], focus: f.id, say: info[f.id].why || "" });
   });
   const evNodes = gr.nodes.filter((n) => n.kind === "evidence").map((n) => n.id);
-  if (evNodes.length && rec && clauseId) steps.push({ agent: "Planner", who: ev("PLANNER_DONE")?.agent, title: "Checks the evidence the clause requires", ts: ev("PLANNER_DONE")?.ts, show: evNodes, edges: evNodes.map((x) => [clauseId, x] as [string, string]), focus: null, say: noBasis ? "The clause's evidence is listed, but a gate already ruled out any appeal." : "Each requirement is matched against the documents on file." });
+  if (evNodes.length && rec) {
+    const nLearned = d.requirements.filter((r) => requirementOrigin(r) !== "policy").length;
+    const nPolicy = d.requirements.length - d.requirements.filter((r) => requirementOrigin(r) === "learned").length;
+    steps.push({
+      agent: "Planner", who: ev("PLANNER_DONE")?.agent,
+      title: nLearned ? "Checks required and suggested evidence" : "Checks the evidence the clause requires",
+      ts: ev("PLANNER_DONE")?.ts, show: evNodes,
+      edges: gr.edges.filter((e) => evNodes.includes(e.to)).map((e) => [e.from, e.to] as [string, string]), focus: null,
+      say: noBasis
+        ? "The evidence is listed, but a gate already ruled out any appeal."
+        : `${nPolicy} required by the clause${nLearned ? `; ${nLearned} also suggested by a followed precedent (${LEARNED_CAVEAT})` : ""}. Each is matched against the documents on file.`,
+    });
+  }
   if (rec) steps.push({ agent: "Planner", who: ev("PLANNER_DONE")?.agent, title: DISPO_TEXT[rec.disposition] || "Writes the plan", ts: ev("PLANNER_DONE")?.ts, show: [PLAN], edges: [[claimId, PLAN]], focus: PLAN, say: rec.summary });
 
   const nodes: Script["nodes"] = [...gr.nodes.filter((n) => n.kind !== "evidence" || rec), ...(rec ? [{ id: PLAN, kind: "plan" as const, label: DISPO_TEXT[rec.disposition] || "Plan" }] : [])];
@@ -213,7 +236,7 @@ export function mountReplay(
   const sub = (n: Script["nodes"][number]) => {
     if (n.kind === "claim") return data.detail.service;
     if (n.kind === "finding") return "under review";
-    if (n.kind === "evidence") { const r = data.detail.requirements.find((x) => x.code === n.id); return r?.satisfied ? "on file" : sc.noBasis ? "not needed" : "missing"; }
+    if (n.kind === "evidence") { const r = data.detail.requirements.find((x) => x.code === n.id); const st = r?.satisfied ? "on file" : sc.noBasis ? "not needed" : "missing"; return r && requirementOrigin(r) === "learned" ? `suggested · ${st}` : st; }
     if (n.kind === "resolution") return "verified outcome: upheld";
     if (n.kind === "plan") return `${data.detail.recommendation?.items.length || 0} cited items`;
     return trim((n as GraphNode).sub || "", 28);
@@ -236,11 +259,13 @@ export function mountReplay(
   sc.steps.forEach((s) => s.edges.forEach(([a, b]) => {
     const key = `${a}>${b}`;
     if (edgeEls[key] || !pos[a] || !pos[b]) return;
-    const A = pos[a], B = pos[b], same = A.x === B.x;
-    const x1 = A.x + NODE_W, y1 = A.y + NODE_H / 2, x2 = same ? B.x + NODE_W : B.x, y2 = B.y + NODE_H / 2;
-    const d = same ? `M${x1} ${y1} C${x1 + 30} ${y1}, ${x2 + 30} ${y2}, ${x2} ${y2}` : `M${x1} ${y1} C${x1 + 40} ${y1}, ${x2 - 40} ${y2}, ${x2} ${y2}`;
+    const A = pos[a], B = pos[b], same = A.x === B.x, back = B.x < A.x;
+    const x1 = back ? A.x : A.x + NODE_W, y1 = A.y + NODE_H / 2, x2 = same || back ? B.x + NODE_W : B.x, y2 = B.y + NODE_H / 2;
+    const d = same ? `M${x1} ${y1} C${x1 + 30} ${y1}, ${x2 + 30} ${y2}, ${x2} ${y2}`
+      : back ? `M${x1} ${y1} C${x1 - 40} ${y1}, ${x2 + 40} ${y2}, ${x2} ${y2}`
+      : `M${x1} ${y1} C${x1 + 40} ${y1}, ${x2 - 40} ${y2}, ${x2} ${y2}`;
     const meta = sc.edgeMeta[key] || {};
-    const cls = meta.state === "missing" && !sc.noBasis ? "e-missing" : meta.code ? `e-${SIGNAL[meta.code] || "neu"}` : "e-neu";
+    const cls = meta.state === "missing" && !sc.noBasis ? "e-missing" : meta.origin === "learned" ? "e-learned" : meta.code ? `e-${SIGNAL[meta.code] || "neu"}` : "e-neu";
     edgeEls[key] = { path: el("path", { d, class: `cbg-edge ${cls} hidden` }, gEdges) as SVGPathElement, cls };
   }));
 

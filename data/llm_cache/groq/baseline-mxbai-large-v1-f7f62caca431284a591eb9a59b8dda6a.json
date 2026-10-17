@@ -1,0 +1,31 @@
+{
+ "task": "baseline-mxbai-large-v1",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You help a caseworker respond to a denied health-insurance claim.\nYou get the claim and the passages retrieved from the policy documents (all policy versions) and from\npast case records. Decide:\n- the insurer's denial reason (one code);\n- the policy version in force on the service date (versions run from their effective date until the next one);\n- the evidence an appeal needs under the governing terms, and which of it the claim is missing;\n- which past cases (HC-...) are valid precedents for this claim (empty if none truly apply);\n- the disposition: APPEAL_VIABLE (all required evidence on file), APPEAL_NEEDS_EVIDENCE (an appeal is possible\n  once evidence is added) or NO_BASIS_ESCALATE (the governing terms leave no basis for appeal);\n- a short plan whose items cite the passage IDs they rely on.\nUse only the passages and claim facts. Never promise approval.",
+ "user": "CLAIM:\nClaim ID: EV-T4-01\nService: Sleep study\nService date: 2025-07-15\nFiled: 2025-08-14 (30 days after the service)\nEmergency: no\nIn network: yes\nEvidence already on file: Retroactive authorization request (RETRO_AUTH_REQUEST)\nDenial notice: Lumen Health Assurance - Notice of claim denial. Claim EV-T4-01. Service: Sleep study. Date of service: 2025-07-15. This service required precertification from the plan, which was not requested. See Section 4.4 (Prior authorization for sleep studies) of your LumenCare Silver policy. You may appeal this decision within 180 days of this notice.\n\nRETRIEVED PASSAGES:\n[CL-C-2025-SLEEP-STUDY-PREAUTH] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 4.4, Prior authorization for sleep studies: Facility-based sleep studies require prior authorization. A retroactive authorization request may be considered. Evidence required for an appeal under this section: Retroactive authorization request (RETRO_AUTH_REQUEST).\n\n[CL-C-2024-SLEEP-STUDY-PREAUTH] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 4.4, Prior authorization for sleep studies: Facility-based sleep studies require prior authorization. A retroactive authorization request may be considered. Evidence required for an appeal under this section: Retroactive authorization request (RETRO_AUTH_REQUEST).\n\n[CL-C-2026-SLEEP-STUDY-PREAUTH] Policy LumenCare Silver, version V2026 (in force 2026-01-01 to open-ended). Section 4.4, Prior authorization for sleep studies: Facility-based sleep studies require prior authorization. A retroactive authorization request may be considered. Evidence required for an appeal under this section: Retroactive authorization request (RETRO_AUTH_REQUEST).\n\n[CL-C-2025-EXPERIMENTAL-EXCL] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 8.2, Experimental and investigational services: Experimental or investigational services, including genetic testing not otherwise listed as covered, are excluded. Evidence required for an appeal under this section: none.\n\n[CL-C-2024-EXPERIMENTAL-EXCL] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 8.2, Experimental and investigational services: Experimental or investigational services, including genetic testing not otherwise listed as covered, are excluded. Evidence required for an appeal under this section: none.\n\n[CL-C-2026-EXPERIMENTAL-EXCL] Policy LumenCare Silver, version V2026 (in force 2026-01-01 to open-ended). Section 8.2, Experimental and investigational services: Experimental or investigational services, including genetic testing not otherwise listed as covered, are excluded. Evidence required for an appeal under this section: none.\n\n[CL-C-2025-RETRO-AUTH] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 4.6, Retroactive authorization: Retroactive authorization requests are reviewed against the clinical criteria that applied on the date of service. Evidence required for an appeal under this section: Retroactive authorization request (RETRO_AUTH_REQUEST).\n\n[CS-HC-016] Past case HC-016. Policyholder: Keiko Sato. Service: Physiotherapy, service date 2026-05-18 (policy V2026). Emergency: no. In network: yes. Denial notice: Service: Physiotherapy. The services billed exceed what is considered medically necessary for the diagnosis provided. See Section 5.1 (Physiotherapy session limit) of your LumenCare Silver policy. Evidence submitted on appeal: Physician letter of medical necessity (PHYSICIAN_NECESSITY_LETTER), Clinical progress notes (PROGRESS_NOTES). Verified outcome: OVERTURNED on 2026-08-09.\n\nDecide and write the plan.",
+ "output": {
+  "denial_reason": "PREAUTH_MISSING",
+  "policy_version": "V2025",
+  "cited_section": "4.4",
+  "required_evidence": [
+   "RETRO_AUTH_REQUEST"
+  ],
+  "missing_evidence": [],
+  "precedent_case_ids": [],
+  "disposition": "APPEAL_VIABLE",
+  "summary": "The claim was denied for lack of prior authorization (Section\u202f4.4). The policy version in effect is V2025, which allows a retroactive authorization request as the sole required appeal evidence. The claimant has already submitted a Retroactive Authorization Request, so no additional evidence is needed and an appeal can be filed.",
+  "items": [
+   {
+    "kind": "ACTION",
+    "text": "File the appeal using the existing Retroactive Authorization Request; no further documentation is required.",
+    "cite_ids": [
+     "CL-C-2025-SLEEP-STUDY-PREAUTH",
+     "CL-C-2025-RETRO-AUTH"
+    ]
+   }
+  ]
+ },
+ "input_tokens": 1877,
+ "output_tokens": 662
+}

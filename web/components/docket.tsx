@@ -152,8 +152,8 @@ function Preview({ row, onClose, onFile, busy }: { row: ClaimRow; onClose: () =>
           <div>
             <p className="mb-1.5 text-[11px] font-medium uppercase tracking-[0.06em] text-ink-3">Disposition</p>
             <Treatment kind={d.tone} label={d.short} size={12} />
-            {row.confidence != null && (
-              <span className="ml-2 text-[12px] text-ink-3 tabular">{Math.round(row.confidence * 100)}% confidence</span>
+            {row.confidence != null && row.flags.some((f) => f.code === "ACCEPTED") && (
+              <span className="ml-2 text-[12px] text-ink-3 tabular">{Math.round(row.confidence * 100)}% support score</span>
             )}
           </div>
         )}
@@ -214,7 +214,7 @@ export function Docket() {
     setBusy(true);
     setActionError(null);
     try {
-      await post("/api/claims/inject", ids ? { ids } : { group: fileGroup });
+      await post("/api/claims/inject", { ids: ids ?? (data ?? []).filter(x => x.status === "NEW" && (fileGroup === "all" || (fileGroup === "normal" ? !x.trap : x.trap === fileGroup))).map(x => x.claim_id) });
       await mutate();
     } catch (e) {
       setActionError(e);
@@ -412,8 +412,8 @@ export function Docket() {
                       {d ? (
                         <>
                           <Treatment kind={d.tone} label={d.short} size={12} />
-                          {r.confidence != null && (
-                            <div className="mt-0.5 text-[11.5px] text-ink-3 tabular" title="Precedent confidence">
+                          {r.confidence != null && r.flags.some((f) => f.code === "ACCEPTED") && (
+                            <div className="mt-0.5 text-[11.5px] text-ink-3 tabular" title="Precedent support score (smoothed recorded outcomes, not a probability)">
                               {Math.round(r.confidence * 100)}%
                             </div>
                           )}

@@ -7,9 +7,14 @@ import useSWR from "swr";
 import { ChevronLeft, ChevronDown, ChevronRight } from "lucide-react";
 import { post, type ClaimDetail, type GraphEdge, type GraphNode, type Verdict } from "@/lib/api";
 import { DISPOSITION, STATUS_LABEL, TRAPS, TREATMENT, ago, fmtDate, humanEvent, pct } from "@/lib/vocab";
+import { SUPPORT_NOTE, conditionFailure, originLine, requirementOrigin, supportView } from "@/lib/explain";
 import { GraphReplay } from "./graph-replay";
+import { PrecedentPath } from "./graph-trace";
+import { EvidenceManager, ReclassifyForm } from "./human-actions";
 import { SignalMark, Treatment } from "./signal";
 import { Button, Cite, ErrorNote, Mono, SectionHead } from "./ui";
+
+import { useAccess } from "./session-gate";
 
 const KIND_LABEL: Record<string, string> = {
   EVIDENCE_NEEDED: "Evidence",
@@ -41,7 +46,7 @@ function uncertaintyLine(u: string, verdicts: Verdict[]): { text: string; ids?: 
 }
 
 // The citation line, in words first: "Superseded by §4.2 (2026)". Node IDs follow in mono.
-function groundsLine(v: Verdict): { text: string; ids: string[] } {
+function groundsLine(v: Verdict, claim: ClaimDetail["claim"]): { text: string; ids: string[] } {
   switch (v.code) {
     case "VERSION_DRIFT":
       return {
@@ -54,22 +59,22 @@ function groundsLine(v: Verdict): { text: string; ids: string[] } {
         ids: v.contradicted_by,
       };
     case "CONDITION_UNMET":
-      return { text: "Distinguished: it won only in emergencies, and this claim was not one.", ids: [] };
+      return { text: `Distinguished: ${conditionFailure(v, claim)}.`, ids: [] };
     case "LINEAGE_MISMATCH":
       return {
         text: `Distinguished: it concerns §${v.learned_section}, a different clause from the one this denial cites.`,
         ids: [v.learned_on],
       };
     case "ACCEPTED":
-      return { text: `Followed: good law under the policy in force (valid in ${v.valid_in.join(", ")}).`, ids: [v.learned_on] };
+      return { text: `Applicable precedent under the policy in force (valid in ${v.valid_in.join(", ")}).`, ids: [v.learned_on] };
     default:
       return { text: TREATMENT[v.code]?.why ?? "", ids: [] };
   }
 }
 
-function PrecedentRow({ v, hot, onHover }: { v: Verdict; hot: boolean; onHover: (id: string | null) => void }) {
+function PrecedentRow({ v, claim, hot, onHover }: { v: Verdict; claim: ClaimDetail["claim"]; hot: boolean; onHover: (id: string | null) => void }) {
   const t = TREATMENT[v.code] ?? TREATMENT.CANDIDATE;
-  const grounds = groundsLine(v);
+  const grounds = groundsLine(v, claim);
   return (
     <li
       id={`p-${v.finding_id}`}
@@ -89,12 +94,13 @@ function PrecedentRow({ v, hot, onHover }: { v: Verdict; hot: boolean; onHover: 
           {grounds.text}
         </p>
         {grounds.ids.length > 0 && <Mono className="mt-0.5 block text-ink-3">{grounds.ids.join(" → ")}</Mono>}
+        {v.code !== "REASON_MISMATCH" && <PrecedentPath cid={claim.claim_id} fid={v.finding_id} />}
       </div>
       <div className="col-start-2 mt-1 text-[12px] text-ink-3 sm:col-start-3 sm:mt-0 sm:text-right">
         <div className="tabular">
-          {v.support} verified win{v.support === 1 ? "" : "s"}
+          {v.support} recorded win{v.support === 1 ? "" : "s"} · {v.contradicted_by.length} contradicted
         </div>
-        <div className="tabular">confidence {pct(v.confidence)}</div>
+        <div className="tabular">{v.support > 0 ? `support score ${pct(v.confidence)}` : "no supporting outcomes yet"}</div>
         <div>via {v.source}</div>
       </div>
     </li>
@@ -105,6 +111,8 @@ function ActionPanel({ d, cid, onDone }: { d: ClaimDetail; cid: string; onDone: 
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<unknown>(null);
   const status = d.claim.status as string;
+  const { operator } = useAccess();
+  const [confirmed, setConfirmed] = useState<string[]>([]);
   const owner = d.claim.lease_owner as string | undefined;
   const last = d.timeline[d.timeline.length - 1];
 
@@ -134,18 +142,31 @@ function ActionPanel({ d, cid, onDone }: { d: ClaimDetail; cid: string; onDone: 
   } else if (status === "AWAITING_REVIEW") {
     body = (
       <>
-        <p className="text-[13px] text-ink-2">The plan is a recommendation. Approve it to send the appeal; nothing happens without you.</p>
+        <p className="text-[13px] text-ink-2">Approve this recommendation for human follow-up. ClaimBridge does not send an appeal to the insurer.</p>
         <Button variant="primary" className="mt-3 w-full" busy={busy === "approve"} onClick={() => act("approve", `/api/claims/${cid}/approve`, {})}>
           Approve recommendation
         </Button>
       </>
     );
+  } else if (status === "APPROVED" && !operator) {
+    body = <p className="text-sm text-ink-2">Approved for follow-up. An operator must verify and record the insurer outcome.</p>;
   } else if (status === "APPROVED") {
     body = (
       <>
         <p className="text-[13px] text-ink-2">
           When the insurer answers the appeal, record what happened. The Curator turns it into memory for the next claim.
         </p>
+        <fieldset className="mt-3 space-y-1 text-xs text-ink-2">
+          <legend className="mb-2">Which documents did the decision rely on, as far as you saw?</legend>
+          {d.evidence.map(e => <label key={e.code} className="flex items-center gap-2">
+            <input type="checkbox" checked={confirmed.includes(e.code)} onChange={() => setConfirmed(prev => prev.includes(e.code) ? prev.filter(x => x !== e.code) : [...prev, e.code])} />
+            {e.name}
+          </label>)}
+          <p className="pt-1 text-ink-3">
+            Tick only what you actually observed. If you tick nothing, memory records the documents that were on file as an association, not proof
+            that any of them caused the outcome.
+          </p>
+        </fieldset>
         <div className="mt-3 grid grid-cols-3 gap-1.5">
           {[
             ["OVERTURNED", "Overturned"],
@@ -156,7 +177,7 @@ function ActionPanel({ d, cid, onDone }: { d: ClaimDetail; cid: string; onDone: 
               key={o}
               variant={o === "UPHELD" ? "danger" : o === "OVERTURNED" ? "primary" : "secondary"}
               busy={busy === o}
-              onClick={() => act(o, `/api/claims/${cid}/outcome`, { outcome: o })}
+              onClick={() => act(o, `/api/claims/${cid}/outcome`, { outcome: o, confirmed_evidence: confirmed.length ? confirmed : null })}
             >
               {l}
             </Button>
@@ -184,7 +205,7 @@ function ActionPanel({ d, cid, onDone }: { d: ClaimDetail; cid: string; onDone: 
       </p>
     );
   } else if (status === "NEEDS_HUMAN") {
-    body = <p className="text-[13px] text-neg">The agents could not finish this claim on their own. A caseworker needs to look at it.</p>;
+    body = <ReclassifyForm d={d} onDone={onDone} operator={operator} />;
   } else {
     body = (
       <p className="text-[13px] text-ink-2">
@@ -266,6 +287,7 @@ export function CaseView() {
   const [showIrrelevant, setShowIrrelevant] = useState(false);
   const [tab, setTab] = useState<Tab>("graph");
   const [jump, setJump] = useState<string | null>(null);
+  const { operator } = useAccess();
 
   // A citation clicked in the plan opens the precedent it names.
   useEffect(() => {
@@ -317,6 +339,9 @@ export function CaseView() {
       <Link href="/console" className="inline-flex items-center gap-1 text-[12.5px] text-ink-3 hover:text-ink">
         <ChevronLeft size={14} aria-hidden /> Docket
       </Link>
+
+      {rec && <a href={`/api/claims/${encodeURIComponent(id)}/packet`} download
+        className="ml-5 inline-flex text-[12.5px] font-medium text-link hover:underline">Download review packet</a>}
 
       <header className="mt-3 grid gap-x-8 gap-y-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
         <div className="min-w-0">
@@ -385,14 +410,13 @@ export function CaseView() {
               </p>
               <p className="mt-2 max-w-[80ch] text-[14px] leading-relaxed text-ink-2">{rec.summary}</p>
               {rec.uncertainty?.length > 0 && (
-                <ul className="mt-3 space-y-1">
+                <ul className="mt-3 space-y-1" aria-label="Caveats">
                   {rec.uncertainty.map((u) => {
                     const line = uncertaintyLine(u, d.verdicts);
                     return (
                       <li key={u} className="flex gap-2 text-[12.5px] text-ink-2">
                         <span className="mt-[9px] h-px w-3 shrink-0 bg-ink-3" aria-hidden />
                         <span>
-                          <span className="text-ink-3">Could be wrong if: </span>
                           {line.text}
                           {line.ids && <Mono className="ml-1.5 text-ink-3">{line.ids}</Mono>}
                         </span>
@@ -403,19 +427,28 @@ export function CaseView() {
               )}
             </div>
             <dl className="grid grid-cols-[auto_auto] content-start gap-x-4 gap-y-1 text-[12.5px] md:text-right">
-              <dt className="text-ink-3">Confidence</dt>
-              <dd className="font-medium text-ink tabular">{pct(rec.confidence)}</dd>
+              <dt className="text-ink-3">Support score</dt>
+              <dd className="font-medium text-ink tabular" title={supportView(rec, d.verdicts).detail}>
+                {supportView(rec, d.verdicts).value}
+              </dd>
+              {supportView(rec, d.verdicts).detail && (
+                <>
+                  <dt className="text-ink-3">Observed</dt>
+                  <dd className="text-ink-2">{supportView(rec, d.verdicts).detail}</dd>
+                </>
+              )}
               <dt className="text-ink-3">Citation guard</dt>
               <dd className="text-ink-2 tabular">
                 {rec.guard_dropped || rec.guard_added ? `−${rec.guard_dropped} / +${rec.guard_added}` : "all cited"}
               </dd>
-              {rec.llm_model && (
+              {(
                 <>
-                  <dt className="text-ink-3">Wording</dt>
-                  <dd className="text-ink-2">{rec.llm_model.split("/").pop()}</dd>
+                  <dt className="text-ink-3">Published plan</dt>
+                  <dd className="text-ink-2">Graph templates</dd>
                 </>
               )}
             </dl>
+            <p className="text-[11.5px] leading-snug text-ink-3 md:col-span-2">{SUPPORT_NOTE}</p>
           </div>
         ) : (
           <p className="text-[13.5px] text-ink-3">
@@ -510,7 +543,7 @@ export function CaseView() {
                 </p>
                 <ul className="rounded-[12px] border border-rule bg-wash">
                   {relevant.map((v) => (
-                    <PrecedentRow key={v.finding_id} v={v} hot={hot === v.finding_id} onHover={setHot} />
+                    <PrecedentRow key={v.finding_id} v={v} claim={c} hot={hot === v.finding_id} onHover={setHot} />
                   ))}
                 </ul>
               </>
@@ -534,7 +567,7 @@ export function CaseView() {
             {showIrrelevant && (
               <ul className="mt-2 rounded-[12px] border border-rule bg-wash">
                 {irrelevant.map((v) => (
-                  <PrecedentRow key={v.finding_id} v={v} hot={hot === v.finding_id} onHover={setHot} />
+                  <PrecedentRow key={v.finding_id} v={v} claim={c} hot={hot === v.finding_id} onHover={setHot} />
                 ))}
               </ul>
             )}
@@ -551,40 +584,43 @@ export function CaseView() {
               />
               <div className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
                 <div>
-                  <h3 className="text-[11px] font-medium uppercase tracking-[0.06em] text-ink-3">Required by the governing terms</h3>
+                  <h3 className="text-[11px] font-medium uppercase tracking-[0.06em] text-ink-3">Evidence checklist</h3>
                   <ul className="mt-1.5">
                     {d.requirements.length ? (
-                      d.requirements.map((r) => (
-                        <li key={r.code} className="flex items-center justify-between gap-3 border-b border-rule py-2 text-[13px]">
-                          <span>{r.name}</span>
-                          {r.satisfied ? (
-                            <Treatment kind="positive" label="On file" size={12} />
-                          ) : noBasis ? (
-                            <Treatment kind="neutral" label="Not needed" size={12} />
-                          ) : (
-                            <Treatment kind="negative" label="Missing" size={12} />
-                          )}
-                        </li>
-                      ))
+                      d.requirements.map((r) => {
+                        const origin = requirementOrigin(r);
+                        return (
+                          <li key={r.code} className="border-b border-rule py-2 text-[13px]">
+                            <div className="flex items-center justify-between gap-3">
+                              <span>{r.name}</span>
+                              {r.satisfied ? (
+                                <Treatment kind="positive" label="On file" size={12} />
+                              ) : noBasis ? (
+                                <Treatment kind="neutral" label="Not needed" size={12} />
+                              ) : (
+                                <Treatment kind="negative" label="Missing" size={12} />
+                              )}
+                            </div>
+                            <p className="mt-1 text-[11.5px] leading-snug text-ink-3">
+                              <span className={origin === "learned" ? "text-link" : "text-ink-2"}>
+                                {origin === "learned" ? "Suggested" : origin === "both" ? "Required and suggested" : "Required"}
+                              </span>
+                              {" · "}
+                              {originLine(r, d.clause?.section)}
+                            </p>
+                          </li>
+                        );
+                      })
                     ) : (
                       <li className="py-2 text-[13px] text-ink-3">Nothing required, or not yet determined.</li>
                     )}
                   </ul>
                 </div>
                 <div>
-                  <h3 className="text-[11px] font-medium uppercase tracking-[0.06em] text-ink-3">Submitted with the claim</h3>
-                  <ul className="mt-1.5">
-                    {d.evidence.length ? (
-                      d.evidence.map((e) => (
-                        <li key={e.code} className="flex items-center justify-between gap-3 border-b border-rule py-2 text-[13px]">
-                          <span>{e.name}</span>
-                          <span className="text-[12px] text-ink-3 tabular">{fmtDate(e.submitted)}</span>
-                        </li>
-                      ))
-                    ) : (
-                      <li className="py-2 text-[13px] text-ink-3">No documents submitted.</li>
-                    )}
-                  </ul>
+                  <h3 className="text-[11px] font-medium uppercase tracking-[0.06em] text-ink-3">Documents on file</h3>
+                  <div className="mt-1.5">
+                    <EvidenceManager d={d} operator={operator} onDone={refresh} />
+                  </div>
                 </div>
               </div>
               <SectionHead title="Denial notice" aside={`issued ${fmtDate(d.notice_date)}`} />

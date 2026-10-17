@@ -2,17 +2,20 @@
 
 import { useMemo, useState } from "react";
 import useSWR from "swr";
-import { ApiError, post, type Memory, type Finding, type Overview } from "@/lib/api";
+import { ApiError, getWith, post, type Memory, type Finding, type Overview } from "@/lib/api";
 import { FINDING_STATUS, ago, pct } from "@/lib/vocab";
 import { Treatment } from "./signal";
 import { Button, ErrorNote, Mono, SectionHead } from "./ui";
+
+import { useAccess } from "./session-gate";
+import { ClauseImpactPanel } from "./graph-trace";
 
 const ALL_VERSIONS = ["2024", "2025", "2026"];
 const STATUS_ORDER = ["ACTIVE", "STALE", "CONTRADICTED"];
 
 function Versions({ f, present }: { f: Finding; present: string[] }) {
   return (
-    <div className="flex gap-1" aria-label={`Good law in ${f.valid_in.join(", ") || "no version"}`}>
+    <div className="flex gap-1" aria-label={`Applies in ${f.valid_in.join(", ") || "no version"}`}>
       {ALL_VERSIONS.filter((v) => present.includes(v)).map((v) => {
         const ok = f.valid_in.includes(v);
         return (
@@ -125,10 +128,15 @@ const TENANTS = [
 
 function Privacy({ findings }: { findings: Finding[] }) {
   const [fid, setFid] = useState(findings.find((f) => f.finding_id === "F-CODING")?.finding_id ?? findings[0]?.finding_id);
-  const [tenant, setTenant] = useState("TEN-03");
+  const { session } = useAccess();
+  // A signed-in policyholder is fixed by the server; only an operator (or the public sandbox) can look at
+  // the shared memory "as" another policyholder, and only an operator is told who the others are.
+  const fixedTenant = session?.mode === "protected" ? (session.tenant_id ?? null) : null;
+  const [picked, setTenant] = useState("TEN-03");
+  const tenant = fixedTenant ?? picked;
   const { data } = useSWR<{ rows: { resolution_id: string; outcome: string; own: boolean; claim_id: string | null; service_date: number | null }[]; redacted: number }>(
     fid ? [`/api/memory/findings/${fid}/precedents`, tenant] : null,
-    ([url, t]: [string, string]) => fetch(url, { headers: { "X-Tenant-Id": t } }).then((r) => r.json()),
+    ([url, t]: [string, string]) => getWith(url, { "X-Tenant-Id": t }),
   );
   return (
     <section>
@@ -143,13 +151,17 @@ function Privacy({ findings }: { findings: Finding[] }) {
           ))}
         </select>
         <span className="text-ink-2">as policyholder</span>
-        <select value={tenant} onChange={(e) => setTenant(e.target.value)} aria-label="Policyholder" className="h-8 rounded-[8px] border border-rule bg-wash px-2 hover:border-rule-2">
-          {TENANTS.map(([id, name]) => (
-            <option key={id} value={id}>
-              {name}
-            </option>
-          ))}
-        </select>
+        {fixedTenant ? (
+          <Mono className="text-ink">{fixedTenant} (you)</Mono>
+        ) : (
+          <select value={tenant} onChange={(e) => setTenant(e.target.value)} aria-label="Policyholder" className="h-8 rounded-[8px] border border-rule bg-wash px-2 hover:border-rule-2">
+            {TENANTS.map(([id, name]) => (
+              <option key={id} value={id}>
+                {name}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
       <table className="mt-3 w-full border-collapse text-[13px]">
         <thead>
@@ -173,12 +185,13 @@ function Privacy({ findings }: { findings: Finding[] }) {
           ))}
         </tbody>
       </table>
-      {data && <p className="mt-2 text-[12px] text-ink-3">{data.redacted} of {data.rows.length} underlying cases withheld from this policyholder. The plain-RAG baseline exposed 9 such case details in the evaluation.</p>}
+      {data && <p className="mt-2 text-[12px] text-ink-3">{data.redacted} of {data.rows.length} underlying cases withheld from this policyholder. The memory is shared; the cases behind it are not.</p>}
     </section>
   );
 }
 
 export function MemoryView() {
+  const { operator } = useAccess();
   const { data, error, mutate } = useSWR<Memory>("/api/memory", { refreshInterval: 6000 });
   const grouped = useMemo(() => {
     const g: Record<string, Finding[]> = { ACTIVE: [], STALE: [], CONTRADICTED: [] };
@@ -194,7 +207,7 @@ export function MemoryView() {
     <div className="mx-auto max-w-[1280px]">
       <h1 className="text-[26px] font-semibold leading-[1.15] tracking-[-0.03em]">Memory</h1>
       <p className="mt-1.5 max-w-[70ch] text-[13.5px] text-ink-2">
-        Precedents distilled from verified outcomes. Each is good law only in the policy versions whose clause it was learned on; later
+        Precedents distilled from verified outcomes. Each applies only in the policy versions whose clause it was learned on; later
         verified losses count against it.
       </p>
 
@@ -245,7 +258,7 @@ export function MemoryView() {
                         <div className="flex flex-col gap-1.5 text-[12px] text-ink-3 sm:items-end">
                           <Versions f={f} present={present} />
                           <span className="tabular">
-                            {f.wins} win{f.wins === 1 ? "" : "s"} · confidence {pct(f.confidence)}
+                            {f.wins} recorded win{f.wins === 1 ? "" : "s"} · {f.contradictions} contradicted · {f.wins > 0 ? `support score ${pct(f.confidence)}` : "no supporting outcomes yet"}
                           </span>
                           {f.updated_at ? <span>updated {ago(f.updated_at)}</span> : null}
                         </div>
@@ -257,6 +270,8 @@ export function MemoryView() {
             })}
 
           {data && <Privacy findings={data.findings} />}
+
+          {data && <ClauseImpactPanel />}
 
           {data && (
             <section>
@@ -292,7 +307,7 @@ export function MemoryView() {
         </div>
 
         <aside className="space-y-6 lg:sticky lg:top-6 lg:self-start">
-          {data && <WorldPanel memory={data} onChange={() => mutate()} />}
+          {data && operator && <WorldPanel memory={data} onChange={() => mutate()} />}
           {data && (
             <section className="rounded-[12px] border border-rule bg-wash p-4 text-[12.5px] text-ink-2">
               <h2 className="mb-2 text-[14px] font-semibold text-ink">Learned in this session</h2>

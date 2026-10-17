@@ -12,6 +12,8 @@ its output against the graph before anything is written.
 import hashlib
 import json
 import logging
+import os
+import re
 import time
 from dataclasses import dataclass
 
@@ -72,8 +74,9 @@ def complete(task: str, system: str, user: str, schema: type[BaseModel],
 
     if config.LLM_MODE in ("cached", "offline") and path.exists():
         rec = json.loads(path.read_text(encoding="utf-8"))
-        return schema.model_validate(rec["output"]), Meta(platform, model, True, 0,
-                                                          rec.get("input_tokens"), rec.get("output_tokens"))
+        meta = Meta(platform, model, True, 0, rec.get("input_tokens"), rec.get("output_tokens"))
+        _ledger(task, key, meta, user)
+        return schema.model_validate(rec["output"]), meta
     if config.LLM_MODE == "offline" and platform != "fake":
         raise LLMError(f"LLM_MODE=offline and no recorded response for {task} ({key})")
 
@@ -89,7 +92,26 @@ def complete(task: str, system: str, user: str, schema: type[BaseModel],
             "input_tokens": meta.input_tokens, "output_tokens": meta.output_tokens,
         }, indent=1), encoding="utf-8")
     log.info("llm %s via %s/%s in %d ms", task, platform, model, meta.latency_ms)
+    _ledger(task, key, meta, user)
     return out, meta
+
+
+_CLAIM = re.compile(r"\bEV-[A-Z0-9]+-[A-Z0-9]+\b")
+
+
+def _ledger(task: str, key: str, meta: Meta, user: str):
+    """During an evaluation run, record every call (fresh, replayed or fake) with the system and claim
+    it served and the exact cache entry used, so tokens and costs are attributed, never inferred."""
+    path = os.environ.get("EVAL_LEDGER")
+    if not path:
+        return
+    m = _CLAIM.search(user)
+    rec = {"ts": time.strftime("%Y-%m-%dT%H:%M:%S%z"), "run_id": os.environ.get("EVAL_RUN_ID"),
+           "system": os.environ.get("EVAL_SYSTEM"), "task": task, "key": key, "platform": meta.platform,
+           "model": meta.model, "cached": meta.cached, "input_tokens": meta.input_tokens,
+           "output_tokens": meta.output_tokens, "claim_id": m.group(0) if m else None}
+    with open(path, "a", encoding="utf-8") as f:
+        f.write(json.dumps(rec) + "\n")
 
 
 def strict_schema(schema: type[BaseModel]) -> dict:

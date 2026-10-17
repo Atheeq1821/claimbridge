@@ -1,0 +1,30 @@
+{
+ "task": "baseline-mxbai-large-v1",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You help a caseworker respond to a denied health-insurance claim.\nYou get the claim and the passages retrieved from the policy documents (all policy versions) and from\npast case records. Decide:\n- the insurer's denial reason (one code);\n- the policy version in force on the service date (versions run from their effective date until the next one);\n- the evidence an appeal needs under the governing terms, and which of it the claim is missing;\n- which past cases (HC-...) are valid precedents for this claim (empty if none truly apply);\n- the disposition: APPEAL_VIABLE (all required evidence on file), APPEAL_NEEDS_EVIDENCE (an appeal is possible\n  once evidence is added) or NO_BASIS_ESCALATE (the governing terms leave no basis for appeal);\n- a short plan whose items cite the passage IDs they rely on.\nUse only the passages and claim facts. Never promise approval.",
+ "user": "CLAIM:\nClaim ID: EV-N-10\nService: Outpatient MRI\nService date: 2025-04-10\nFiled: 2025-09-07 (150 days after the service)\nEmergency: no\nIn network: yes\nEvidence already on file: Proof of timely filing (PROOF_OF_TIMELY_FILING)\nDenial notice: Lumen Health Assurance - Notice of claim denial. Claim EV-N-10. Service: Outpatient MRI. Date of service: 2025-04-10. This claim was not submitted within the timely filing limit. See Section 9.1 (Timely filing limit) of your LumenCare Silver policy. You may appeal this decision within 180 days of this notice.\n\nRETRIEVED PASSAGES:\n[CL-C-2025-MRI-PREAUTH] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 4.2, Prior authorization for outpatient MRI: Outpatient magnetic resonance imaging requires prior authorization from the Plan. Prior authorization is not required where the MRI was ordered on the written referral of a board-certified specialist. Evidence required for an appeal under this section: Specialist referral (SPECIALIST_REFERRAL).\n\n[CL-C-2024-MRI-PREAUTH] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 4.2, Prior authorization for outpatient MRI: Outpatient magnetic resonance imaging requires prior authorization from the Plan. Prior authorization is not required where the MRI was ordered on the written referral of a board-certified specialist. Evidence required for an appeal under this section: Specialist referral (SPECIALIST_REFERRAL).\n\n[CL-C-2026-MRI-PREAUTH] Policy LumenCare Silver, version V2026 (in force 2026-01-01 to open-ended). Section 4.2, Prior authorization for outpatient MRI: Outpatient magnetic resonance imaging requires prior authorization from the Plan before the date of service. No referral exception applies. Where authorization was not obtained, a retroactive authorization request supported by a letter of medical necessity may be submitted. Evidence required for an appeal under this section: Retroactive authorization request (RETRO_AUTH_REQUEST), Physician letter of medical necessity (PHYSICIAN_NECESSITY_LETTER).\n\n[CL-C-2025-TIMELY-FILING] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 9.1, Timely filing limit: Claims must be filed within 180 days of the date of service. Evidence required for an appeal under this section: Proof of timely filing (PROOF_OF_TIMELY_FILING).\n\n[CL-C-2024-TIMELY-FILING] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 9.1, Timely filing limit: Claims must be filed within 180 days of the date of service. Evidence required for an appeal under this section: Proof of timely filing (PROOF_OF_TIMELY_FILING).\n\n[CL-C-2026-TIMELY-FILING] Policy LumenCare Silver, version V2026 (in force 2026-01-01 to open-ended). Section 9.1, Timely filing limit: Claims must be filed within 90 days of the date of service. Evidence required for an appeal under this section: Proof of timely filing (PROOF_OF_TIMELY_FILING).\n\n[CS-HC-018] Past case HC-018. Policyholder: Nikhil Rao. Service: Emergency room visit, service date 2025-03-17 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Emergency room visit. Clinical review determined the treatment was not medically necessary as documented. See Section 6.1 (Emergency room coverage) of your LumenCare Silver policy. Evidence submitted on appeal: Discharge summary (DISCHARGE_SUMMARY). Verified outcome: OVERTURNED on 2025-05-25.\n\n[CL-C-2025-OON-EMERGENCY] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 6.3, Out-of-network services: Services from out-of-network providers are not covered, except emergency services, which are covered at the in-network rate when an emergency attestation is filed within 72 hours of admission. Evidence required for an appeal under this section: Emergency attestation (EMERGENCY_ATTESTATION), Discharge summary (DISCHARGE_SUMMARY).\n\nDecide and write the plan.",
+ "output": {
+  "denial_reason": "TIMELY_FILING",
+  "policy_version": "V2025",
+  "cited_section": "9.1",
+  "required_evidence": [
+   "PROOF_OF_TIMELY_FILING"
+  ],
+  "missing_evidence": [],
+  "precedent_case_ids": [],
+  "disposition": "APPEAL_VIABLE",
+  "summary": "The claim was denied for filing beyond the 180\u2011day limit. Under V2025 the only evidence needed for an appeal is proof of timely filing, which is already on record.",
+  "items": [
+   {
+    "kind": "ACTION",
+    "text": "Submit an appeal within 180 days of the denial notice, attaching the existing Proof of Timely Filing.",
+    "cite_ids": [
+     "CL-C-2025-TIMELY-FILING"
+    ]
+   }
+  ]
+ },
+ "input_tokens": 1960,
+ "output_tokens": 824
+}

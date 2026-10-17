@@ -1,29 +1,50 @@
 # 06 — API and UI
 
-> **As built (Phase 4).** The API is `backend/claimbridge/api.py` (FastAPI). The web app is `web/` (Next.js 16, App Router, Tailwind 4, SWR). The browser calls `/api/*` on the web origin, and Next rewrites those calls to the API. Live updates are one server-sent event stream (`/api/stream`, a `tick` whenever graph activity changes), which revalidates every SWR key.
+> **Status: the "as built" section is current; the sections below it are the original design (historical).**
 >
-> **Endpoints:**
-> - **Overview:** `GET /api/overview`
-> - **Claims:** `GET /api/claims`, `POST /api/claims/inject {ids | group}`, `GET /api/claims/{id}`, `GET /api/claims/{id}/graph`
-> - **Review:** `POST /api/claims/{id}/approve`, `POST /api/claims/{id}/outcome {outcome}`
-> - **Memory:** `GET /api/memory`, `GET /api/memory/findings/{id}/precedents` (tenant-scoped through the `X-Tenant-Id` header, Q11)
-> - **Policy world:** `POST /api/world {action: reset | reset_2025 | publish, version}`
-> - **Agents:** `GET /api/agents`, `POST /api/agents/{id}/kill`, `POST /api/agents/start {role}`
-> - **Evaluation and live updates:** `GET /api/eval`, `GET /api/stream`
+> **As built.** The API is `backend/claimbridge/api.py` (FastAPI). The web app is `web/` (Next.js 16, App Router, Tailwind 4, SWR). The browser calls `/api/*` on the web origin and Next rewrites those calls to the API.
 >
-> Kill and start become `Command` nodes in the graph, which the Supervisor executes.
+> ### Access model
 >
-> **Screens:**
-> - **`/`:** landing page for judges.
-> - **`/console`:** the docket, with a stage filter, scenario filing, and a precedent-flag strip on each claim.
-> - **`/console/claims/[id]`:** the case: holding, cited plan, precedents with citator treatment, evidence graph, denial notice, evidence, action panel, agent record.
-> - **`/console/memory`:** Findings by treatment; the policy-world panel (rewind to 2025 / publish 2026); the shared-memory privacy demo; playbooks.
-> - **`/console/agents`:** workers by role with kill and start; the coordination ledger, leases and commands.
-> - **`/console/evaluation`:** the eval results.
+> | Mode | Who | How |
+> |---|---|---|
+> | `AUTH_MODE=demo` (default) | everyone | A public synthetic sandbox: every visitor sees every fictional policyholder and can use operator controls. Never load private records. |
+> | `AUTH_MODE=protected` | signed-in users | Operator-provisioned opaque tokens (32+ chars) in `AUTH_CREDENTIALS_JSON`, each mapped to a subject and a role (`admin` or `tenant` with a `tenant_id`). Invalid configuration fails closed (503). |
 >
-> **Visual world:** "The Citator", recorded in `PRODUCT.md`, `.impeccable/surfaces/` and `DESIGN.md`.
+> - The console signs in with `POST /api/session` and keeps an **HttpOnly, SameSite=Strict, `Path=/api`** cookie (`Secure` when `COOKIE_SECURE=1`); API clients send `Authorization: Bearer`. Cookie-authenticated writes also need the console's `X-ClaimBridge-Request: 1` header.
+> - **Identity comes from the credential only.** `X-Tenant-Id` is ignored for tenants (an operator may use it to view the shared memory "as" a policyholder).
+> - Every API response names the signed-in subject (`X-ClaimBridge-Subject`). A tab that sees a response for a different subject than the one it is showing discards it and re-checks who it is, so a cookie changed in another tab can never leave one identity's data under another's banner.
+> - A tenant can read and act on **its own claims only** (detail, graph, packet, evidence declaration); other tenants' claims answer 404. Operator-only: agent control, world reset/publish, recording outcomes, reclassifying a notice, withdrawing documents.
 >
-> The plan below is the original design. A tenant selector exists only on the privacy demo; there are no reviewer roles or headers.
+> **Shared with every signed-in user:** the abstract memory (findings, playbooks, policy versions), aggregate counts of it, worker count and LLM mode in `/api/overview`, and the aggregate evaluation report. **Private to a tenant:** its claims, notices, graphs, packets, evidence, corrections and events. Small cohorts can reveal patterns: shared findings are not a formal anonymization guarantee.
+>
+> ### Endpoints
+> - **Session:** `GET|POST|DELETE /api/session`
+> - **Overview and catalog:** `GET /api/overview`, `GET /api/catalog`
+> - **Claims:** `GET /api/claims`, `POST /api/claims/new` (enter a claim by hand), `POST /api/claims/sample-notice`, `POST /api/claims/inject`, `GET /api/claims/{id}`, `/graph`, `/packet` (cited Markdown review record; never an insurer submission)
+> - **Human steps:** `POST /api/claims/{id}/approve`, `/outcome {outcome, confirmed_evidence}`, `/correct {denial_reason, note}` (operator), `POST /api/claims/{id}/evidence {type, reference}` and `DELETE /api/claims/{id}/evidence/{doc_id}` (operator)
+> - **Memory:** `GET /api/memory`, `GET /api/memory/findings/{id}/precedents`
+> - **Policy world:** `POST /api/world {action: reset | reset_2025 | publish, version}` (operator)
+> - **Agents:** `GET /api/agents`, `POST /api/agents/{id}/kill`, `POST /api/agents/start {role}` (operator). Kill and start become `Command` nodes the Supervisor executes.
+> - **Evaluation:** `GET /api/eval` (the promoted run), `GET /api/eval/raw/{system}/{claim}` (operator: one claim's raw prediction, expected answer and model answer)
+> - **Live updates:** `GET /api/stream`
+>
+> ### Live stream lifetime
+> The stream emits a `tick` whenever the graph's activity changes. It re-checks the caller's credential on **every poll** and ends with an `auth` event if the credential is revoked, removed, misconfigured or older than 8 hours (`SESSION_SECONDS`). Signing out clears the cookie and the page closes its stream; the server cannot see a cookie being cleared, so revocation is what ends a stream it still holds. A tenant's stream carries only its own latest-event timestamp. Responses carry `Cache-Control: no-store, no-transform`: without `no-transform` a proxy that gzips (Next's does) buffers the stream and no tick ever arrives.
+>
+> ### Screens
+> - **`/`:** landing page with a recorded replay of `EV-T1-01`.
+> - **`/console`:** the docket (stage filter, scenario filing, **New claim**, a preview drawer per claim).
+> - **`/console/claims/[id]`:** holding and support score, then tabs: **Graph replay** (animated, clickable), Plan, Precedents, Evidence (policy requirements vs suggestions learned from outcomes; declare and withdraw documents), Agent record. A claim waiting for a person shows why and, for an operator, a reclassify form.
+> - **`/console/memory`, `/console/agents`, `/console/evaluation`:** memory by treatment and the policy-world controls; workers, leases and the coordination ledger; the promoted evaluation run with its identity, what each system can see, missing outputs and per-claim links to raw evidence.
+>
+> **Visual world:** monochrome dark product UI (Direction B), recorded in `PRODUCT.md` and `DESIGN.md`.
+>
+> **Two rules the UI keeps.** (1) A learned item is never worded as a policy requirement: the checklist, graph, replay and packet all say *required by the clause* or *suggested by a precedent: an observed association, not a policy requirement*. (2) A support score is shown with its observed counts and is **absent**, never "0%", when there is nothing to count.
+
+# Original design (historical)
+
+The text below is the first plan. It is kept for context; where it disagrees with the section above, the section above is right.
 
 ## 1. API (FastAPI)
 

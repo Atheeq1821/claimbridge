@@ -1,5 +1,15 @@
 # 04 — Agents, Coordination, and Memory
 
+> **Status (updated 17 Oct 2026): planning-era design with as-built changes.**
+>
+> - **Models and LLM use.** Groq `openai/gpt-oss-120b`, only in Intake for a notice that cites no section. If the LLM is unavailable, nothing is inferred from similarity alone: the claim goes to a person.
+> - **Intake escalates (NEEDS_HUMAN) when:** the reason is `UNKNOWN` or low-confidence; the LLM is unavailable; the cited section is not in the governing policy; the cited section does not govern this service or reason; the notice does not name this insurer or plan; or the section's implied reason is not among the notice wording's three nearest reason profiles (a contradiction). On the 23 seeded notices that cite a section the implied reason ranked first or second.
+> - **Planner.** Publishes graph templates and reviewed playbook steps. Optional drafts (`PLANNER_DRAFT_AUDIT=1`) are audited and never published as prose. The citation guard checks membership of IDs, which is not entailment: a valid ID cannot make unsupported advice true.
+> - **Lease contract.** A write is accepted only while the writer still holds the lease: same owner, same `lease_gen`, not expired by the database's clock, checked in the same query that writes. A lapsed lease cannot be renewed. A restarted worker that reuses a name is a different incarnation (new `lease_gen`). Tests pause a living worker past its lease (`tests/test_stale_workers.py`).
+> - **Curator.** Deterministic finding ids, counters derived from linked resolutions, and every memory write fenced through `FencedGraph`. Interrupted after each statement, a replacement converges to the same state (tested).
+> - **Policy changes in flight.** A claim is pinned at Intake to the version in force on its service date; publishing a later version never rewrites its outputs (tested at four points in the pipeline).
+> - **Human gate (Supervisor module).** `approve`, `record_outcome`, `correct_classification` (operator reclassifies a notice; the claim resumes at Retrieval with everything computed after classification removed), `declare_evidence` / `withdraw_evidence` (documents are declared, never verified; a claim already planned is re-planned).
+
 ## 1. Design principles
 
 1. **The graph is the only shared state.** There is no agent-to-agent messaging, no shared session, no queue, and no cache. Each agent reads its input from FalkorDB and writes its output back.

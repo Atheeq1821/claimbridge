@@ -148,6 +148,7 @@ select { color-scheme: dark; }
 .cbg-edge.hidden { opacity: 0; }
 .e-neu { stroke: var(--neutral); } .e-pos { stroke: var(--pos); } .e-neg { stroke: var(--neg); } .e-cau { stroke: var(--caution); }
 .e-missing { stroke: var(--neg); stroke-dasharray: 5 4; }
+.e-learned { stroke: var(--link); stroke-dasharray: 2 4; }
 .cbg-token { fill: var(--link); filter: drop-shadow(0 0 5px var(--link)); }
 .g-glyph.s-neg .gf { fill: var(--neg); } .g-glyph.s-cau .gf { fill: var(--caution); } .g-glyph.s-pos .gf { fill: var(--pos); }
 .g-glyph.s-neu .gf { fill: var(--neutral); } .g-glyph.s-neu .gs { stroke: var(--neutral); }

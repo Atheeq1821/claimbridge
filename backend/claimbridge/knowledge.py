@@ -3,6 +3,9 @@
 Used by the seeders (to write the graph) and by the ground-truth rule engine.
 The rule engine never touches Cypher, so it cannot share bugs with the graph tools.
 """
+import hashlib
+import json
+
 from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
@@ -29,6 +32,13 @@ class Clause:
     governs: list[str]
     routes: list[dict]
     supersedes: str | None = None
+
+    @property
+    def fingerprint(self) -> str:
+        payload = {"text": " ".join(self.text.split()), "params": self.params,
+                   "requires": sorted(self.requires), "type": self.type,
+                   "governs": sorted(self.governs), "routes": sorted(self.routes, key=lambda r: json.dumps(r, sort_keys=True))}
+        return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
 
     @property
     def no_basis(self) -> bool:
@@ -69,7 +79,7 @@ class FindingSpec:
 
     @property
     def confidence(self) -> float:
-        return round((self.wins / self.support) / (1 + self.contradicted_by), 3)
+        return round((self.wins + 1) / (self.wins + self.contradicted_by + 2), 3)
 
 
 @dataclass
@@ -163,12 +173,12 @@ def load() -> Knowledge:
     findings = [FindingSpec(**f) for f in _read(kdir / "findings.yaml")]
     for f in findings:
         learned = [by_version[v][f.lineage] for v in f.learned_in]
-        if any(c.params != learned[0].params for c in learned):
+        if any(c.fingerprint != learned[0].fingerprint for c in learned):
             raise ValueError(f"{f.finding_id}: learned_in versions disagree on clause params")
         # VALID_IN: every version whose clause for this lineage has identical params.
         f.valid_in = [v["version_id"] for v in versions
                       if f.lineage in by_version[v["version_id"]]
-                      and by_version[v["version_id"]][f.lineage].params == learned[0].params]
+                      and by_version[v["version_id"]][f.lineage].fingerprint == learned[0].fingerprint]
     return Knowledge(raw, versions, clauses, by_version, findings, playbooks)
 
 

@@ -6,8 +6,8 @@
 | 2 | Full agent loop and memory | Fri Oct 17, morning | Plan → approve → learn → stale → contradict. Kill-and-resume through the Supervisor. | ✅ **Done** |
 | 3 | Evaluation | Fri Oct 17, afternoon | `make eval` prints ClaimBridge vs. no-memory vs. baseline RAG, failures included | ✅ **Done** |
 | 4 | API and UI | Fri evening to Sat morning | Every demo step can be clicked through live | ✅ **Done** |
-| 5 | Deploy and harden | Sat Oct 18, morning | Live URL works from a phone. Feature freeze at 1:00 PM IST. | |
-| 6 | Docs, video, submit | Sat Oct 18, afternoon | Submitted by 9:00 PM IST | |
+| 5 | Harden and complete | Sat Oct 17, evening | Review findings fixed and proven by tests and a real browser; one promoted, traceable evaluation run | ✅ **Done locally** (live deployment not done: participant-owned) |
+| 6 | Docs, video, submit | Sat Oct 18 | Docs synchronized; working-project video hosted; submitted by 9:00 PM IST | 🔶 Docs synchronized. **Video hosting, public-repo check and submission are the team's.** |
 
 ---
 
@@ -179,3 +179,26 @@ uv run python -m claimbridge.cli reset --upto V2025 && uv run python -m claimbri
 ### Notes
 - **Dev origin:** open the dev server at `http://localhost:3100`. Next 16 refuses dev assets to other origins unless they're listed in `allowedDevOrigins`; `127.0.0.1` is now listed.
 - **Dev ports:** FalkorDB Browser uses :3000, the web app :3100, the API :8000.
+
+---
+
+## Phase 5 — Harden and complete ✅ (17 Oct 2026)
+
+What the judge review and `11-pending-work-and-completion-plan.md` asked for, and the evidence for each. Detail in `12-completion-report.md`.
+
+| Item | Result | Proof |
+|---|---|---|
+| Learned evidence mislabelled as a policy requirement | Checklist, graph, replay and packet all say *required by the clause* or *suggested by a precedent: an observed association*; the real failed condition (emergency or network) is named | `test_learned_evidence_is_never_a_policy_requirement`, `web/lib/explain.test.ts` |
+| Stale living worker, lease expiry | Lease contract: owner + fencing token (`lease_gen`) + database-clock expiry in the same write; a lapsed lease cannot be renewed | `tests/test_stale_workers.py` (a paused living worker, a same-name restart, a stale Curator) and the deliberate scenario inside the evaluation |
+| Curator partial writes | Interrupted after every statement, a replacement converges to the reference state | `test_curator_interrupted_after_every_statement_converges_to_one_correct_result` |
+| Policy change in flight | A claim is pinned at Intake; publishing 2026 at four points never changes its outputs | `tests/test_policy_race.py` |
+| Sessions and tenant boundaries | 24 HTTP cases and a 27-check real-browser matrix. Found and fixed: the live stream was gzip-buffered by the proxy (no tick ever arrived), an open stream outlived revocation, the gate hung on an unreachable API, and a cookie changed in another tab could show one identity's data under another's banner | `tests/test_access_matrix.py`, `scripts/access-matrix.mjs` |
+| Evaluation provenance | One directory per run; code, data and prompt digests; per-call ledger; raw output never overwritten; a changed source invalidates a run and blocks promotion | `tests/test_evaluation_integrity.py` |
+| Evaluation fairness | Access table; reachable-recall; abstention, missing output and completion reported apart; the information-parity baseline implemented | see the run notes for whether it ran |
+| Generalization | 19 pre-registered unseen letters in three kinds; locked by sha256 | `data/scenarios/generalization.yaml` |
+| Intake robustness | Escalates on a foreign insurer, a contradicting section, a section for another service | `tests/test_intake_consistency.py` |
+| Human loop | Correct-and-resume; declare and withdraw documents; audit trail; a claim already planned is re-planned | `tests/test_human_loop.py` |
+| Memory wording | Support score shown with counts or absent; "good law" retired; outcome form asks what the reviewer *observed* | `tests/test_memory_cases.py` |
+| Runtime | Pinned FalkorDB image; localhost-only configurable ports; run directories and video out of the Docker context; the browser smoke script now clicks the controls it reports on | `scripts/browser-smoke.mjs` |
+
+Tests: **118 backend** (real FalkorDB, fake LLM) and 8 frontend unit tests.

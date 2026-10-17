@@ -8,14 +8,15 @@ def evidence_gap(g, cid: str) -> list[dict]:
     return db.run(g, """
         MATCH (c:Claim {claim_id: $cid})-[:HAS_NOTICE]->(:DenialNotice)-[:CITES]->(cl:Clause)
         OPTIONAL MATCH (cl)-[:REQUIRES]->(e1:EvidenceType)
-        WITH c, collect(DISTINCT e1) AS r1
-        OPTIONAL MATCH (c)-[:CONSIDERED {verdict: 'ACCEPTED'}]->(:Finding)-[:NEEDS_EVIDENCE]->(e2:EvidenceType)
-        WITH c, r1, collect(DISTINCT e2) AS r2
-        UNWIND r1 + r2 AS e
-        WITH DISTINCT c, e
-        OPTIONAL MATCH (c)-[:HAS_EVIDENCE]->(ev:Evidence)-[:OF_TYPE]->(e)
-        WITH e, count(ev) AS have
-        RETURN e.code AS evidence, e.name AS name, have > 0 AS satisfied
+        WITH c, collect(DISTINCT {e: e1, source: cl.clause_id}) AS r1
+        OPTIONAL MATCH (c)-[:CONSIDERED {verdict: 'ACCEPTED'}]->(f:Finding)-[:NEEDS_EVIDENCE]->(e2:EvidenceType)
+        WITH c, r1, collect(DISTINCT {e: e2, source: f.finding_id}) AS r2
+        UNWIND r1 + r2 AS requirement
+        WITH c, requirement.e AS e, collect(DISTINCT requirement.source) AS sources
+        WHERE e IS NOT NULL
+        OPTIONAL MATCH (c)-[:HAS_EVIDENCE]->(ev:Evidence)-[:OF_TYPE]->(e) WHERE coalesce(ev.withdrawn, false) = false
+        WITH e, sources, count(ev) AS have
+        RETURN e.code AS evidence, e.name AS name, have > 0 AS satisfied, sources
         ORDER BY satisfied, evidence
     """, {"cid": cid})
 

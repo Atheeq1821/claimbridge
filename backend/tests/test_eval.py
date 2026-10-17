@@ -37,8 +37,9 @@ def test_baseline_index_and_answer(seeded):
     model = config.BASELINE_EMBED_MODEL
     name = bl.build_index(model)
     assert name.startswith("claimbridge_test_baseline")
-    hits = bl.retrieve(model, "Outpatient MRI. Prior authorization was not obtained.", 8)
+    hits = bl.retrieve(model, "Outpatient MRI. Prior authorization was not obtained.", 8, "TEN-01")
     assert len(hits) == 8 and all(h["chunk_id"].startswith(("CL-", "CS-")) for h in hits)
+    assert all(h["kind"] == "clause" or h["tenant_id"] == "TEN-01" for h in hits)
 
     case = next(c for c in load_cases() if c["claim_id"] == "EV-T1-01")
     res = bl.answer(case, model)

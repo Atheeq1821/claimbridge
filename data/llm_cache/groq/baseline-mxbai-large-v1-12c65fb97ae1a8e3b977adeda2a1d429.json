@@ -1,0 +1,47 @@
+{
+ "task": "baseline-mxbai-large-v1",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You help a caseworker respond to a denied health-insurance claim.\nYou get the claim and the passages retrieved from the policy documents (all policy versions) and from\npast case records. Decide:\n- the insurer's denial reason (one code);\n- the policy version in force on the service date (versions run from their effective date until the next one);\n- the evidence an appeal needs under the governing terms, and which of it the claim is missing;\n- which past cases (HC-...) are valid precedents for this claim (empty if none truly apply);\n- the disposition: APPEAL_VIABLE (all required evidence on file), APPEAL_NEEDS_EVIDENCE (an appeal is possible\n  once evidence is added) or NO_BASIS_ESCALATE (the governing terms leave no basis for appeal);\n- a short plan whose items cite the passage IDs they rely on.\nUse only the passages and claim facts. Never promise approval.",
+ "user": "CLAIM:\nClaim ID: EV-T3-02\nService: Bariatric surgery\nService date: 2025-09-10\nFiled: 2025-10-05 (25 days after the service)\nEmergency: no\nIn network: yes\nEvidence already on file: BMI record (BMI_RECORD)\nDenial notice: Lumen Health Assurance - Notice of claim denial. Claim EV-T3-02. Service: Bariatric surgery. Date of service: 2025-09-10. This service is not a covered benefit under your plan. This decision applies the policy terms on bariatric surgery. You may appeal this decision within 180 days of this notice.\n\nRETRIEVED PASSAGES:\n[CL-C-2024-BARIATRIC] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 7.4, Bariatric surgery: Bariatric surgery and other surgical treatment of obesity are excluded. Evidence required for an appeal under this section: none.\n\n[CL-C-2025-BARIATRIC] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 7.4, Bariatric surgery: Bariatric surgery is covered for members with a documented BMI of 40 or more who completed a six-month supervised weight-loss program. Evidence required for an appeal under this section: BMI record (BMI_RECORD), Supervised weight-loss program record (SUPERVISED_PROGRAM_RECORD).\n\n[CL-C-2026-BARIATRIC] Policy LumenCare Silver, version V2026 (in force 2026-01-01 to open-ended). Section 7.4, Bariatric surgery: Bariatric surgery is covered for members with a documented BMI of 40 or more who completed a six-month supervised weight-loss program. Evidence required for an appeal under this section: BMI record (BMI_RECORD), Supervised weight-loss program record (SUPERVISED_PROGRAM_RECORD).\n\n[CS-HC-026] Past case HC-026. Policyholder: Ines Moreau. Service: Genetic testing, service date 2025-04-09 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Genetic testing. This type of service falls outside what your plan pays for. Evidence submitted on appeal: Genetic counselor referral (GENETIC_COUNSELOR_REFERRAL). Verified outcome: OVERTURNED on 2025-07-20.\n\n[CS-HC-043] Past case HC-043. Policyholder: Ines Moreau. Service: Genetic testing, service date 2024-12-11 (policy V2024). Emergency: no. In network: yes. Denial notice: Service: Genetic testing. This service is not a covered benefit under your plan. See Section 8.2 (Experimental and investigational services) of your LumenCare Silver policy. Evidence submitted on appeal: Lab report (LAB_REPORT). Verified outcome: UPHELD on 2025-03-14.\n\n[CS-HC-045] Past case HC-045. Policyholder: Ines Moreau. Service: Outpatient MRI, service date 2024-03-24 (policy V2024). Emergency: no. In network: yes. Denial notice: Service: Outpatient MRI. The claim was received after the filing deadline. This decision applies the policy terms on timely filing limit. Evidence submitted on appeal: Itemized bill (ITEMIZED_BILL). Verified outcome: UPHELD on 2024-11-26.\n\n[CL-C-2025-EXPERIMENTAL-EXCL] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 8.2, Experimental and investigational services: Experimental or investigational services, including genetic testing not otherwise listed as covered, are excluded. Evidence required for an appeal under this section: none.\n\n[CL-C-2024-EXPERIMENTAL-EXCL] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 8.2, Experimental and investigational services: Experimental or investigational services, including genetic testing not otherwise listed as covered, are excluded. Evidence required for an appeal under this section: none.\n\nDecide and write the plan.",
+ "output": {
+  "denial_reason": "EXCLUDED_SERVICE",
+  "policy_version": "V2025",
+  "cited_section": "7.4",
+  "required_evidence": [
+   "BMI_RECORD",
+   "SUPERVISED_PROGRAM_RECORD"
+  ],
+  "missing_evidence": [
+   "SUPERVISED_PROGRAM_RECORD"
+  ],
+  "precedent_case_ids": [],
+  "disposition": "APPEAL_NEEDS_EVIDENCE",
+  "summary": "The claim was denied because bariatric surgery is excluded under Section\u202f7.4 of the V2025 policy without the required supervised weight\u2011loss program record. The claimant has a BMI record, but the supervised program documentation is missing, so an appeal is possible once that evidence is provided.",
+  "items": [
+   {
+    "kind": "EVIDENCE_NEEDED",
+    "text": "Provide the supervised weight\u2011loss program record (SUPERVISED_PROGRAM_RECORD) required for bariatric surgery coverage under Section\u202f7.4.",
+    "cite_ids": [
+     "CL-C-2025-BARIATRIC"
+    ]
+   },
+   {
+    "kind": "ACTION",
+    "text": "File an appeal attaching the SUPERVISED_PROGRAM_RECORD; the existing BMI_RECORD already satisfies part of the evidence requirement.",
+    "cite_ids": [
+     "CL-C-2025-BARIATRIC"
+    ]
+   },
+   {
+    "kind": "WARNING",
+    "text": "The denial is based on the service being excluded under the policy (EXCLUDED_SERVICE) because the required program record is missing.",
+    "cite_ids": [
+     "CL-C-2025-BARIATRIC"
+    ]
+   }
+  ]
+ },
+ "input_tokens": 1891,
+ "output_tokens": 978
+}

@@ -1,0 +1,40 @@
+{
+ "task": "baseline-bge-small",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You help a caseworker respond to a denied health-insurance claim.\nYou get the claim and the passages retrieved from the policy documents (all policy versions) and from\npast case records. Decide:\n- the insurer's denial reason (one code);\n- the policy version in force on the service date (versions run from their effective date until the next one);\n- the evidence an appeal needs under the governing terms, and which of it the claim is missing;\n- which past cases (HC-...) are valid precedents for this claim (empty if none truly apply);\n- the disposition: APPEAL_VIABLE (all required evidence on file), APPEAL_NEEDS_EVIDENCE (an appeal is possible\n  once evidence is added) or NO_BASIS_ESCALATE (the governing terms leave no basis for appeal);\n- a short plan whose items cite the passage IDs they rely on.\nUse only the passages and claim facts. Never promise approval.",
+ "user": "CLAIM:\nClaim ID: EV-T5-01\nService: Outpatient MRI\nService date: 2025-04-18\nFiled: 2025-05-04 (16 days after the service)\nEmergency: no\nIn network: no\nEvidence already on file: Itemized bill (ITEMIZED_BILL)\nDenial notice: Lumen Health Assurance - Notice of claim denial. Claim EV-T5-01. Service: Outpatient MRI. Date of service: 2025-04-18. Services from non-participating providers are not covered under your plan. See Section 6.3 (Out-of-network services) of your LumenCare Silver policy. You may appeal this decision within 180 days of this notice.\n\nRETRIEVED PASSAGES:\n[CL-C-2024-MRI-PREAUTH] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 4.2, Prior authorization for outpatient MRI: Outpatient magnetic resonance imaging requires prior authorization from the Plan. Prior authorization is not required where the MRI was ordered on the written referral of a board-certified specialist. Evidence required for an appeal under this section: Specialist referral (SPECIALIST_REFERRAL).\n\n[CL-C-2025-MRI-PREAUTH] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 4.2, Prior authorization for outpatient MRI: Outpatient magnetic resonance imaging requires prior authorization from the Plan. Prior authorization is not required where the MRI was ordered on the written referral of a board-certified specialist. Evidence required for an appeal under this section: Specialist referral (SPECIALIST_REFERRAL).\n\n[CL-C-2026-MRI-PREAUTH] Policy LumenCare Silver, version V2026 (in force 2026-01-01 to open-ended). Section 4.2, Prior authorization for outpatient MRI: Outpatient magnetic resonance imaging requires prior authorization from the Plan before the date of service. No referral exception applies. Where authorization was not obtained, a retroactive authorization request supported by a letter of medical necessity may be submitted. Evidence required for an appeal under this section: Retroactive authorization request (RETRO_AUTH_REQUEST), Physician letter of medical necessity (PHYSICIAN_NECESSITY_LETTER).\n\n[CL-C-2024-OON-EMERGENCY] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 6.3, Out-of-network services: Services from out-of-network providers are not covered, except emergency services, which are covered at the in-network rate when an emergency attestation is filed within 72 hours of admission. Evidence required for an appeal under this section: Emergency attestation (EMERGENCY_ATTESTATION), Discharge summary (DISCHARGE_SUMMARY).\n\n[CL-C-2025-OON-EMERGENCY] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 6.3, Out-of-network services: Services from out-of-network providers are not covered, except emergency services, which are covered at the in-network rate when an emergency attestation is filed within 72 hours of admission. Evidence required for an appeal under this section: Emergency attestation (EMERGENCY_ATTESTATION), Discharge summary (DISCHARGE_SUMMARY).\n\n[CS-HC-049] Past case HC-049. Policyholder: Maya Cohen. Service: Physiotherapy, service date 2025-12-05 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Physiotherapy. The diagnosis and procedure codes on the claim are inconsistent. See Section 9.4 (Coding corrections) of your LumenCare Silver policy. Evidence submitted on appeal: Itemized bill (ITEMIZED_BILL). Verified outcome: PARTIAL on 2026-01-30.\n\n[CS-HC-019] Past case HC-019. Policyholder: Maya Cohen. Service: Durable medical equipment, service date 2025-06-25 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Durable medical equipment. The documentation submitted does not establish that this service was medically necessary. See Section 5.4 (Durable medical equipment) of your LumenCare Silver policy. Evidence submitted on appeal: Physician letter of medical necessity (PHYSICIAN_NECESSITY_LETTER). Verified outcome: OVERTURNED on 2025-10-11.\n\n[CL-C-2026-OON-EMERGENCY] Policy LumenCare Silver, version V2026 (in force 2026-01-01 to open-ended). Section 6.3, Out-of-network services: Services from out-of-network providers are not covered, except emergency services, which are covered at the in-network rate when an emergency attestation is filed within 48 hours of admission. Evidence required for an appeal under this section: Emergency attestation (EMERGENCY_ATTESTATION), Discharge summary (DISCHARGE_SUMMARY).\n\nDecide and write the plan.",
+ "output": {
+  "denial_reason": "OUT_OF_NETWORK",
+  "policy_version": "V2025",
+  "cited_section": "6.3",
+  "required_evidence": [],
+  "missing_evidence": [],
+  "precedent_case_ids": [],
+  "disposition": "NO_BASIS_ESCALATE",
+  "summary": "The claim was denied because the MRI was performed by an out-of-network provider and was not an emergency. Under policy version V2025, Section 6.3 only permits coverage for emergency out-of-network services with specific evidence; no appeal pathway exists for non\u2011emergency services.",
+  "items": [
+   {
+    "kind": "ACTION",
+    "text": "Identify denial as out\u2011of\u2011network per Section 6.3 of V2025 policy.",
+    "cite_ids": [
+     "CL-C-2025-OON-EMERGENCY"
+    ]
+   },
+   {
+    "kind": "WARNING",
+    "text": "Non\u2011emergency out\u2011of\u2011network services are not covered and the policy provides no evidence\u2011based appeal mechanism.",
+    "cite_ids": [
+     "CL-C-2025-OON-EMERGENCY"
+    ]
+   },
+   {
+    "kind": "REJECTED_PRECEDENT",
+    "text": "No past cases provide a precedent that overturns an out\u2011of\u2011network non\u2011emergency denial under these terms.",
+    "cite_ids": []
+   }
+  ]
+ },
+ "input_tokens": 2057,
+ "output_tokens": 881
+}

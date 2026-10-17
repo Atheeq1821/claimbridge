@@ -26,7 +26,11 @@ def rows(result) -> list[dict[str, Any]]:
 
 
 def run(g, query: str, params: dict | None = None) -> list[dict[str, Any]]:
-    return rows(g.query(query, params or {}))
+    params = dict(params or {})
+    # Fencing token: a worker's `me` is a tools.Owner carrying the lease generation it was
+    # given. Queries that fence on the lease read it as $gen (None for a plain agent id).
+    params.setdefault("gen", getattr(params.get("me"), "gen", None))
+    return rows(g.query(query, params))
 
 
 def one(g, query: str, params: dict | None = None) -> dict[str, Any] | None:

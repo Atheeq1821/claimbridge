@@ -5,8 +5,10 @@ import { usePathname, useRouter } from "next/navigation";
 import { Suspense, createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import useSWR, { SWRConfig, useSWRConfig } from "swr";
 import { Bot, Brain, ChartColumnBig, Inbox, Menu, Search, X } from "lucide-react";
-import { fetcher, type Overview } from "@/lib/api";
+import { SESSION_ENDED, fetcher, type Overview } from "@/lib/api";
 import { Wordmark } from "./signal";
+
+import { SessionGate, useAccess } from "./session-gate";
 
 type Live = { connected: boolean; lastTick: number | null };
 const LiveContext = createContext<Live>({ connected: false, lastTick: null });
@@ -31,9 +33,16 @@ function LiveBridge({ children }: { children: ReactNode }) {
           mutate((key) => typeof key === "string" && key.startsWith("/api/") && key !== "/api/eval");
         }, 250);
       });
+      // The server ends the stream when the credential is revoked or the session expires.
+      es.addEventListener("auth", () => {
+        es?.close();
+        setLive({ connected: false, lastTick: null });
+        window.dispatchEvent(new Event(SESSION_ENDED));
+      });
       es.onerror = () => {
         setLive((l) => ({ ...l, connected: false }));
         es?.close();
+        window.dispatchEvent(new Event(SESSION_ENDED));   // a refused reconnect usually means 401
         retry = setTimeout(open, 3000);
       };
     };
@@ -41,6 +50,11 @@ function LiveBridge({ children }: { children: ReactNode }) {
     return () => {
       es?.close();
       if (retry) clearTimeout(retry);
+      // A refresh scheduled for the previous identity must not run against its torn-down cache.
+      if (pending.current) {
+        clearTimeout(pending.current);
+        pending.current = null;
+      }
     };
   }, [mutate]);
 
@@ -56,6 +70,7 @@ const NAV = [
 
 function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const path = usePathname();
+  const { operator } = useAccess();
   const { data } = useSWR<Overview>("/api/overview", fetcher, { refreshInterval: 5000 });
   const live = useLive();
   const counts = data?.statuses ?? {};
@@ -71,7 +86,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       </div>
       <p className="px-4 pb-2 pt-3 text-[11px] font-medium uppercase tracking-[0.06em] text-ink-3">Workspace</p>
       <ul className="flex flex-col gap-0.5 px-2">
-        {NAV.map(({ href, label, icon: Icon, exact, key }) => {
+        {NAV.filter(n => operator || n.label !== "Agents").map(({ href, label, icon: Icon, exact, key }) => {
           const active = exact ? path === href || path.startsWith("/console/claims") : path.startsWith(href);
           const badge = label === "Docket" ? review : label === "Memory" ? stale : label === "Agents" ? data?.workers_alive : null;
           return (
@@ -214,7 +229,7 @@ export function ConsoleShell({ children }: { children: ReactNode }) {
 
   return (
     <SWRConfig value={{ fetcher, revalidateOnFocus: false, keepPreviousData: true }}>
-      <LiveBridge>
+      <SessionGate><LiveBridge>
         <div className="flex min-h-dvh">
           <aside className="sticky top-0 hidden h-dvh w-[220px] shrink-0 lg:block">
             <Suspense fallback={<div className="h-full border-r border-rule" />}>
@@ -242,7 +257,7 @@ export function ConsoleShell({ children }: { children: ReactNode }) {
             <main className="min-w-0 flex-1 px-4 pb-16 pt-6 sm:px-6 lg:px-8 lg:pt-8">{children}</main>
           </div>
         </div>
-      </LiveBridge>
+      </LiveBridge></SessionGate>
     </SWRConfig>
   );
 }

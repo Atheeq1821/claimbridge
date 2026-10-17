@@ -34,11 +34,11 @@ export const TREATMENT: Record<string, { signal: Signal; label: string; why: str
 };
 
 export const FINDING_STATUS: Record<string, { signal: Signal; label: string; why: string }> = {
-  ACTIVE: { signal: "positive", label: "Good law", why: "Valid in the current policy version." },
+  ACTIVE: { signal: "positive", label: "Applies", why: "Matches a clause in the current policy version." },
   STALE: {
     signal: "caution",
     label: "Limited",
-    why: "Superseded in the current version; still good law for claims under the versions it was learned on.",
+    why: "Superseded in the current version; still applies to claims under the versions it was learned on.",
   },
   CONTRADICTED: {
     signal: "negative",
@@ -163,6 +163,9 @@ export function humanEvent(type: string): string {
     OUTCOME_RECORDED: "Outcome recorded",
     NEEDS_HUMAN: "Sent to a person",
     GAVE_UP: "Gave up after retries",
+    HUMAN_CORRECTION: "A person classified the notice",
+    EVIDENCE_DECLARED: "Document declared on file",
+    EVIDENCE_WITHDRAWN: "Document withdrawn",
   };
   return map[type] ?? type;
 }

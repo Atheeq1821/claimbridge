@@ -46,7 +46,7 @@ Success means a caseworker gets a correct, cited plan and never acts on a preced
   - approve and record an outcome, and watch memory learn;
   - publish the 2026 policy and watch Findings go stale;
   - read the evaluation results.
-- **Main tool for the judges:** the live deployed URL. The FalkorDB Browser is also available.
+- **Main tool for the judges:** a live URL if one is deployed; otherwise the documented local setup. The FalkorDB Browser is also available locally.
 
 ## Capabilities and Constraints
 
@@ -55,7 +55,7 @@ Success means a caseworker gets a correct, cited plan and never acts on a preced
 - **LLM layer:** provider-agnostic (`LLM_PLATFORM` groq|openai|claude|fake; default Groq `openai/gpt-oss-120b`). Responses are recorded and replayed (`LLM_MODE=cached`). Groq's free tier is limited to 200K tokens a day, so public visitors should mostly replay.
 - **Terminology:** claim, denial notice, policy version, clause, lineage, Finding (precedent), Playbook, disposition (APPEAL_VIABLE / APPEAL_NEEDS_EVIDENCE / NO_BASIS_ESCALATE), verdict codes (ACCEPTED, VERSION_DRIFT, LINEAGE_MISMATCH, CONTRADICTED, CONDITION_UNMET, REASON_MISMATCH), gates, lease, checkpoint.
 - **Tenancy:** case detail is tenant-scoped; Findings are anonymous and shared.
-- **Undecided:** authentication (a tenant/role selector stands in for the demo), the final hosting provider, and whether to add an MCP server.
+- **Undecided:** the final hosting provider and whether to add an MCP server. Authentication exists (`AUTH_MODE=protected`); demo mode is a deliberately public sandbox.
 
 ## Brand Commitments
 
@@ -65,9 +65,9 @@ Success means a caseworker gets a correct, cited plan and never acts on a preced
 
 ## Evidence on Hand
 
-- **Evaluation results:** `eval/results/latest.md` and `latest.json` (34 claims). ClaimBridge is 100% fully correct against 65% for plain vector RAG; plain RAG reused a precedent that doesn't apply on 15% of claims against ClaimBridge's 0%; and plain RAG exposed 9 of other policyholders' case details against 0.
-- **Chaos test:** 7/7 interrupted steps resumed, 0 duplicate outputs.
-- **Memory gain:** after one verified win, the learned Finding was reused on the next look-alike claim (confidence 0.4 → 1.0).
+- **Evaluation results:** the promoted run, `eval/results/latest.md` (run `20261017T183825+0530-3c6ce4`, 34 authored synthetic claims). Decision correctness is equal for ClaimBridge and its no-memory ablation, so memory adds precedents and a changed checklist, not a measured gain in decisions; plain RAG is lower on decisions, but it sees different information and decides differently, so this is a whole-system comparison, not proof that a database alone causes the gap. The information-parity baseline did not run. Quote numbers only with the run id and these caveats.
+- **Coordination:** random kills and a deliberate paused-worker scenario with the late writes rejected and audited, in the same report.
+- **Memory:** one recorded synthetic outcome changes the next checklist; a smoothed support score, never a probability.
 - **Docs and data:** design docs in `docs/`, ground truth in `data/generated/`.
 - **What doesn't exist:** no real customers, testimonials, partners, logos, pricing or real-world outcome data. Never invent them.
 

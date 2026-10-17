@@ -1,0 +1,37 @@
+{
+ "task": "baseline-mxbai-large-v1",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You help a caseworker respond to a denied health-insurance claim.\nYou get the claim and the passages retrieved from the policy documents (all policy versions) and from\npast case records. Decide:\n- the insurer's denial reason (one code);\n- the policy version in force on the service date (versions run from their effective date until the next one);\n- the evidence an appeal needs under the governing terms, and which of it the claim is missing;\n- which past cases (HC-...) are valid precedents for this claim (empty if none truly apply);\n- the disposition: APPEAL_VIABLE (all required evidence on file), APPEAL_NEEDS_EVIDENCE (an appeal is possible\n  once evidence is added) or NO_BASIS_ESCALATE (the governing terms leave no basis for appeal);\n- a short plan whose items cite the passage IDs they rely on.\nUse only the passages and claim facts. Never promise approval.",
+ "user": "CLAIM:\nClaim ID: EV-N-06\nService: Physiotherapy\nService date: 2026-01-10\nFiled: 2026-01-26 (16 days after the service)\nEmergency: no\nIn network: yes\nEvidence already on file: Itemized bill (ITEMIZED_BILL)\nDenial notice: Lumen Health Assurance - Notice of claim denial. Claim EV-N-06. Service: Physiotherapy. Date of service: 2026-01-10. A claim for the same member, provider, date and amount has already been processed. See Section 9.5 (Duplicate claims) of your LumenCare Silver policy. You may appeal this decision within 180 days of this notice.\n\nRETRIEVED PASSAGES:\n[CL-C-2024-PHYSIO-LIMIT] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 5.1, Physiotherapy session limit: Physiotherapy is covered up to 20 sessions per plan year. Sessions are considered medically necessary when supported by clinical progress notes. Evidence required for an appeal under this section: Clinical progress notes (PROGRESS_NOTES).\n\n[CL-C-2025-PHYSIO-LIMIT] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 5.1, Physiotherapy session limit: Physiotherapy is covered up to 20 sessions per plan year. Sessions are considered medically necessary when supported by clinical progress notes. Evidence required for an appeal under this section: Clinical progress notes (PROGRESS_NOTES).\n\n[CL-C-2026-PHYSIO-LIMIT] Policy LumenCare Silver, version V2026 (in force 2026-01-01 to open-ended). Section 5.1, Physiotherapy session limit: Physiotherapy is covered up to 12 sessions per plan year. Sessions beyond the twelfth require a physician letter of medical necessity and clinical progress notes demonstrating functional improvement. Evidence required for an appeal under this section: Physician letter of medical necessity (PHYSICIAN_NECESSITY_LETTER), Clinical progress notes (PROGRESS_NOTES).\n\n[CL-C-2025-DUPLICATE] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 9.5, Duplicate claims: A claim matching an earlier claim for the same member, provider, service date and amount is denied as a duplicate unless the itemized bill shows distinct services. Evidence required for an appeal under this section: Itemized bill (ITEMIZED_BILL).\n\n[CL-C-2024-DUPLICATE] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 9.5, Duplicate claims: A claim matching an earlier claim for the same member, provider, service date and amount is denied as a duplicate unless the itemized bill shows distinct services. Evidence required for an appeal under this section: Itemized bill (ITEMIZED_BILL).\n\n[CL-C-2024-ENROLLMENT] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 3.1, Enrollment and effective dates: Coverage begins on the enrollment effective date shown on the enrollment record. Evidence required for an appeal under this section: Enrollment record (ENROLLMENT_RECORD).\n\n[CL-C-2025-ENROLLMENT] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 3.1, Enrollment and effective dates: Coverage begins on the enrollment effective date shown on the enrollment record. Evidence required for an appeal under this section: Enrollment record (ENROLLMENT_RECORD).\n\n[CL-C-2024-TIMELY-FILING] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 9.1, Timely filing limit: Claims must be filed within 180 days of the date of service. Evidence required for an appeal under this section: Proof of timely filing (PROOF_OF_TIMELY_FILING).\n\nDecide and write the plan.",
+ "output": {
+  "denial_reason": "DUPLICATE_CLAIM",
+  "policy_version": "V2026",
+  "cited_section": "9.5",
+  "required_evidence": [
+   "ITEMIZED_BILL"
+  ],
+  "missing_evidence": [],
+  "precedent_case_ids": [],
+  "disposition": "APPEAL_VIABLE",
+  "summary": "The claim was denied as a duplicate under Section 9.5. The policy requires an itemized bill for appeal, which is already on file, so an appeal is viable.",
+  "items": [
+   {
+    "kind": "EVIDENCE_NEEDED",
+    "text": "Itemized bill already on file satisfies the required evidence for a duplicate\u2011claim appeal.",
+    "cite_ids": [
+     "CL-C-2025-DUPLICATE"
+    ]
+   },
+   {
+    "kind": "ACTION",
+    "text": "Submit an appeal within 180 days, attaching the itemized bill to demonstrate distinct services.",
+    "cite_ids": [
+     "CL-C-2025-DUPLICATE"
+    ]
+   }
+  ]
+ },
+ "input_tokens": 1877,
+ "output_tokens": 1097
+}

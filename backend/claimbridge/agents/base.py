@@ -13,6 +13,7 @@ import time
 from dataclasses import dataclass, field
 
 from claimbridge import config, db
+from claimbridge.tools import Owner
 from claimbridge.tools import coordination as coord
 
 log = logging.getLogger("claimbridge.worker")
@@ -50,10 +51,11 @@ class Worker:
     output_state: str = ""
 
     def __init__(self, agent_id: str | None = None, crash_at: str | None = None,
-                 step_delay_s: float | None = None):
+                 step_delay_s: float | None = None, lease_ttl_s: float | None = None):
         self.me = agent_id or f"{self.role}-{socket.gethostname()}-{os.getpid()}"
         self.crash_at = crash_at
         self.step_delay_s = config.STEP_DELAY_S if step_delay_s is None else step_delay_s
+        self.lease_ttl_s = config.LEASE_TTL_S if lease_ttl_s is None else lease_ttl_s
         self.g = db.connect()
         self._stop = threading.Event()
 
@@ -97,14 +99,16 @@ class Worker:
         return steps
 
     def step_once(self) -> bool:
-        lease = coord.claim_lease(self.g, self.input_state, self.me)
+        lease = coord.claim_lease(self.g, self.input_state, self.me, ttl_s=self.lease_ttl_s)
         if not lease:
             return False
         cid, attempt = lease["claim_id"], lease["attempt"]
+        # This acquisition's identity: our agent id plus the lease generation (fencing token).
+        me = Owner(self.me, lease["gen"])
         coord.heartbeat(self.g, self.me, self.role, "working", cid)
 
         if attempt > config.MAX_ATTEMPTS:
-            coord.commit(self.g, cid, self.me, self.role, self.input_state, "NEEDS_HUMAN",
+            coord.commit(self.g, cid, me, self.role, self.input_state, "NEEDS_HUMAN",
                          "GAVE_UP", {"attempts": attempt - 1})
             return True
 
@@ -116,19 +120,19 @@ class Worker:
             coord.append_event(self.g, cid, "RESUMED", self.me, self.role, self.input_state,
                                {"attempt": attempt, "previous_owner": prev,
                                 "checkpoint_from": cp.get("_agent_id") if cp else None},
-                               me=self.me)
+                               me=me)
         else:
             coord.append_event(self.g, cid, "CLAIMED", self.me, self.role, self.input_state,
-                               {"attempt": attempt}, me=self.me)
+                               {"attempt": attempt}, me=me)
 
-        ctx = Context(self.g, cid, self.me, attempt, cp, resumed_from=prev)
-        hb = _LeaseKeeper(cid, self.me)
+        ctx = Context(self.g, cid, me, attempt, cp, resumed_from=prev)
+        hb = _LeaseKeeper(cid, me)
         hb.start()
         try:
             result = self.work(ctx)
             self.pause()
             self.maybe_crash("before_commit")
-            ok = coord.commit(self.g, cid, self.me, self.role, self.input_state,
+            ok = coord.commit(self.g, cid, me, self.role, self.input_state,
                               result.next_state or self.output_state,
                               f"{self.role.upper()}_DONE", result.payload, result.checkpoint)
             if not ok:
@@ -137,12 +141,12 @@ class Worker:
                                    self.input_state, {"attempt": attempt})
             return True
         except NeedsHuman as e:
-            coord.commit(self.g, cid, self.me, self.role, self.input_state, "NEEDS_HUMAN",
+            coord.commit(self.g, cid, me, self.role, self.input_state, "NEEDS_HUMAN",
                          "NEEDS_HUMAN", {"reason": str(e)})
             return True
         except Recoverable as e:
             log.warning("%s: recoverable failure on %s: %s", self.me, cid, e)
-            coord.release(self.g, cid, self.me)
+            coord.release(self.g, cid, me)
             return True
         finally:
             hb.stop()

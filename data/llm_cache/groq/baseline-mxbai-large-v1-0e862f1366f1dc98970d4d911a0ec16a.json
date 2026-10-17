@@ -1,0 +1,37 @@
+{
+ "task": "baseline-mxbai-large-v1",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You help a caseworker respond to a denied health-insurance claim.\nYou get the claim and the passages retrieved from the policy documents (all policy versions) and from\npast case records. Decide:\n- the insurer's denial reason (one code);\n- the policy version in force on the service date (versions run from their effective date until the next one);\n- the evidence an appeal needs under the governing terms, and which of it the claim is missing;\n- which past cases (HC-...) are valid precedents for this claim (empty if none truly apply);\n- the disposition: APPEAL_VIABLE (all required evidence on file), APPEAL_NEEDS_EVIDENCE (an appeal is possible\n  once evidence is added) or NO_BASIS_ESCALATE (the governing terms leave no basis for appeal);\n- a short plan whose items cite the passage IDs they rely on.\nUse only the passages and claim facts. Never promise approval.",
+ "user": "CLAIM:\nClaim ID: EV-T2-02\nService: Durable medical equipment\nService date: 2025-08-20\nFiled: 2025-09-10 (21 days after the service)\nEmergency: no\nIn network: yes\nEvidence already on file: Physician letter of medical necessity (PHYSICIAN_NECESSITY_LETTER)\nDenial notice: Lumen Health Assurance - Notice of claim denial. Claim EV-T2-02. Service: Durable medical equipment. Date of service: 2025-08-20. The services billed exceed what is considered medically necessary for the diagnosis provided. This decision applies the policy terms on durable medical equipment. You may appeal this decision within 180 days of this notice.\n\nRETRIEVED PASSAGES:\n[CL-C-2025-DME-NECESSITY] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 5.4, Durable medical equipment: Durable medical equipment is covered when prescribed with a physician letter of medical necessity. Evidence required for an appeal under this section: Physician letter of medical necessity (PHYSICIAN_NECESSITY_LETTER).\n\n[CL-C-2024-DME-NECESSITY] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 5.4, Durable medical equipment: Durable medical equipment is covered when prescribed with a physician letter of medical necessity. Evidence required for an appeal under this section: Physician letter of medical necessity (PHYSICIAN_NECESSITY_LETTER).\n\n[CL-C-2026-DME-NECESSITY] Policy LumenCare Silver, version V2026 (in force 2026-01-01 to open-ended). Section 5.4, Durable medical equipment: Durable medical equipment is covered when prescribed with a physician letter of medical necessity. Evidence required for an appeal under this section: Physician letter of medical necessity (PHYSICIAN_NECESSITY_LETTER).\n\n[CL-C-2025-MED-NECESSITY-DEF] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 2.4, Definition of medical necessity: A service is medically necessary when a treating physician documents that it is appropriate and required for the diagnosis or treatment of the member's condition. Evidence required for an appeal under this section: Physician letter of medical necessity (PHYSICIAN_NECESSITY_LETTER).\n\n[CL-C-2024-MED-NECESSITY-DEF] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 2.4, Definition of medical necessity: A service is medically necessary when a treating physician documents that it is appropriate and required for the diagnosis or treatment of the member's condition. Evidence required for an appeal under this section: Physician letter of medical necessity (PHYSICIAN_NECESSITY_LETTER).\n\n[CL-C-2026-MED-NECESSITY-DEF] Policy LumenCare Silver, version V2026 (in force 2026-01-01 to open-ended). Section 2.4, Definition of medical necessity: A service is medically necessary when a treating physician documents that it is appropriate and required for the diagnosis or treatment of the member's condition. Evidence required for an appeal under this section: Physician letter of medical necessity (PHYSICIAN_NECESSITY_LETTER).\n\n[CS-HC-048] Past case HC-048. Policyholder: Farid Haddad. Service: Maternity care, service date 2025-11-08 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Maternity care. You were not yet eligible for this benefit on the date of service. Evidence submitted on appeal: Enrollment record (ENROLLMENT_RECORD). Verified outcome: UPHELD on 2026-02-09.\n\n[CL-C-2025-ER-COVERAGE] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 6.1, Emergency room coverage: Emergency room services are covered when symptoms would lead a prudent layperson to believe that urgent care was required, as documented in the discharge summary. Evidence required for an appeal under this section: Discharge summary (DISCHARGE_SUMMARY).\n\nDecide and write the plan.",
+ "output": {
+  "denial_reason": "NOT_MED_NECESSARY",
+  "policy_version": "V2025",
+  "cited_section": "5.4",
+  "required_evidence": [
+   "PHYSICIAN_NECESSITY_LETTER"
+  ],
+  "missing_evidence": [],
+  "precedent_case_ids": [],
+  "disposition": "APPEAL_VIABLE",
+  "summary": "The claim was denied as not medically necessary under Section\u202f5.4 of the V2025 policy. The required physician letter of medical necessity is already on file, so an appeal is viable.",
+  "items": [
+   {
+    "kind": "ACTION",
+    "text": "File an appeal using the physician letter of medical necessity already on file.",
+    "cite_ids": [
+     "CL-C-2025-DME-NECESSITY"
+    ]
+   },
+   {
+    "kind": "WARNING",
+    "text": "Denial is based on the service exceeding medically necessary limits per Section 5.4.",
+    "cite_ids": [
+     "CL-C-2025-DME-NECESSITY"
+    ]
+   }
+  ]
+ },
+ "input_tokens": 1925,
+ "output_tokens": 971
+}

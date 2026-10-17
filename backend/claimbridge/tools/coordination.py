@@ -9,6 +9,29 @@ import os
 from claimbridge import config, db
 from claimbridge.tools import FENCE
 
+
+class FencedGraph:
+    """Fence each curator query in the same database operation as its effects.
+
+    A stale worker cannot update shared memory after another worker takes its
+    lease. Mutations themselves must also be idempotent to survive retries.
+    """
+    def __init__(self, graph, cid, owner):
+        self.graph, self.cid, self.owner = graph, cid, owner
+
+    def query(self, query, params=None):
+        from claimbridge.agents.base import Recoverable
+        guard = """MATCH (_lease:Claim {claim_id: $_cid})
+            WHERE _lease.lease_owner = $_owner AND ($_gen IS NULL OR _lease.lease_gen = $_gen)
+              AND _lease.lease_until >= timestamp()
+            WITH _lease """
+        p = {**(params or {}), "_cid": self.cid, "_owner": str(self.owner), "_gen": getattr(self.owner, "gen", None)}
+        # The prefix is the atomic fence; this check gives callers a useful error.
+        alive = db.one(self.graph, guard + "RETURN _lease.claim_id AS id", p)
+        if not alive:
+            raise Recoverable("memory write fenced: lease no longer owned")
+        return self.graph.query(guard + query, p)
+
 # Appends one CaseEvent after `c` (expects `c` bound and c.event_seq already incremented).
 _EVENT = """
     WITH c
@@ -32,28 +55,30 @@ def _event_params(etype, agent, role, step, payload) -> dict:
 def claim_lease(g, state: str, me: str, ttl_s: float = config.LEASE_TTL_S) -> dict | None:
     """Q7: atomically take the oldest claim in `state` whose lease is free or expired.
     FalkorDB applies write queries to a graph one at a time, so exactly one worker wins."""
-    now = db.now_ms()
+    # Time is the database's clock, and every acquisition bumps `lease_gen`: the fencing token
+    # a worker presents on each later write (see the lease contract in tools/__init__.py).
     return db.one(g, """
         MATCH (c:Claim {status: $state})
-        WHERE c.lease_owner IS NULL OR c.lease_until < $now
+        WHERE c.lease_owner IS NULL OR c.lease_until < timestamp()
         WITH c ORDER BY c.filed_date, c.claim_id LIMIT 1
         SET c.prev_owner = c.lease_owner,
             c.lease_owner = $me,
-            c.lease_until = $now + $ttl,
-            c.attempt = coalesce(c.attempt, 0) + 1
-        RETURN c.claim_id AS claim_id, c.attempt AS attempt, c.prev_owner AS prev_owner
-    """, {"state": state, "me": me, "now": now, "ttl": int(ttl_s * 1000)})
+            c.lease_until = timestamp() + $ttl,
+            c.attempt = coalesce(c.attempt, 0) + 1,
+            c.lease_gen = coalesce(c.lease_gen, 0) + 1
+        RETURN c.claim_id AS claim_id, c.attempt AS attempt, c.prev_owner AS prev_owner, c.lease_gen AS gen
+    """, {"state": state, "me": str(me), "ttl": int(ttl_s * 1000)})
 
 
 def extend_lease(g, cid: str, me: str, ttl_s: float = config.LEASE_TTL_S) -> bool:
-    """Q7b: heartbeat. Only extends while `me` still owns the lease."""
-    now = db.now_ms()
+    """Q7b: heartbeat. Renews only a lease that is still valid: same owner, same generation and
+    not yet expired. A lease that lapsed cannot be revived, even if nobody has reclaimed it."""
     r = db.one(g, """
         MATCH (c:Claim {claim_id: $cid})
-        WHERE c.lease_owner = $me
-        SET c.lease_until = $now + $ttl
+        WHERE c.lease_owner = $me AND ($gen IS NULL OR c.lease_gen = $gen) AND c.lease_until >= timestamp()
+        SET c.lease_until = timestamp() + $ttl
         RETURN c.claim_id AS ok
-    """, {"cid": cid, "me": me, "now": now, "ttl": int(ttl_s * 1000)})
+    """, {"cid": cid, "me": me, "ttl": int(ttl_s * 1000)})
     return r is not None
 
 
@@ -67,7 +92,8 @@ def commit(g, cid: str, me: str, role: str, from_state: str, to_state: str,
               **_event_params(etype, me, role, from_state, payload)}
     r = db.one(g, f"""
         MATCH (c:Claim {{claim_id: $cid}})
-        WHERE c.lease_owner = $me AND c.status = $from
+        WHERE c.lease_owner = $me AND ($gen IS NULL OR c.lease_gen = $gen)
+          AND c.lease_until >= timestamp() AND c.status = $from
         SET c.status = $to, c.lease_owner = null, c.lease_until = null, c.attempt = 0,
             c.event_seq = coalesce(c.event_seq, 0) + 1
         {_EVENT}
@@ -120,7 +146,7 @@ def load_checkpoint(g, cid: str, step: str) -> dict | None:
 def release(g, cid: str, me: str) -> bool:
     """Give the lease back without advancing (recoverable failure)."""
     return db.one(g, """
-        MATCH (c:Claim {claim_id: $cid}) WHERE c.lease_owner = $me
+        MATCH (c:Claim {claim_id: $cid}) WHERE c.lease_owner = $me AND ($gen IS NULL OR c.lease_gen = $gen)
         SET c.lease_owner = null, c.lease_until = null
         RETURN c.claim_id AS ok
     """, {"cid": cid, "me": me}) is not None

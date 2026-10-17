@@ -1,0 +1,49 @@
+{
+ "task": "baseline-mxbai-large-v1",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You help a caseworker respond to a denied health-insurance claim.\nYou get the claim and the passages retrieved from the policy documents (all policy versions) and from\npast case records. Decide:\n- the insurer's denial reason (one code);\n- the policy version in force on the service date (versions run from their effective date until the next one);\n- the evidence an appeal needs under the governing terms, and which of it the claim is missing;\n- which past cases (HC-...) are valid precedents for this claim (empty if none truly apply);\n- the disposition: APPEAL_VIABLE (all required evidence on file), APPEAL_NEEDS_EVIDENCE (an appeal is possible\n  once evidence is added) or NO_BASIS_ESCALATE (the governing terms leave no basis for appeal);\n- a short plan whose items cite the passage IDs they rely on.\nUse only the passages and claim facts. Never promise approval.",
+ "user": "CLAIM:\nClaim ID: EV-N-11\nService: Sleep study\nService date: 2025-06-22\nFiled: 2025-07-25 (33 days after the service)\nEmergency: no\nIn network: yes\nEvidence already on file: Itemized bill (ITEMIZED_BILL), Corrected coding submission (CORRECTED_CODING_SUBMISSION)\nDenial notice: Lumen Health Assurance - Notice of claim denial. Claim EV-N-11. Service: Sleep study. Date of service: 2025-06-22. Authorization review: the services billed could not be matched to an approved service. The procedure code submitted is not valid for the service described. You may appeal this decision within 180 days of this notice.\n\nRETRIEVED PASSAGES:\n[CS-HC-010] Past case HC-010. Policyholder: Olga Petrova. Service: Sleep study, service date 2025-12-13 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Sleep study. This service required precertification from the plan, which was not requested. See Section 4.4 (Prior authorization for sleep studies) of your LumenCare Silver policy. Evidence submitted on appeal: Retroactive authorization request (RETRO_AUTH_REQUEST). Verified outcome: UPHELD on 2026-03-25.\n\n[CL-C-2025-SLEEP-STUDY-PREAUTH] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 4.4, Prior authorization for sleep studies: Facility-based sleep studies require prior authorization. A retroactive authorization request may be considered. Evidence required for an appeal under this section: Retroactive authorization request (RETRO_AUTH_REQUEST).\n\n[CL-C-2024-SLEEP-STUDY-PREAUTH] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 4.4, Prior authorization for sleep studies: Facility-based sleep studies require prior authorization. A retroactive authorization request may be considered. Evidence required for an appeal under this section: Retroactive authorization request (RETRO_AUTH_REQUEST).\n\n[CL-C-2026-SLEEP-STUDY-PREAUTH] Policy LumenCare Silver, version V2026 (in force 2026-01-01 to open-ended). Section 4.4, Prior authorization for sleep studies: Facility-based sleep studies require prior authorization. A retroactive authorization request may be considered. Evidence required for an appeal under this section: Retroactive authorization request (RETRO_AUTH_REQUEST).\n\n[CL-C-2025-RETRO-AUTH] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 4.6, Retroactive authorization: Retroactive authorization requests are reviewed against the clinical criteria that applied on the date of service. Evidence required for an appeal under this section: Retroactive authorization request (RETRO_AUTH_REQUEST).\n\n[CL-C-2024-RETRO-AUTH] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 4.6, Retroactive authorization: Retroactive authorization requests are reviewed against the clinical criteria that applied on the date of service. Evidence required for an appeal under this section: Retroactive authorization request (RETRO_AUTH_REQUEST).\n\n[CL-C-2026-RETRO-AUTH] Policy LumenCare Silver, version V2026 (in force 2026-01-01 to open-ended). Section 4.6, Retroactive authorization: Retroactive authorization requests are reviewed against the clinical criteria that applied on the date of service. Evidence required for an appeal under this section: Retroactive authorization request (RETRO_AUTH_REQUEST).\n\n[CL-C-2025-EXPERIMENTAL-EXCL] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 8.2, Experimental and investigational services: Experimental or investigational services, including genetic testing not otherwise listed as covered, are excluded. Evidence required for an appeal under this section: none.\n\nDecide and write the plan.",
+ "output": {
+  "denial_reason": "CODING_ERROR",
+  "policy_version": "V2025",
+  "cited_section": "4.4",
+  "required_evidence": [
+   "RETRO_AUTH_REQUEST"
+  ],
+  "missing_evidence": [
+   "RETRO_AUTH_REQUEST"
+  ],
+  "precedent_case_ids": [
+   "HC-010"
+  ],
+  "disposition": "APPEAL_NEEDS_EVIDENCE",
+  "summary": "The claim was denied for a coding error; the policy (V2025) requires a prior authorization for facility\u2011based sleep studies (Section\u202f4.4) and a retroactive authorization request for appeal. The claim lacks the required RETRO_AUTH_REQUEST evidence. A similar case (HC\u2011010) was upheld when the retro authorization was missing.",
+  "items": [
+   {
+    "kind": "EVIDENCE_NEEDED",
+    "text": "Obtain and submit a Retroactive Authorization Request (RETRO_AUTH_REQUEST) to satisfy the prior\u2011auth requirement for a sleep study.",
+    "cite_ids": [
+     "CL-C-2025-SLEEP-STUDY-PREAUTH",
+     "CL-C-2025-RETRO-AUTH"
+    ]
+   },
+   {
+    "kind": "ACTION",
+    "text": "File an appeal attaching the RETRO_AUTH_REQUEST and corrected coding documentation.",
+    "cite_ids": [
+     "CL-C-2025-SLEEP-STUDY-PREAUTH"
+    ]
+   },
+   {
+    "kind": "WARNING",
+    "text": "Past case HC\u2011010 (same service and policy version) was upheld when the retro authorization was missing, indicating the denial is likely to be sustained without it.",
+    "cite_ids": [
+     "CS-HC-010"
+    ]
+   }
+  ]
+ },
+ "input_tokens": 1867,
+ "output_tokens": 1075
+}

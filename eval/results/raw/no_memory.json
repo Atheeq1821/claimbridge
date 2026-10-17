@@ -1,6 +1,6 @@
 {
  "system": "no_memory",
- "wall_seconds": 263.6,
+ "wall_seconds": 7.5,
  "predictions": {
   "EV-T1-01": {
    "status": "AWAITING_REVIEW",
@@ -16,11 +16,11 @@
    "items_total": 3,
    "items_unsupported": 0,
    "guard_dropped": 0,
-   "guard_added": 0,
-   "confidence": 0.4,
+   "guard_added": 3,
+   "confidence": 0.0,
    "leaked_fields": 0,
-   "tokens_in": 830,
-   "tokens_out": 854
+   "tokens_in": 0,
+   "tokens_out": 0
   },
   "EV-T1-02": {
    "status": "AWAITING_REVIEW",
@@ -35,11 +35,11 @@
    "items_total": 2,
    "items_unsupported": 0,
    "guard_dropped": 0,
-   "guard_added": 0,
-   "confidence": 0.4,
+   "guard_added": 2,
+   "confidence": 0.0,
    "leaked_fields": 0,
-   "tokens_in": 1607,
-   "tokens_out": 733
+   "tokens_in": 820,
+   "tokens_out": 126
   },
   "EV-T1-03": {
    "status": "AWAITING_REVIEW",
@@ -52,11 +52,11 @@
    "items_total": 1,
    "items_unsupported": 0,
    "guard_dropped": 0,
-   "guard_added": 0,
-   "confidence": 0.4,
+   "guard_added": 1,
+   "confidence": 0.0,
    "leaked_fields": 0,
-   "tokens_in": 807,
-   "tokens_out": 465
+   "tokens_in": 0,
+   "tokens_out": 0
   },
   "EV-T1-04": {
    "status": "AWAITING_REVIEW",
@@ -66,14 +66,14 @@
    "rejected": {},
    "missing": [],
    "disposition": "NO_BASIS_ESCALATE",
-   "items_total": 3,
+   "items_total": 2,
    "items_unsupported": 0,
    "guard_dropped": 0,
-   "guard_added": 0,
-   "confidence": 0.9,
+   "guard_added": 2,
+   "confidence": 0.0,
    "leaked_fields": 0,
-   "tokens_in": 715,
-   "tokens_out": 831
+   "tokens_in": 0,
+   "tokens_out": 0
   },
   "EV-T2-01": {
    "status": "AWAITING_REVIEW",
@@ -88,11 +88,11 @@
    "items_total": 2,
    "items_unsupported": 0,
    "guard_dropped": 0,
-   "guard_added": 0,
-   "confidence": 0.4,
+   "guard_added": 2,
+   "confidence": 0.0,
    "leaked_fields": 0,
-   "tokens_in": 1584,
-   "tokens_out": 734
+   "tokens_in": 815,
+   "tokens_out": 118
   },
   "EV-T2-02": {
    "status": "AWAITING_REVIEW",
@@ -102,14 +102,14 @@
    "rejected": {},
    "missing": [],
    "disposition": "APPEAL_VIABLE",
-   "items_total": 2,
+   "items_total": 1,
    "items_unsupported": 0,
    "guard_dropped": 0,
-   "guard_added": 0,
-   "confidence": 0.4,
+   "guard_added": 1,
+   "confidence": 0.0,
    "leaked_fields": 0,
-   "tokens_in": 1550,
-   "tokens_out": 699
+   "tokens_in": 820,
+   "tokens_out": 104
   },
   "EV-T2-03": {
    "status": "AWAITING_REVIEW",
@@ -121,14 +121,14 @@
     "EMERGENCY_ATTESTATION"
    ],
    "disposition": "APPEAL_NEEDS_EVIDENCE",
-   "items_total": 3,
+   "items_total": 2,
    "items_unsupported": 0,
    "guard_dropped": 0,
-   "guard_added": 0,
-   "confidence": 0.4,
+   "guard_added": 2,
+   "confidence": 0.0,
    "leaked_fields": 0,
-   "tokens_in": 751,
-   "tokens_out": 556
+   "tokens_in": 0,
+   "tokens_out": 0
   },
   "EV-T3-01": {
    "status": "AWAITING_REVIEW",
@@ -141,14 +141,14 @@
     "PROGRESS_NOTES"
    ],
    "disposition": "APPEAL_NEEDS_EVIDENCE",
-   "items_total": 5,
+   "items_total": 3,
    "items_unsupported": 0,
    "guard_dropped": 0,
-   "guard_added": 0,
-   "confidence": 0.4,
+   "guard_added": 3,
+   "confidence": 0.0,
    "leaked_fields": 0,
-   "tokens_in": 822,
-   "tokens_out": 911
+   "tokens_in": 0,
+   "tokens_out": 0
   },
   "EV-T3-02": {
    "status": "AWAITING_REVIEW",
@@ -160,14 +160,14 @@
     "SUPERVISED_PROGRAM_RECORD"
    ],
    "disposition": "APPEAL_NEEDS_EVIDENCE",
-   "items_total": 3,
+   "items_total": 2,
    "items_unsupported": 0,
    "guard_dropped": 0,
-   "guard_added": 0,
-   "confidence": 0.4,
+   "guard_added": 2,
+   "confidence": 0.0,
    "leaked_fields": 0,
-   "tokens_in": 1577,
-   "tokens_out": 696
+   "tokens_in": 817,
+   "tokens_out": 103
   },
   "EV-T3-03": {
    "status": "AWAITING_REVIEW",
@@ -179,14 +179,14 @@
     "CORRECTED_CODING_SUBMISSION"
    ],
    "disposition": "APPEAL_NEEDS_EVIDENCE",
-   "items_total": 3,
+   "items_total": 2,
    "items_unsupported": 0,
    "guard_dropped": 0,
-   "guard_added": 0,
-   "confidence": 0.4,
+   "guard_added": 2,
+   "confidence": 0.0,
    "leaked_fields": 0,
-   "tokens_in": 798,
-   "tokens_out": 571
+   "tokens_in": 0,
+   "tokens_out": 0
   },
   "EV-T4-01": {
    "status": "AWAITING_REVIEW",
@@ -199,11 +199,11 @@
    "items_total": 1,
    "items_unsupported": 0,
    "guard_dropped": 0,
-   "guard_added": 0,
-   "confidence": 0.4,
+   "guard_added": 1,
+   "confidence": 0.0,
    "leaked_fields": 0,
-   "tokens_in": 752,
-   "tokens_out": 537
+   "tokens_in": 0,
+   "tokens_out": 0
   },
   "EV-T4-02": {
    "status": "AWAITING_REVIEW",
@@ -218,11 +218,11 @@
    "items_total": 2,
    "items_unsupported": 0,
    "guard_dropped": 0,
-   "guard_added": 0,
-   "confidence": 0.4,
+   "guard_added": 2,
+   "confidence": 0.0,
    "leaked_fields": 0,
-   "tokens_in": 1534,
-   "tokens_out": 658
+   "tokens_in": 814,
+   "tokens_out": 118
   },
   "EV-T5-01": {
    "status": "AWAITING_REVIEW",
@@ -235,14 +235,14 @@
     "EMERGENCY_ATTESTATION"
    ],
    "disposition": "NO_BASIS_ESCALATE",
-   "items_total": 4,
+   "items_total": 2,
    "items_unsupported": 0,
    "guard_dropped": 0,
-   "guard_added": 0,
-   "confidence": 0.9,
+   "guard_added": 2,
+   "confidence": 0.0,
    "leaked_fields": 0,
-   "tokens_in": 817,
-   "tokens_out": 790
+   "tokens_in": 0,
+   "tokens_out": 0
   },
   "EV-T5-02": {
    "status": "AWAITING_REVIEW",
@@ -255,14 +255,14 @@
     "EMERGENCY_ATTESTATION"
    ],
    "disposition": "NO_BASIS_ESCALATE",
-   "items_total": 4,
+   "items_total": 2,
    "items_unsupported": 0,
    "guard_dropped": 0,
-   "guard_added": 0,
-   "confidence": 0.9,
+   "guard_added": 2,
+   "confidence": 0.0,
    "leaked_fields": 0,
-   "tokens_in": 1602,
-   "tokens_out": 828
+   "tokens_in": 820,
+   "tokens_out": 121
   },
   "EV-T6-01": {
    "status": "AWAITING_REVIEW",
@@ -274,14 +274,14 @@
     "PROOF_OF_TIMELY_FILING"
    ],
    "disposition": "NO_BASIS_ESCALATE",
-   "items_total": 3,
+   "items_total": 2,
    "items_unsupported": 0,
    "guard_dropped": 0,
-   "guard_added": 0,
-   "confidence": 0.9,
+   "guard_added": 2,
+   "confidence": 0.0,
    "leaked_fields": 0,
-   "tokens_in": 759,
-   "tokens_out": 850
+   "tokens_in": 0,
+   "tokens_out": 0
   },
   "EV-T6-02": {
    "status": "AWAITING_REVIEW",
@@ -291,14 +291,14 @@
    "rejected": {},
    "missing": [],
    "disposition": "NO_BASIS_ESCALATE",
-   "items_total": 4,
+   "items_total": 2,
    "items_unsupported": 0,
    "guard_dropped": 0,
-   "guard_added": 0,
-   "confidence": 0.9,
+   "guard_added": 2,
+   "confidence": 0.0,
    "leaked_fields": 0,
-   "tokens_in": 1511,
-   "tokens_out": 963
+   "tokens_in": 818,
+   "tokens_out": 123
   },
   "EV-T6-03": {
    "status": "AWAITING_REVIEW",
@@ -308,14 +308,14 @@
    "rejected": {},
    "missing": [],
    "disposition": "NO_BASIS_ESCALATE",
-   "items_total": 3,
+   "items_total": 2,
    "items_unsupported": 0,
    "guard_dropped": 0,
-   "guard_added": 0,
-   "confidence": 0.9,
+   "guard_added": 2,
+   "confidence": 0.0,
    "leaked_fields": 0,
-   "tokens_in": 756,
-   "tokens_out": 1064
+   "tokens_in": 0,
+   "tokens_out": 0
   },
   "EV-T7-01": {
    "status": "AWAITING_REVIEW",
@@ -325,14 +325,14 @@
    "rejected": {},
    "missing": [],
    "disposition": "APPEAL_VIABLE",
-   "items_total": 2,
+   "items_total": 1,
    "items_unsupported": 0,
    "guard_dropped": 0,
-   "guard_added": 0,
-   "confidence": 0.4,
+   "guard_added": 1,
+   "confidence": 0.0,
    "leaked_fields": 0,
-   "tokens_in": 796,
-   "tokens_out": 537
+   "tokens_in": 0,
+   "tokens_out": 0
   },
   "EV-T7-02": {
    "status": "AWAITING_REVIEW",
@@ -345,11 +345,11 @@
    "items_total": 1,
    "items_unsupported": 0,
    "guard_dropped": 0,
-   "guard_added": 0,
-   "confidence": 0.4,
+   "guard_added": 1,
+   "confidence": 0.0,
    "leaked_fields": 0,
-   "tokens_in": 1594,
-   "tokens_out": 511
+   "tokens_in": 822,
+   "tokens_out": 186
   },
   "EV-N-01": {
    "status": "AWAITING_REVIEW",
@@ -364,11 +364,11 @@
    "items_total": 2,
    "items_unsupported": 0,
    "guard_dropped": 0,
-   "guard_added": 0,
-   "confidence": 0.4,
+   "guard_added": 2,
+   "confidence": 0.0,
    "leaked_fields": 0,
-   "tokens_in": 765,
-   "tokens_out": 517
+   "tokens_in": 0,
+   "tokens_out": 0
   },
   "EV-N-02": {
    "status": "AWAITING_REVIEW",
@@ -378,14 +378,14 @@
    "rejected": {},
    "missing": [],
    "disposition": "APPEAL_VIABLE",
-   "items_total": 2,
+   "items_total": 1,
    "items_unsupported": 0,
    "guard_dropped": 0,
-   "guard_added": 0,
-   "confidence": 0.4,
+   "guard_added": 1,
+   "confidence": 0.0,
    "leaked_fields": 0,
-   "tokens_in": 1550,
-   "tokens_out": 864
+   "tokens_in": 823,
+   "tokens_out": 123
   },
   "EV-N-03": {
    "status": "AWAITING_REVIEW",
@@ -398,11 +398,11 @@
    "items_total": 1,
    "items_unsupported": 0,
    "guard_dropped": 0,
-   "guard_added": 0,
-   "confidence": 0.4,
+   "guard_added": 1,
+   "confidence": 0.0,
    "leaked_fields": 0,
-   "tokens_in": 800,
-   "tokens_out": 426
+   "tokens_in": 0,
+   "tokens_out": 0
   },
   "EV-N-04": {
    "status": "AWAITING_REVIEW",
@@ -412,14 +412,14 @@
    "rejected": {},
    "missing": [],
    "disposition": "APPEAL_VIABLE",
-   "items_total": 2,
+   "items_total": 1,
    "items_unsupported": 0,
    "guard_dropped": 0,
-   "guard_added": 0,
-   "confidence": 0.4,
+   "guard_added": 1,
+   "confidence": 0.0,
    "leaked_fields": 0,
-   "tokens_in": 757,
-   "tokens_out": 745
+   "tokens_in": 0,
+   "tokens_out": 0
   },
   "EV-N-05": {
    "status": "AWAITING_REVIEW",
@@ -431,14 +431,14 @@
     "DISCHARGE_SUMMARY"
    ],
    "disposition": "APPEAL_NEEDS_EVIDENCE",
-   "items_total": 3,
+   "items_total": 2,
    "items_unsupported": 0,
    "guard_dropped": 0,
-   "guard_added": 0,
-   "confidence": 0.4,
+   "guard_added": 2,
+   "confidence": 0.0,
    "leaked_fields": 0,
-   "tokens_in": 1559,
-   "tokens_out": 648
+   "tokens_in": 807,
+   "tokens_out": 122
   },
   "EV-N-06": {
    "status": "AWAITING_REVIEW",
@@ -451,11 +451,11 @@
    "items_total": 1,
    "items_unsupported": 0,
    "guard_dropped": 0,
-   "guard_added": 0,
-   "confidence": 0.4,
+   "guard_added": 1,
+   "confidence": 0.0,
    "leaked_fields": 0,
-   "tokens_in": 755,
-   "tokens_out": 628
+   "tokens_in": 0,
+   "tokens_out": 0
   },
   "EV-N-07": {
    "status": "AWAITING_REVIEW",
@@ -468,11 +468,11 @@
    "items_total": 1,
    "items_unsupported": 0,
    "guard_dropped": 0,
-   "guard_added": 0,
-   "confidence": 0.4,
+   "guard_added": 1,
+   "confidence": 0.0,
    "leaked_fields": 0,
-   "tokens_in": 791,
-   "tokens_out": 541
+   "tokens_in": 0,
+   "tokens_out": 0
   },
   "EV-N-08": {
    "status": "AWAITING_REVIEW",
@@ -482,14 +482,14 @@
    "rejected": {},
    "missing": [],
    "disposition": "APPEAL_VIABLE",
-   "items_total": 2,
+   "items_total": 1,
    "items_unsupported": 0,
    "guard_dropped": 0,
-   "guard_added": 0,
-   "confidence": 0.4,
+   "guard_added": 1,
+   "confidence": 0.0,
    "leaked_fields": 0,
-   "tokens_in": 755,
-   "tokens_out": 717
+   "tokens_in": 0,
+   "tokens_out": 0
   },
   "EV-N-09": {
    "status": "AWAITING_REVIEW",
@@ -501,14 +501,14 @@
     "ENROLLMENT_RECORD"
    ],
    "disposition": "APPEAL_NEEDS_EVIDENCE",
-   "items_total": 3,
+   "items_total": 2,
    "items_unsupported": 0,
    "guard_dropped": 0,
-   "guard_added": 0,
-   "confidence": 0.4,
+   "guard_added": 2,
+   "confidence": 0.0,
    "leaked_fields": 0,
-   "tokens_in": 1532,
-   "tokens_out": 586
+   "tokens_in": 819,
+   "tokens_out": 107
   },
   "EV-N-10": {
    "status": "AWAITING_REVIEW",
@@ -521,11 +521,11 @@
    "items_total": 1,
    "items_unsupported": 0,
    "guard_dropped": 0,
-   "guard_added": 0,
-   "confidence": 0.4,
+   "guard_added": 1,
+   "confidence": 0.0,
    "leaked_fields": 0,
-   "tokens_in": 748,
-   "tokens_out": 629
+   "tokens_in": 0,
+   "tokens_out": 0
   },
   "EV-N-11": {
    "status": "AWAITING_REVIEW",
@@ -538,11 +538,11 @@
    "items_total": 1,
    "items_unsupported": 0,
    "guard_dropped": 0,
-   "guard_added": 0,
-   "confidence": 0.4,
+   "guard_added": 1,
+   "confidence": 0.0,
    "leaked_fields": 0,
-   "tokens_in": 1578,
-   "tokens_out": 533
+   "tokens_in": 820,
+   "tokens_out": 125
   },
   "EV-N-12": {
    "status": "AWAITING_REVIEW",
@@ -554,14 +554,14 @@
     "PHYSICIAN_NECESSITY_LETTER"
    ],
    "disposition": "APPEAL_NEEDS_EVIDENCE",
-   "items_total": 3,
+   "items_total": 2,
    "items_unsupported": 0,
    "guard_dropped": 0,
-   "guard_added": 0,
-   "confidence": 0.4,
+   "guard_added": 2,
+   "confidence": 0.0,
    "leaked_fields": 0,
-   "tokens_in": 767,
-   "tokens_out": 645
+   "tokens_in": 0,
+   "tokens_out": 0
   },
   "EV-N-13": {
    "status": "AWAITING_REVIEW",
@@ -576,11 +576,11 @@
    "items_total": 2,
    "items_unsupported": 0,
    "guard_dropped": 0,
-   "guard_added": 0,
-   "confidence": 0.4,
+   "guard_added": 2,
+   "confidence": 0.0,
    "leaked_fields": 0,
-   "tokens_in": 810,
-   "tokens_out": 628
+   "tokens_in": 0,
+   "tokens_out": 0
   },
   "EV-M-A": {
    "status": "AWAITING_REVIEW",
@@ -590,14 +590,14 @@
    "rejected": {},
    "missing": [],
    "disposition": "APPEAL_VIABLE",
-   "items_total": 2,
+   "items_total": 1,
    "items_unsupported": 0,
    "guard_dropped": 0,
-   "guard_added": 0,
-   "confidence": 0.4,
+   "guard_added": 1,
+   "confidence": 0.0,
    "leaked_fields": 0,
-   "tokens_in": 746,
-   "tokens_out": 658
+   "tokens_in": 0,
+   "tokens_out": 0
   },
   "EV-M-B1": {
    "status": "AWAITING_REVIEW",
@@ -610,33 +610,53 @@
    "items_total": 1,
    "items_unsupported": 0,
    "guard_dropped": 0,
-   "guard_added": 0,
-   "confidence": 0.4,
+   "guard_added": 1,
+   "confidence": 0.0,
    "leaked_fields": 0,
-   "tokens_in": 747,
-   "tokens_out": 548
+   "tokens_in": 0,
+   "tokens_out": 0
   }
  },
  "memory_gain": {
   "learned": [
-   "F-L-AMBULANCE-1"
+   "F-L-AMBULANCE-3fc5cd595b568ee3"
   ],
   "curator_action": "learned",
   "before": {
    "accepted": [],
    "disposition": "APPEAL_VIABLE",
-   "confidence": 0.4,
+   "confidence": 0.0,
    "uncertainty": [
     "No verified precedent applies to this claim."
-   ]
+   ],
+   "missing": []
   },
   "after": {
    "accepted": [],
    "disposition": "APPEAL_VIABLE",
-   "confidence": 0.4,
+   "confidence": 0.0,
    "uncertainty": [
     "No verified precedent applies to this claim."
-   ]
+   ],
+   "missing": []
+  }
+ },
+ "provenance": {
+  "run_id": "20261017T183825+0530-3c6ce4",
+  "step": "no_memory",
+  "started_at": "2026-10-17T18:38:47+05:30",
+  "ended_at": "2026-10-17T18:39:07+05:30",
+  "source_sha256_at_save": "848bb7301544155c1d362f39a8178bf680f8af5b381b6c4b053530ac4f7ad9f1",
+  "source_unchanged": true,
+  "dataset_unchanged": true,
+  "llm_platform": "groq",
+  "llm_model": "openai/gpt-oss-120b",
+  "llm_mode": "cached",
+  "access": {
+   "policy_clauses": "same as ClaimBridge",
+   "abstract_findings": "hidden (ablation)",
+   "raw_cases": "own tenant only",
+   "decided_by": "same deterministic rules without semantic memory"
   }
  }
 }

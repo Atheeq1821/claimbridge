@@ -1,0 +1,45 @@
+{
+ "task": "baseline-bge-small",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You help a caseworker respond to a denied health-insurance claim.\nYou get the claim and the passages retrieved from the policy documents (all policy versions) and from\npast case records. Decide:\n- the insurer's denial reason (one code);\n- the policy version in force on the service date (versions run from their effective date until the next one);\n- the evidence an appeal needs under the governing terms, and which of it the claim is missing;\n- which past cases (HC-...) are valid precedents for this claim (empty if none truly apply);\n- the disposition: APPEAL_VIABLE (all required evidence on file), APPEAL_NEEDS_EVIDENCE (an appeal is possible\n  once evidence is added) or NO_BASIS_ESCALATE (the governing terms leave no basis for appeal);\n- a short plan whose items cite the passage IDs they rely on.\nUse only the passages and claim facts. Never promise approval.",
+ "user": "CLAIM:\nClaim ID: EV-T7-01\nService: Durable medical equipment\nService date: 2025-05-01\nFiled: 2025-05-24 (23 days after the service)\nEmergency: no\nIn network: yes\nEvidence already on file: Itemized bill (ITEMIZED_BILL), Corrected coding submission (CORRECTED_CODING_SUBMISSION)\nDenial notice: Lumen Health Assurance - Notice of claim denial. Claim EV-T7-01. Service: Durable medical equipment. Date of service: 2025-05-01. The diagnosis and procedure codes on the claim are inconsistent. See Section 9.4 (Coding corrections) of your LumenCare Silver policy. You may appeal this decision within 180 days of this notice.\n\nRETRIEVED PASSAGES:\n[CL-C-2024-DME-NECESSITY] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 5.4, Durable medical equipment: Durable medical equipment is covered when prescribed with a physician letter of medical necessity. Evidence required for an appeal under this section: Physician letter of medical necessity (PHYSICIAN_NECESSITY_LETTER).\n\n[CL-C-2025-DME-NECESSITY] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 5.4, Durable medical equipment: Durable medical equipment is covered when prescribed with a physician letter of medical necessity. Evidence required for an appeal under this section: Physician letter of medical necessity (PHYSICIAN_NECESSITY_LETTER).\n\n[CL-C-2026-DME-NECESSITY] Policy LumenCare Silver, version V2026 (in force 2026-01-01 to open-ended). Section 5.4, Durable medical equipment: Durable medical equipment is covered when prescribed with a physician letter of medical necessity. Evidence required for an appeal under this section: Physician letter of medical necessity (PHYSICIAN_NECESSITY_LETTER).\n\n[CL-C-2025-TIMELY-FILING] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 9.1, Timely filing limit: Claims must be filed within 180 days of the date of service. Evidence required for an appeal under this section: Proof of timely filing (PROOF_OF_TIMELY_FILING).\n\n[CL-C-2024-TIMELY-FILING] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 9.1, Timely filing limit: Claims must be filed within 180 days of the date of service. Evidence required for an appeal under this section: Proof of timely filing (PROOF_OF_TIMELY_FILING).\n\n[CL-C-2024-COSMETIC-EXCL] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 8.1, Cosmetic services: Cosmetic procedures are excluded. Evidence required for an appeal under this section: none.\n\n[CL-C-2025-COSMETIC-EXCL] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 8.1, Cosmetic services: Cosmetic procedures are excluded. Evidence required for an appeal under this section: none.\n\n[CL-C-2026-TIMELY-FILING] Policy LumenCare Silver, version V2026 (in force 2026-01-01 to open-ended). Section 9.1, Timely filing limit: Claims must be filed within 90 days of the date of service. Evidence required for an appeal under this section: Proof of timely filing (PROOF_OF_TIMELY_FILING).\n\nDecide and write the plan.",
+ "output": {
+  "denial_reason": "CODING_ERROR",
+  "policy_version": "V2025",
+  "cited_section": "9.4",
+  "required_evidence": [
+   "PHYSICIAN_NECESSITY_LETTER",
+   "CORRECTED_CODING_SUBMISSION"
+  ],
+  "missing_evidence": [
+   "PHYSICIAN_NECESSITY_LETTER"
+  ],
+  "precedent_case_ids": [],
+  "disposition": "APPEAL_NEEDS_EVIDENCE",
+  "summary": "The claim was denied for coding inconsistencies (Section 9.4). Under the V2025 policy, DME also requires a physician letter of medical necessity, which is missing. The corrected coding submission is on file, but the physician letter must be provided before an appeal can succeed.",
+  "items": [
+   {
+    "kind": "EVIDENCE_NEEDED",
+    "text": "A physician letter of medical necessity is required for durable medical equipment coverage.",
+    "cite_ids": [
+     "CL-C-2025-DME-NECESSITY"
+    ]
+   },
+   {
+    "kind": "ACTION",
+    "text": "Obtain and submit the physician letter of medical necessity to complete the appeal.",
+    "cite_ids": [
+     "CL-C-2025-DME-NECESSITY"
+    ]
+   },
+   {
+    "kind": "WARNING",
+    "text": "The corrected coding submission is already on file, satisfying the coding\u2011correction requirement.",
+    "cite_ids": []
+   }
+  ]
+ },
+ "input_tokens": 1806,
+ "output_tokens": 1545
+}

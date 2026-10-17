@@ -1,5 +1,7 @@
 # 03 — Synthetic Dataset and Trap Cases
 
+> **Status (updated 17 Oct 2026): current for the seeded data; one addition.** Besides the seeded scenarios, `data/scenarios/generalization.yaml` holds 19 pre-registered unseen letters (see `07-evaluation.md`). They are separately authored by the AI assistant that helped build the system, not independent, and are kept out of the benchmark.
+
 Everything here is **fictional**: the insurer, the plan, the people, and the claims. Nothing is loaded from real insurers or patients, which meets the rules and avoids privacy risk.
 
 ## 1. Fictional world

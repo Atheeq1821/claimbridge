@@ -83,7 +83,7 @@ def load_version(g, kn: Knowledge, version_id: str) -> int:
     for c in kn.by_version[version_id].values():
         props = {"clause_id": c.clause_id, "lineage_id": c.lineage_id, "version_id": c.version_id,
                  "section": c.section, "type": c.type, "title": c.title, "text": c.text,
-                 "params": json.dumps(c.params, sort_keys=True)}
+                 "fingerprint": c.fingerprint, "params": json.dumps(c.params, sort_keys=True)}
         props.update({k: c.params[k] for k in FLAT_PARAMS if k in c.params})
         clause_rows.append({"props": props, "supersedes": c.supersedes, "governs": c.governs,
                             "requires": c.requires, "routes": c.routes})
@@ -217,7 +217,7 @@ def load_findings(g, kn: Knowledge, cases: list[dict], versions: list[str]):
                      f"overturned when the appeal included: {needs}.")
         r = {
             "props": {"finding_id": f.finding_id, "statement": statement, "status": status,
-                      "support": wins, "wins": wins, "confidence": round(1.0 / (1 + n), 3),
+                      "support": wins, "wins": wins, "confidence": round((wins + 1) / (wins + n + 2), 3),
                       "req_emergency": f.req_emergency, "req_in_network": f.req_in_network,
                       "origin": "seed", "created_at": 0, "updated_at": 0},
             "reason": f.reason, "learned_on": kn.clause(learned[-1], f.lineage).clause_id,

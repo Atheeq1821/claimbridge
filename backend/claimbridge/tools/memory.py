@@ -1,10 +1,13 @@
 """Semantic and procedural memory maintenance (Curator).
 
 A Finding is keyed by (denial reason, clause lineage, evidence that won, conditions).
-It is valid in every policy version whose clause for that lineage has the same params
+It is valid in every policy version whose clause for that lineage has the same policy fingerprint
 as the clause it was learned on. New verified outcomes strengthen or contradict
 Findings, and a new policy version marks dependent Findings stale.
 """
+import hashlib
+import json
+
 from claimbridge import db
 
 # ---------------------------------------------------------------------------- outcomes
@@ -17,14 +20,14 @@ def outcome_context(g, cid: str) -> dict | None:
         MATCH (c)-[:DENIED_FOR]->(r:DenialReason)
         MATCH (c)-[:HAS_NOTICE]->(:DenialNotice)-[:CITES]->(cc:Clause)
         MATCH (c)-[:RESOLVED_BY]->(res:Resolution)
-        OPTIONAL MATCH (c)-[:HAS_EVIDENCE]->(:Evidence)-[:OF_TYPE]->(et:EvidenceType)
+        OPTIONAL MATCH (c)-[:HAS_EVIDENCE]->(ev0:Evidence)-[:OF_TYPE]->(et:EvidenceType) WHERE coalesce(ev0.withdrawn, false) = false
         WITH c, v, r, cc, res, collect(DISTINCT et.code) AS have
         OPTIONAL MATCH (c)-[:CONSIDERED {verdict: 'ACCEPTED'}]->(af:Finding)
         RETURN c.claim_id AS claim_id, v.version_id AS version, r.code AS reason,
-               cc.clause_id AS clause_id, cc.lineage_id AS lineage, cc.params AS params,
+               cc.clause_id AS clause_id, cc.lineage_id AS lineage, cc.params AS params, cc.fingerprint AS fingerprint,
                coalesce(cc.req_emergency, false) AS clause_req_emergency,
                c.is_emergency AS is_emergency, c.in_network AS in_network,
-               res.resolution_id AS resolution_id, res.outcome AS outcome,
+               res.resolution_id AS resolution_id, res.outcome AS outcome, res.confirmed_evidence AS confirmed_evidence,
                have, collect(af.finding_id) AS accepted
     """, {"cid": cid})
 
@@ -52,7 +55,7 @@ def strengthen(g, finding_id: str, resolution_id: str, now: int) -> dict:
         OPTIONAL MATCH (f)-[:CONTRADICTED_BY]->(x:Resolution)
         WITH f, wins, count(x) AS n
         SET f.wins = wins, f.support = wins, f.updated_at = $now,
-            f.confidence = round(1000.0 / (1 + n)) / 1000.0,
+            f.confidence = round(1000.0 * (wins + 1) / (wins + n + 2)) / 1000.0,
             f.status = CASE WHEN n >= wins THEN 'CONTRADICTED'
                             WHEN f.status = 'CONTRADICTED' THEN 'ACTIVE' ELSE f.status END
         RETURN f.finding_id AS finding_id, f.wins AS wins, f.confidence AS confidence, f.status AS status
@@ -68,8 +71,7 @@ def contradict(g, finding_id: str, resolution_id: str, now: int) -> dict:
         WITH f
         MATCH (f)-[:CONTRADICTED_BY]->(x:Resolution)
         WITH f, count(x) AS n
-        SET f.confidence = CASE WHEN f.support = 0 THEN 0.0
-                                ELSE round(1000.0 * (toFloat(f.wins) / f.support) / (1 + n)) / 1000.0 END,
+        SET f.confidence = round(1000.0 * (f.wins + 1) / (f.wins + n + 2)) / 1000.0,
             f.status     = CASE WHEN n >= f.wins THEN 'CONTRADICTED' ELSE f.status END,
             f.updated_at = $now
         RETURN f.finding_id AS finding_id, f.status AS status, f.confidence AS confidence, n AS contradictions
@@ -78,11 +80,12 @@ def contradict(g, finding_id: str, resolution_id: str, now: int) -> dict:
 
 def create_finding(g, ctx: dict, needs: list[str], now: int) -> dict:
     """A new Finding learned from one verified win. VALID_IN is computed in the graph:
-    every version whose clause for this lineage has the same params."""
-    n = db.one(g, "MATCH (f:Finding) WHERE f.finding_id STARTS WITH $p RETURN count(f) AS n",
-               {"p": f"F-L-{ctx['lineage'].removeprefix('L-')}"})["n"]
-    fid = f"F-L-{ctx['lineage'].removeprefix('L-')}-{n + 1}"
-    req_em = True if ctx["clause_req_emergency"] else None
+    every version whose clause for this lineage has the same policy fingerprint."""
+    identity = [ctx["reason"], ctx["lineage"], ctx.get("fingerprint"), sorted(needs),
+                ctx["is_emergency"], ctx["in_network"]]
+    suffix = hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()[:16]
+    fid = f"F-L-{ctx['lineage'].removeprefix('L-')}-{suffix}"
+    req_em = ctx["is_emergency"]
     return db.one(g, """
         MATCH (dr:DenialReason {code: $reason}), (cc:Clause {clause_id: $clause_id}),
               (res:Resolution {resolution_id: $rid})
@@ -92,26 +95,28 @@ def create_finding(g, ctx: dict, needs: list[str], now: int) -> dict:
         WITH dr, cc, res, coalesce(head(collect(DISTINCT pb0.playbook_id)),
                                    head(collect(DISTINCT pb1.playbook_id))) AS pid
         OPTIONAL MATCH (pb:Playbook {playbook_id: pid})
-        CREATE (f:Finding {finding_id: $fid, status: 'ACTIVE', support: 1, wins: 1, confidence: 1.0,
-                           req_emergency: $req_em, origin: 'learned', created_at: $now, updated_at: $now})
-        CREATE (f)-[:FOR_REASON]->(dr)
-        CREATE (f)-[:ON_LINEAGE]->(cc)
-        CREATE (f)-[:DERIVED_FROM]->(res)
-        FOREACH (_ IN CASE WHEN pb IS NULL THEN [] ELSE [1] END | CREATE (f)-[:RECOMMENDS]->(pb))
+        MERGE (f:Finding {finding_id: $fid})
+        ON CREATE SET f.status = 'ACTIVE', f.support = 1, f.wins = 1, f.confidence = 0.667,
+                      f.req_emergency = $req_em, f.req_in_network = $req_net,
+                      f.origin = 'learned', f.created_at = $now, f.updated_at = $now
+        MERGE (f)-[:FOR_REASON]->(dr)
+        MERGE (f)-[:ON_LINEAGE]->(cc)
+        MERGE (f)-[:DERIVED_FROM]->(res)
+        FOREACH (_ IN CASE WHEN pb IS NULL THEN [] ELSE [1] END | MERGE (f)-[:RECOMMENDS]->(pb))
         WITH f, cc
         MATCH (v:PolicyVersion)-[:CONTAINS]->(x:Clause {lineage_id: cc.lineage_id})
-        WHERE x.params = cc.params
-        CREATE (f)-[:VALID_IN]->(v)
+        WHERE x.fingerprint IS NOT NULL AND x.fingerprint = cc.fingerprint
+        MERGE (f)-[:VALID_IN]->(v)
         WITH f, collect(v.version_id) AS valid
         UNWIND (CASE WHEN size($needs) = 0 THEN [null] ELSE $needs END) AS code
         OPTIONAL MATCH (e:EvidenceType {code: code})
-        FOREACH (_ IN CASE WHEN e IS NULL THEN [] ELSE [1] END | CREATE (f)-[:NEEDS_EVIDENCE]->(e))
+        FOREACH (_ IN CASE WHEN e IS NULL THEN [] ELSE [1] END | MERGE (f)-[:NEEDS_EVIDENCE]->(e))
         WITH f, valid
         MATCH (latest:PolicyVersion) WHERE NOT (latest)<-[:SUCCEEDS]-()
         SET f.status = CASE WHEN latest.version_id IN valid THEN 'ACTIVE' ELSE 'STALE' END
         RETURN DISTINCT f.finding_id AS finding_id, valid, f.status AS status
     """, {"fid": fid, "reason": ctx["reason"], "clause_id": ctx["clause_id"], "rid": ctx["resolution_id"],
-          "accepted": ctx["accepted"], "needs": needs, "req_em": req_em, "now": now})
+          "accepted": ctx["accepted"], "needs": needs, "req_em": req_em, "req_net": ctx["in_network"], "now": now})
 
 
 def set_statement(g, finding_id: str, statement: str):
@@ -131,8 +136,11 @@ def record_playbook_use(g, cid: str, outcome: str) -> str | None:
                            head(collect(DISTINCT pb1.playbook_id))) AS pid
         MATCH (pb:Playbook {playbook_id: pid})
         MERGE (res)-[:FOLLOWED]->(pb)
-        SET pb.uses = coalesce(pb.uses, 0) + 1,
-            pb.wins = coalesce(pb.wins, 0) + CASE WHEN $outcome = 'OVERTURNED' THEN 1 ELSE 0 END
+        WITH pb
+        MATCH (r:Resolution)-[:FOLLOWED]->(pb)
+        WITH pb, count(DISTINCT r) AS uses,
+             count(DISTINCT CASE WHEN r.outcome = 'OVERTURNED' THEN r END) AS wins
+        SET pb.uses = uses, pb.wins = wins
         RETURN pb.playbook_id AS playbook_id
     """, {"cid": cid, "outcome": outcome})
     return r["playbook_id"] if r else None
@@ -142,11 +150,11 @@ def record_playbook_use(g, cid: str, outcome: str) -> str | None:
 
 
 def mark_stale(g, new_version: str, now: int) -> list[dict]:
-    """Q6 step 1: lineages whose params changed in the new version make the Findings
+    """Q6 step 1: lineages whose policy content changed in the new version make the Findings
     learned on them stale (they keep VALID_IN for the older versions)."""
     return db.run(g, """
         MATCH (new:Clause {version_id: $v})-[:SUPERSEDES]->(old:Clause)
-        WHERE new.params <> old.params
+        WHERE new.fingerprint IS NULL OR old.fingerprint IS NULL OR new.fingerprint <> old.fingerprint
         MATCH (f:Finding)-[:ON_LINEAGE]->(:Clause {lineage_id: new.lineage_id})
         MERGE (f)-[:STALE_BECAUSE]->(new)
         SET f.status = CASE WHEN f.status = 'CONTRADICTED' THEN f.status ELSE 'STALE' END,
@@ -161,7 +169,7 @@ def carry_forward(g, new_version: str) -> list[str]:
     """Q6 step 2: Findings on lineages that did not change stay valid in the new version."""
     return [r["finding_id"] for r in db.run(g, """
         MATCH (new:Clause {version_id: $v})-[:SUPERSEDES]->(old:Clause)
-        WHERE new.params = old.params
+        WHERE new.fingerprint IS NOT NULL AND new.fingerprint = old.fingerprint
         MATCH (pv_new:PolicyVersion {version_id: $v}),
               (pv_old:PolicyVersion {version_id: old.version_id})
         MATCH (f:Finding)-[:ON_LINEAGE]->(:Clause {lineage_id: new.lineage_id})

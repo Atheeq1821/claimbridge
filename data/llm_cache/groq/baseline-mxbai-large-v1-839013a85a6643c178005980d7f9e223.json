@@ -1,0 +1,55 @@
+{
+ "task": "baseline-mxbai-large-v1",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You help a caseworker respond to a denied health-insurance claim.\nYou get the claim and the passages retrieved from the policy documents (all policy versions) and from\npast case records. Decide:\n- the insurer's denial reason (one code);\n- the policy version in force on the service date (versions run from their effective date until the next one);\n- the evidence an appeal needs under the governing terms, and which of it the claim is missing;\n- which past cases (HC-...) are valid precedents for this claim (empty if none truly apply);\n- the disposition: APPEAL_VIABLE (all required evidence on file), APPEAL_NEEDS_EVIDENCE (an appeal is possible\n  once evidence is added) or NO_BASIS_ESCALATE (the governing terms leave no basis for appeal);\n- a short plan whose items cite the passage IDs they rely on.\nUse only the passages and claim facts. Never promise approval.",
+ "user": "CLAIM:\nClaim ID: EV-N-05\nService: Inpatient surgery\nService date: 2026-04-25\nFiled: 2026-05-06 (11 days after the service)\nEmergency: no\nIn network: yes\nEvidence already on file: Itemized bill (ITEMIZED_BILL)\nDenial notice: Lumen Health Assurance - Notice of claim denial. Claim EV-N-05. Service: Inpatient surgery. Date of service: 2026-04-25. We could not complete our review because some records were not received. You may appeal this decision within 180 days of this notice.\n\nRETRIEVED PASSAGES:\n[CL-C-2025-INPATIENT-PREAUTH] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 4.1, Prior authorization for inpatient surgery: Planned inpatient surgery requires prior authorization. If authorization was not obtained, a retroactive authorization request with the discharge summary may be submitted within the appeal window. Evidence required for an appeal under this section: Retroactive authorization request (RETRO_AUTH_REQUEST), Discharge summary (DISCHARGE_SUMMARY).\n\n[CL-C-2024-INPATIENT-PREAUTH] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 4.1, Prior authorization for inpatient surgery: Planned inpatient surgery requires prior authorization. If authorization was not obtained, a retroactive authorization request with the discharge summary may be submitted within the appeal window. Evidence required for an appeal under this section: Retroactive authorization request (RETRO_AUTH_REQUEST), Discharge summary (DISCHARGE_SUMMARY).\n\n[CL-C-2026-INPATIENT-PREAUTH] Policy LumenCare Silver, version V2026 (in force 2026-01-01 to open-ended). Section 4.1, Prior authorization for inpatient surgery: Planned inpatient surgery requires prior authorization. If authorization was not obtained, a retroactive authorization request with the discharge summary may be submitted within the appeal window. Evidence required for an appeal under this section: Retroactive authorization request (RETRO_AUTH_REQUEST), Discharge summary (DISCHARGE_SUMMARY).\n\n[CS-HC-045] Past case HC-045. Policyholder: Ines Moreau. Service: Outpatient MRI, service date 2024-03-24 (policy V2024). Emergency: no. In network: yes. Denial notice: Service: Outpatient MRI. The claim was received after the filing deadline. This decision applies the policy terms on timely filing limit. Evidence submitted on appeal: Itemized bill (ITEMIZED_BILL). Verified outcome: UPHELD on 2024-11-26.\n\n[CS-HC-013] Past case HC-013. Policyholder: Ines Moreau. Service: Physiotherapy, service date 2025-05-05 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Physiotherapy. Clinical review determined the treatment was not medically necessary as documented. See Section 5.1 (Physiotherapy session limit) of your LumenCare Silver policy. Evidence submitted on appeal: Clinical progress notes (PROGRESS_NOTES). Verified outcome: OVERTURNED on 2025-09-02.\n\n[CL-C-2025-DISCHARGE-DOCS] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 9.2, Discharge documentation: Inpatient and emergency claims must include the discharge summary. Evidence required for an appeal under this section: Discharge summary (DISCHARGE_SUMMARY).\n\n[CS-HC-026] Past case HC-026. Policyholder: Ines Moreau. Service: Genetic testing, service date 2025-04-09 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Genetic testing. This type of service falls outside what your plan pays for. Evidence submitted on appeal: Genetic counselor referral (GENETIC_COUNSELOR_REFERRAL). Verified outcome: OVERTURNED on 2025-07-20.\n\n[CL-C-2024-DISCHARGE-DOCS] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 9.2, Discharge documentation: Inpatient and emergency claims must include the discharge summary. Evidence required for an appeal under this section: Discharge summary (DISCHARGE_SUMMARY).\n\nDecide and write the plan.",
+ "output": {
+  "denial_reason": "INCOMPLETE_DOCS",
+  "policy_version": "V2026",
+  "cited_section": "4.1",
+  "required_evidence": [
+   "RETRO_AUTH_REQUEST",
+   "DISCHARGE_SUMMARY"
+  ],
+  "missing_evidence": [
+   "RETRO_AUTH_REQUEST",
+   "DISCHARGE_SUMMARY"
+  ],
+  "precedent_case_ids": [],
+  "disposition": "APPEAL_NEEDS_EVIDENCE",
+  "summary": "The claim was denied for missing required documentation. Under policy V2026, inpatient surgery needs prior authorization; without it, a retroactive authorization request and discharge summary are required for appeal. These items are absent, so the appeal is possible once the evidence is provided.",
+  "items": [
+   {
+    "kind": "EVIDENCE_NEEDED",
+    "text": "Submit a retroactive authorization request (RETRO_AUTH_REQUEST) for the inpatient surgery.",
+    "cite_ids": [
+     "CL-C-2026-INPATIENT-PREAUTH"
+    ]
+   },
+   {
+    "kind": "EVIDENCE_NEEDED",
+    "text": "Provide the discharge summary (DISCHARGE_SUMMARY) for the inpatient stay.",
+    "cite_ids": [
+     "CL-C-2026-DISCHARGE-DOCS"
+    ]
+   },
+   {
+    "kind": "ACTION",
+    "text": "File the appeal within 180 days, attaching the missing documents.",
+    "cite_ids": [
+     "CL-C-2026-INPATIENT-PREAUTH"
+    ]
+   },
+   {
+    "kind": "WARNING",
+    "text": "Denial was based on incomplete documentation (INCOMPLETE_DOCS).",
+    "cite_ids": [
+     "CL-C-2026-INPATIENT-PREAUTH"
+    ]
+   }
+  ]
+ },
+ "input_tokens": 1940,
+ "output_tokens": 1316
+}

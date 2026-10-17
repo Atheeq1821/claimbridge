@@ -34,7 +34,10 @@ VECTOR_NEIGHBORS = 10
 NO_MEMORY = os.getenv("CB_NO_MEMORY", "0") == "1"
 
 # Evaluation
+# RESULTS_DIR holds the PROMOTED run (what the API and the site serve); every run lives in RUNS_DIR.
 RESULTS_DIR = Path(os.getenv("CB_RESULTS_DIR", REPO_DIR / "eval" / "results"))
+RUNS_DIR = Path(os.getenv("CB_RUNS_DIR", REPO_DIR / "eval" / "runs"))
+ARCHIVE_DIR = Path(os.getenv("CB_ARCHIVE_DIR", REPO_DIR / "eval" / "archive"))
 # The baseline uses ClaimBridge's own embedding model by default, so only graph reasoning differs.
 BASELINE_EMBED_MODEL = os.getenv("BASELINE_EMBED_MODEL", EMBED_MODEL)
 BASELINE_STRONG_EMBED_MODEL = os.getenv("BASELINE_STRONG_EMBED_MODEL", "mixedbread-ai/mxbai-embed-large-v1")
@@ -49,6 +52,7 @@ LLM_PLATFORM = os.getenv("LLM_PLATFORM", "groq").strip().lower()
 LLM_MODE = os.getenv("LLM_MODE", "cached").strip().lower()
 LLM_MODEL = os.getenv("LLM_MODEL", "").strip()
 LLM_REASONING_EFFORT = os.getenv("LLM_REASONING_EFFORT", "medium").strip()
+PLANNER_DRAFT_AUDIT = os.getenv("PLANNER_DRAFT_AUDIT", "0") == "1"
 LLM_CACHE_DIR = Path(os.getenv("LLM_CACHE_DIR", DATA_DIR / "llm_cache"))
 DEFAULT_MODELS = {
     "groq": "openai/gpt-oss-120b",

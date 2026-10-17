@@ -30,7 +30,7 @@ const PAIRS = [
   {
     claim: "It cites a graph node for every line it writes.",
     proof:
-      "The LLM only words the plan. A citation guard drops any item that does not name a node the Verifier returned, and any promise of an outcome.",
+      "Published advice comes from graph facts and reviewed playbook templates. A valid citation ID alone cannot admit an invented instruction.",
     tag: <Treatment kind="positive" label="Followed · F-CODING" size={12} />,
   },
 ];
@@ -207,11 +207,11 @@ export function Landing() {
       <section id="results" className="scroll-mt-14 border-t border-rule">
         <div className="mx-auto max-w-[1200px] px-4 py-20 sm:px-8">
           <h2 className="max-w-[26ch] text-[clamp(28px,3.4vw,40px)] font-semibold leading-[1.1] tracking-[-0.035em]">
-            Same model, same documents. Only the graph differs.
+            Measured on synthetic claims. Open to inspection.
           </h2>
           <p className="mt-4 max-w-[70ch] text-[15px] text-ink-2">
-            34 synthetic claims, 19 of them traps. A larger embedding model did not rescue plain RAG: its mistakes are about policy versions,
-            conditions and contradictions, not retrieval.
+            Compare complete systems on the same authored scenarios. ClaimBridge adds structured policy rules and curated memory;
+            these results do not isolate the database contribution or predict real appeal outcomes.
           </p>
           <div className="mt-10">
             <Results />
@@ -230,7 +230,7 @@ export function Landing() {
               All insurers, plans, people and claims are fictional. ClaimBridge recommends; a person approves. It does not approve claims or
               give legal advice.
             </p>
-            <p>Built with FalkorDB, FastAPI and Next.js; LLM wording by Groq gpt-oss-120b. Developed with an AI coding assistant, disclosed in the repository.</p>
+            <p>Built with FalkorDB, FastAPI and Next.js. AI assists intake; published plans use graph templates. AI development assistance is disclosed in the repository.</p>
           </div>
           <div className="flex gap-5">
             <Link href="/console" className="text-ink-2 hover:text-ink">

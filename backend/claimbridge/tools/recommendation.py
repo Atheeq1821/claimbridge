@@ -59,7 +59,8 @@ def planner_context(g, cid: str) -> dict:
         "clause": {"clause_id": head["clause_id"], "section": head["section"],
                    "title": head["clause_title"], "text": head["clause_text"]},
         "gates": head["gates"],
-        "evidence": [{"code": e["evidence"], "name": e["name"], "satisfied": e["satisfied"]} for e in gap],
+        "evidence": [{"code": e["evidence"], "name": e["name"], "satisfied": e["satisfied"],
+                      "sources": e["sources"]} for e in gap],
         "accepted_precedents": accepted,
         "rejected_precedents": rejected,
     }
@@ -116,10 +117,12 @@ def write_recommendation(g, cid: str, me: str | None, rec: dict, items: list[dic
                  if labels.get(x) == label]
         if pairs:
             db.run(g, f"""
+                MATCH (c:Claim {{claim_id: $cid}}) WHERE {FENCE}
+                WITH c
                 UNWIND $pairs AS p
                 MATCH (i:RecItem {{item_id: p.item}}), (n:{label} {{{key}: p.id}})
                 CREATE (i)-[:CITES]->(n)
-            """, {"pairs": pairs})
+            """, {**params, "pairs": pairs})
     return ok["n"]
 
 

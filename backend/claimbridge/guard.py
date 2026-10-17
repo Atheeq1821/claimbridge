@@ -1,9 +1,4 @@
-"""Citation guard: nothing uncited leaves the system.
-
-The LLM drafts plan items; this module keeps only items whose citations are nodes
-the graph actually returned for this claim, removes promises of approval, and adds
-deterministic items for anything required that the draft left out.
-"""
+"""Publish recommendations from graph facts and reviewed playbook steps only."""
 import re
 
 PROMISE = re.compile(r"\b(guarantee[sd]?|will (definitely |certainly )?be (approved|paid|overturned|covered))\b",
@@ -24,57 +19,64 @@ def no_basis_summary(ctx: dict) -> str:
             "Escalate to a human reviewer rather than gathering evidence.")
 
 
-def apply(draft_items: list[dict], ctx: dict, allowed: dict[str, str], disposition: str) -> tuple[list[dict], dict]:
-    kept, stats = [], {"drafted": len(draft_items), "dropped_uncited": 0, "dropped_unknown_id": 0,
-                       "dropped_promise": 0, "dropped_moot": 0, "added_required": 0}
-    no_basis = disposition == "NO_BASIS_ESCALATE"
-    for it in draft_items:
-        # With no basis for appeal, steps to gather evidence or file an appeal contradict the holding.
-        if no_basis and it["kind"] in ("EVIDENCE_NEEDED", "ACTION"):
-            stats["dropped_moot"] += 1
-            continue
-        cites = list(dict.fromkeys(it["cite_ids"]))
-        if not cites:
-            stats["dropped_uncited"] += 1
-            continue
-        if any(c not in allowed for c in cites):
-            stats["dropped_unknown_id"] += 1
-            continue
-        if PROMISE.search(it["text"]):
-            stats["dropped_promise"] += 1
-            continue
-        kept.append({**it, "cite_ids": cites, "origin": "llm"})
-
-    def cited(kind: str, node_id: str) -> bool:
-        return any(i["kind"] == kind and node_id in i["cite_ids"] for i in kept)
-
-    clause = ctx["clause"]
-    if no_basis:
-        if not any(i["kind"] == "WARNING" for i in kept):
-            kept.insert(0, {"kind": "WARNING", "origin": "template", "cite_ids": [clause["clause_id"]],
-                            "text": no_basis_summary(ctx)})
-            stats["added_required"] += 1
-        kept.append({"kind": "ACTION", "origin": "template", "cite_ids": [clause["clause_id"]],
-                     "text": "Escalate to a human reviewer: the governing terms leave no basis for an appeal."})
-        stats["added_required"] += 1
-    for e in ctx["evidence"]:
-        if no_basis:
-            break
-        if not e["satisfied"] and not cited("EVIDENCE_NEEDED", e["code"]):
-            kept.append({"kind": "EVIDENCE_NEEDED", "origin": "template",
-                         "cite_ids": [e["code"], clause["clause_id"]],
-                         "text": f"Obtain and submit the {e['name'].lower()}."})
-            stats["added_required"] += 1
+def canonical_items(ctx: dict, disposition: str) -> list[dict]:
+    """Construct published advice from graph facts; ID membership is not entailment."""
+    items = []
+    cid = ctx["clause"]["clause_id"]
+    def add(kind, text, cites):
+        item = {"kind": kind, "text": text, "cite_ids": list(dict.fromkeys(cites)), "origin": "graph"}
+        if item not in items:
+            items.append(item)
+    if disposition == "NO_BASIS_ESCALATE":
+        add("WARNING", no_basis_summary(ctx), [cid])
+        add("ACTION", "Escalate to a human reviewer; do not treat this recommendation as a final coverage decision.", [cid])
+    else:
+        for e in ctx["evidence"]:
+            if not e["satisfied"]:
+                sources = e.get("sources", [cid])
+                learned_only = cid not in sources
+                wording = (f"A similar resolved case used the {e['name'].lower()}; ask a caseworker whether to include it."
+                           if learned_only else f"Obtain and submit the {e['name'].lower()}.")
+                add("EVIDENCE_NEEDED", wording, [e["code"], *sources])
+        add("ACTION", "Ask a caseworker to review the evidence and governing clause before submitting an appeal.", [cid])
+        for f in ctx.get("accepted_precedents", []):
+            for step in f.get("playbook_steps", []):
+                add("ACTION", step["action"], [step["step_id"], f["finding_id"]])
     for r in ctx["rejected_precedents"]:
-        if not cited("REJECTED_PRECEDENT", r["finding_id"]):
-            why = {"VERSION_DRIFT": f"it was learned under {r['learned_on']}, but {r['governing']} governs this claim",
-                   "LINEAGE_MISMATCH": "it concerns a different policy clause",
-                   "CONTRADICTED": "later verified cases with the same facts were upheld",
-                   "CONDITION_UNMET": "it only applies when its conditions (such as an emergency) are met"
-                   }.get(r["code"], r["code"])
-            cites = [r["finding_id"]] + [x for x in (r["governing"],) if x and r["code"] == "VERSION_DRIFT"]
-            kept.append({"kind": "REJECTED_PRECEDENT", "origin": "template", "cite_ids": cites,
-                         "text": f"Do not rely on precedent {r['finding_id']}: {why}."})
-            stats["added_required"] += 1
-    stats["kept_llm"] = sum(1 for i in kept if i["origin"] == "llm")
-    return kept, stats
+        why = {"VERSION_DRIFT": f"it was learned under {r['learned_on']}, but {r['governing']} governs this claim",
+               "LINEAGE_MISMATCH": "it concerns a different policy clause",
+               "CONTRADICTED": "later verified outcomes contradict it",
+               "CONDITION_UNMET": "the required conditions are not met"}.get(r["code"], r["code"])
+        cites = [r["finding_id"]]
+        if r["code"] == "VERSION_DRIFT" and r["governing"]:
+            cites.append(r["governing"])
+        add("REJECTED_PRECEDENT", f"Do not rely on precedent {r['finding_id']}: {why}.", cites)
+    return items
+
+
+def apply(draft_items: list[dict], ctx: dict, allowed: dict[str, str], disposition: str) -> tuple[list[dict], dict]:
+    canonical = canonical_items(ctx, disposition)
+    stats = dict.fromkeys(("dropped_uncited", "dropped_unknown_id", "dropped_promise",
+                          "dropped_moot", "dropped_unsupported", "kept_llm"), 0)
+    stats["drafted"] = len(draft_items)
+    matched = set()
+    for it in draft_items:
+        cites = set(it.get("cite_ids", []))
+        if disposition == "NO_BASIS_ESCALATE" and it["kind"] in ("ACTION", "EVIDENCE_NEEDED"):
+            stats["dropped_moot"] += 1
+        elif not cites:
+            stats["dropped_uncited"] += 1
+        elif not cites <= allowed.keys():
+            stats["dropped_unknown_id"] += 1
+        elif PROMISE.search(it["text"]):
+            stats["dropped_promise"] += 1
+        else:
+            hits = [i for i, c in enumerate(canonical) if c["kind"] == it["kind"]
+                    and c["text"] == it["text"] and set(c["cite_ids"]) == cites]
+            if hits:
+                matched.add(hits[0])
+            else:
+                stats["dropped_unsupported"] += 1
+    stats["matched_graph_statements"] = len(matched)
+    stats["added_required"] = len(canonical) - len(matched)
+    return [i for i in canonical if set(i["cite_ids"]) <= allowed.keys()], stats

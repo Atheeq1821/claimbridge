@@ -1,5 +1,19 @@
 # 05 — Load-Bearing Cypher Queries
 
+> **Status (updated 17 Oct 2026): the query walkthrough is the original design; the executable source is authoritative.** Where they differ, trust `backend/claimbridge/tools/`.
+>
+> | Query | As built, and where |
+> |---|---|
+> | Q4 applicability | `tools/applicability.py`: also checks `req_in_network`; verdict order is reason, lineage, version validity, contradiction, conditions |
+> | Q5 evidence gap | `tools/evidence.py`: requirements from the cited clause **and** from accepted findings, each with `sources`; withdrawn documents are ignored |
+> | Q6 staleness | `tools/memory.py`: compares clause **fingerprints** (text, params, evidence, routing), not only numeric parameters |
+> | Q7 / Q7b leases | `tools/coordination.py`: `timestamp()` for time; `lease_gen` incremented on acquisition; renewal refuses an expired lease |
+> | Q8 commit | `tools/coordination.py`: owner, generation and expiry checked in the same write that advances the claim |
+> | The fence | `tools/__init__.py` (`FENCE`): `lease_owner`, `lease_gen` and `lease_until >= timestamp()` in every fenced write; memory writes use `FencedGraph` |
+> | Q9 contradiction, Q11 tenant precedents | `tools/memory.py`, `tools/tenancy.py` (the API's tenant comes from the credential) |
+> | Q10 explanation subgraph | `api.py` `claim_graph`: evidence nodes and edges carry `origin` (`policy` or `learned`) |
+> | New | `supervisor.py`: correction (`correct_classification`) and evidence (`declare_evidence`, `withdraw_evidence`) writes |
+
 The submission must document "the Cypher queries or graph algorithms the product depends on." This is that list. Each query is wrapped by one function in `backend/claimbridge/tools/` and has a test against the seed data.
 
 Conventions:
@@ -305,3 +319,23 @@ Implemented in `backend/tests/` (`uv run pytest`). Status as of Phase 1: **21 pa
 | Lease reaper | supervisor | `LEASE_EXPIRED` recorded once per expiry | ✅ |
 
 The implemented Q6, Q9 and learning queries are in `backend/claimbridge/tools/memory.py`. Planner context and recommendation writes are in `tools/recommendation.py`. All tests: **30 passed** (Phase 2).
+
+## Q14 — What rests on a clause (blast radius) and Q15 — Why this precedent (path trace)
+
+Both live in `backend/claimbridge/tools/trace.py`, are read-only, and are tested in `backend/tests/test_trace.py`.
+
+**Q14, `GET /api/impact/clause/{id}`.** A variable-length traversal finds every version of a clause, then each hop adds a layer: memory learned on any of them, the evidence that memory asks for and the claims that weighed it.
+
+```cypher
+MATCH (c0:Clause {clause_id: $id})-[:SUPERSEDES*0..4]-(x:Clause)      // the clause and every version of it
+WITH DISTINCT x
+MATCH (f:Finding)-[:ON_LINEAGE]->(x)                                   // memory learned on any of them
+OPTIONAL MATCH (f)-[:NEEDS_EVIDENCE]->(e:EvidenceType)                 // the evidence that memory asks for
+OPTIONAL MATCH (cl:Claim)-[k:CONSIDERED]->(f)                          // and the claims that weighed it
+WHERE cl.source <> 'historical' AND k.reason_code <> 'REASON_MISMATCH'
+RETURN x, f, collect(DISTINCT e), collect(DISTINCT cl)
+```
+
+A test asserts that the traversal reaches exactly the clauses sharing the lineage key. A tenant sees its own claims by id; other policyholders' claims are only counted.
+
+**Q15, `GET /api/claims/{cid}/trace/{fid}`.** For one claim and one precedent, it rebuilds the chain of edges the Verifier relies on (reason, lineage, governing version, `SUPERSEDES*` distance, `VALID_IN`, contradiction, conditions). The first hop that does not hold is the break. A test checks, for every precedent of every evaluation claim, that the break reproduces the verdict code stored on the `CONSIDERED` edge.

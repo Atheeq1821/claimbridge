@@ -1,96 +1,53 @@
-# 08 — Demo, Pitch, and Submission
+# Submission and demonstration guide
 
-## 1. The pitch
+Track: **02 — Agent Memory and Coordination**.
 
-**Tagline:** *An AI caseworker that remembers verified resolutions, knows when prior knowledge no longer applies, and explains every recommendation through its evidence graph.*
+## Organizer requirements
 
-**30-second version:**
-> When a health claim is denied, the answer depends on which policy version applied, which clause was cited, what evidence exists, and what happened in similar cases. Vector RAG finds the case that *looks* closest and reuses it, even when the policy changed or the old win depended on a condition this claim doesn't meet. ClaimBridge stores that reasoning in FalkorDB: versioned clauses, verified outcomes distilled into Findings, and the conditions and versions under which they hold. Five agents coordinate only through the graph, so any one can crash and another resumes. Every recommendation is a graph path a human can inspect and approve.
+Checked October 17, 2026 against [official rules](https://www.wemakedevs.org/hackathons/falkordb/rules) and [track focus](https://www.wemakedevs.org/hackathons/falkordb).
 
-**What we don't claim:** that it approves claims, gives legal advice, or has been tested on real insurer data.
+Required: central FalkorDB use, public source, README with setup and graph model, core queries, a working-project video, and deployment or complete local setup. Name the entered track. Teams have at most four people. Main implementation must be within the event window; synthetic data is permitted. Disclose AI assistance. Participants must understand and meaningfully contribute to or verify the work. Deadline: **October 18, 2026, 11:59 PM IST**.
 
-## 2. Demo video script (target 3:30, hard max 4:00)
+The published pages have no numerical judging weights. Our review score is not an official assessment. No official four-minute video cap was found; the duration below is an editorial choice.
 
-Record with `STEP_DELAY_S=2` and `LLM_MODE=cached`. Do one rehearsal with live mode to confirm it also works live, and say so in the video.
+## Suggested three-minute live demo
 
-| Time | Screen | Narration (summary) | Proves |
-|---|---|---|---|
-| 0:00–0:20 | Title, then the inbox | The problem in one sentence: denied claims, outdated precedent, lost context. | — |
-| 0:20–0:40 | FalkorDB browser: schema view | Three layers: knowledge (versioned clauses), cases, memory (Findings). Agents share only this graph. | Graph is central |
-| 0:40–1:20 | Inject **T1** (MRI 2026 with referral). The card moves through the lanes. Open case detail. | "The nearest past case won with a referral. ClaimBridge rejects it: the Finding was learned on the 2025 clause, and the 2026 clause removed the referral exception." Highlight the red edge `VERSION_DRIFT → C-2026-MRI-PREAUTH`. Show the checklist with citation chips. | C2, C4 |
-| 1:20–1:45 | Same claim in the baseline output (evaluation page or a side-by-side) | "Baseline RAG reuses the 2025 win and promises an overturn." | C5 |
-| 1:45–2:20 | Inject **T5**. On the Ops page, **kill verifier-1** mid-step. The timeline shows `LEASE_EXPIRED`, then `RESUMED by verifier-2 (attempt 2)`. | "No session memory to lose. The lease expired, and another verifier resumed from the graph checkpoint. The rejected precedent is `CONDITION_UNMET: not an emergency`." | C3 |
-| 2:20–2:55 | Memory page. Approve claim A and record OVERTURNED. The Finding updates. Inject claim B, which now uses the Finding with higher confidence. Then **Publish 2026 policy** on a fresh reset and watch F-MRI-REFERRAL turn STALE. | "Memory improves the next decision, and it knows when it stops being true." | C1, C2 |
-| 2:55–3:10 | T7: try to open another tenant's precedent | Only the anonymized Finding and outcome are shown. | C6 |
-| 3:10–3:30 | Evaluation table | Headline numbers, plus one honest failure. "Synthetic data; human approval required." Show the repo link. | Credibility |
+| Time | Show | Demonstrate |
+|---|---|---|
+| 0:00–0:20 | Docket | Current terms, relevant outcomes and an auditable checklist. Fictional data only. |
+| 0:20–0:55 | EV-T1-01 graph and plan | Reject the 2025 MRI referral precedent under the 2026 clause. Show VERSION_DRIFT and source IDs. |
+| 0:55–1:45 | B1, outcome A, then B2 | Confirm attestation and itemized bill on A's overturned outcome. B2 now asks about the missing bill and cites learned memory. One win is an association, not causal proof. |
+| 1:45–2:15 | Agents and recovery | Kill a leased worker, start a replacement, show RESUMED and one committed step. A kill after commit interrupts no work. |
+| 2:15–2:35 | Policy publish | Changed fingerprints invalidate findings; old-version validity remains. Rewind resets synthetic state. |
+| 2:20–2:35 | New claim, and a notice it cannot read | Enter a claim, watch the replay; a nonexistent section stops with its reason and a person reclassifies and resumes. |
+| 2:35–2:50 | Protected tenant session | Another tenant's claim returns 404. Tenant cannot control workers. Demo mode deliberately grants fictional operator access. |
+| 2:50–3:00 | Evaluation and source | Actual measured results, no-memory decision metric, limits and reproducible local setup. |
 
-**Recording tips:**
-- 1080p, with the browser zoomed to 110–125%.
-- No dead air while waiting. Cut it, or narrate over it.
-- Record each segment separately and splice.
-- Add captions, because judges often watch muted.
+Label provider recordings as recorded/cached. Graph queries and workers still execute, but a replay is not a fresh model call. A review packet is not sent to an insurer.
 
-## 3. Submission checklist (from the official rules)
+## Submission text
 
-- [ ] **Public repository** (GitHub), with a license (MIT) and the repo description set
-- [ ] **README.md** containing:
-  - [ ] the one-line pitch and a 3-sentence problem statement
-  - [ ] **track(s) entered**: Track 02 Agent Memory and Coordination (optionally also Track 01)
-  - [ ] architecture diagram
-  - [ ] **graph data model** (diagram and node/relationship table, from [02](02-data-model.md))
-  - [ ] **Cypher queries the product depends on** (from [05](05-cypher-queries.md), or a link to `docs/queries.md` in the repo)
-  - [ ] setup: prerequisites, `.env`, `docker compose up`, `make seed`, `make eval`
-  - [ ] live deployment URL and demo video link
-  - [ ] evaluation results table, failures, and threats to validity
-  - [ ] **AI-assistance disclosure**: which tools were used, what for, and what the team wrote, verified, or decided itself
-  - [ ] data statement: all synthetic and fictional
-  - [ ] limitations and next steps
-- [ ] **Demo video** (YouTube unlisted or Loom), showing the working project
-- [ ] **Live deployment** reachable from a fresh browser (or complete local setup if deployment fails)
-- [ ] The team can each explain the graph model, the key queries (Q4, Q6, Q7, Q8), and the architecture without notes
-- [ ] Submitted on the WeMakeDevs page **by 9:00 PM IST, Oct 18** (hard deadline 11:59 PM IST)
+**ClaimBridge — versioned memory for claim review.** Five workers share FalkorDB as persistent state. Intake pins the governing policy and classifies a notice. Retrieval proposes findings; Cypher verifies version, lineage, conditions and contradictions. The planner publishes a cited checklist from graph facts. A reviewer records an outcome and the evidence observed; the curator updates reusable findings. Leases, checkpoints and fenced, idempotent writes support recovery after a crash.
 
-### AI disclosure template
-> We used Claude Code as a coding assistant for scaffolding, boilerplate, and drafting tests and docs. The graph model, trap design, agent coordination protocol (leases, fencing, checkpoints), and evaluation method were designed and reviewed by the team. We read, ran, and verified all code. At runtime, the product uses Claude models for text extraction and wording only. Decisions are made by Cypher queries over FalkorDB.
+The demo uses one fictional plan and synthetic claims. It shows policy invalidation, an outcome changing the next checklist, and recovery without duplicate learning. We compare complete systems against tenant-filtered RAG and a no-memory ablation, retain failed outputs in the denominator, and disclose that structured rules and retrieval differ. No real-world appeal outcomes are claimed.
 
-Edit this so it is exactly true for your team.
+## AI disclosure
 
-## 4. Judge Q&A prep
+The original README reports Claude Code assistance. OpenAI Codex subsequently implemented review fixes, tests, evaluation changes and documentation, and prepared demo materials. Runtime classification defaults to Groq gpt-oss-120b; published plans use graph templates. Do not claim the team authored or manually verified components unless true. Each participant should describe their actual contribution and explain it during judging.
 
-| Likely question | Short answer |
-|---|---|
-| Why not just vector RAG? | Versions, conditions, and contradictions are relationships. Q4 decides applicability in one traversal, and the evaluation shows the RAG baseline reusing invalid precedent. |
-| Does it work without FalkorDB? | No. Version selection, applicability, evidence gaps, memory, leases, and checkpoints all live in the graph. |
-| What if the LLM hallucinates? | It only extracts and phrases text. The citation guard drops any uncited item, so unsupported recommendations are 0%. |
-| How is memory kept safe across tenants? | Findings are built from structured fields only and have no tenant edges. Case reads anchor on the tenant (Q11). |
-| How do you avoid a stale Finding being reused? | `VALID_IN` scoping, plus Q6 propagation on a new version, plus `CONTRADICTED_BY` from verified outcomes. |
-| What's the concurrency model? | Atomic lease claim (Q7), heartbeats (Q7b), and a fenced commit (Q8). Shown live with a kill. |
-| Isn't the evaluation circular? | See [07](07-evaluation.md) §6: the independent rule engine, LLM extraction as the real failure point, and the no-memory ablation. |
-| Real-world use? | A caseworker or patient-advocate assistant with a human in the loop. A real deployment needs authorization, audit, and privacy controls. |
+## Team-owned final checks
 
-## 5. Blog post (side prize, optional)
+- Verify `https://github.com/Atheeq1821/claimbridge` opens without login. Public access has not been established by this workspace.
+- Render, upload and link the video (see `videos/claimbridge/SHOTLIST.md`; FFmpeg is needed and a preview should be approved first). No video exists yet.
+- Check local setup from a clean checkout, or deployment from another device.
+- Confirm registration, track, event-window eligibility and actual contribution disclosure.
+- Submit before the deadline, allowing time for upload/form failures.
 
-**Title idea:** "Your agent's memory should know when it's wrong: versioned, self-revising memory with FalkorDB"
+## Questions to rehearse
 
-**Outline:**
-1. The failure: RAG reusing a precedent from an outdated policy.
-2. The model: lineage, `VALID_IN`, `CONTRADICTED_BY`, and `STALE_BECAUSE`.
-3. Q4 and Q6 explained.
-4. Coordination through the graph: leases, fencing, and checkpoints.
-5. The results table, failures included.
-6. What we'd do next.
-
-Publish it on Hashnode or dev.to, then link it in the submission and the README. Write it only after the submission is in.
-
-## 6. Final-day run sheet (Sat Oct 18, IST)
-
-| Time | Action |
-|---|---|
-| 09:00 | Final evaluation run, freeze numbers |
-| 11:00 | Deploy; test the live URL on a phone and another laptop |
-| 13:00 | Feature freeze (bug fixes only after this) |
-| 13:00–16:00 | README, diagrams, query doc, AI disclosure |
-| 16:00–18:30 | Record and edit the video |
-| 18:30–20:00 | Dry-run the full submission form and fix links |
-| **20:00–21:00** | **Submit** |
-| 21:00–23:59 | Buffer, then the blog post |
+- Why FalkorDB? Domain relationships and working coordination state live there; disabling it stops the pipeline.
+- What is learned? Scoped findings with resolution provenance, evidence associations and observed conditions.
+- What changes with policy? Content fingerprints determine invalidation and carry-forward; old-version validity is retained.
+- What does support mean? Smoothed recorded outcomes, not a calibrated approval forecast.
+- Is evaluation independent? Separate Python truth logic, but the same authors and synthetic domain; not external validation.
+- What remains? Real user validation, broad policy ingestion, document verification and production privacy operations.

@@ -117,7 +117,7 @@ def test_loss_contradicts_finding(seeded):
     process(seeded, "EV-N-04")
     finish(seeded, "EV-N-04", "UPHELD")
     f = db.one(seeded, "MATCH (f:Finding {finding_id: 'F-ER-NECESSITY'}) RETURN f.confidence AS c, f.status AS s")
-    assert f["c"] == pytest.approx(0.5) and f["s"] == "ACTIVE"   # 2 wins, 1 contradiction
+    assert f["c"] == pytest.approx(0.6) and f["s"] == "ACTIVE"   # 2 wins, 1 contradiction
 
 
 def test_reaper_records_expired_lease_once(seeded):

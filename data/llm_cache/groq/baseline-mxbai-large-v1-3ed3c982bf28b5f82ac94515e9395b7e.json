@@ -1,0 +1,48 @@
+{
+ "task": "baseline-mxbai-large-v1",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You help a caseworker respond to a denied health-insurance claim.\nYou get the claim and the passages retrieved from the policy documents (all policy versions) and from\npast case records. Decide:\n- the insurer's denial reason (one code);\n- the policy version in force on the service date (versions run from their effective date until the next one);\n- the evidence an appeal needs under the governing terms, and which of it the claim is missing;\n- which past cases (HC-...) are valid precedents for this claim (empty if none truly apply);\n- the disposition: APPEAL_VIABLE (all required evidence on file), APPEAL_NEEDS_EVIDENCE (an appeal is possible\n  once evidence is added) or NO_BASIS_ESCALATE (the governing terms leave no basis for appeal);\n- a short plan whose items cite the passage IDs they rely on.\nUse only the passages and claim facts. Never promise approval.",
+ "user": "CLAIM:\nClaim ID: EV-T5-02\nService: Physiotherapy\nService date: 2025-11-02\nFiled: 2025-12-12 (40 days after the service)\nEmergency: no\nIn network: no\nEvidence already on file: Itemized bill (ITEMIZED_BILL), Clinical progress notes (PROGRESS_NOTES)\nDenial notice: Lumen Health Assurance - Notice of claim denial. Claim EV-T5-02. Service: Physiotherapy. Date of service: 2025-11-02. Services from non-participating providers are not covered under your plan. This decision applies the policy terms on out-of-network services. You may appeal this decision within 180 days of this notice.\n\nRETRIEVED PASSAGES:\n[CL-C-2026-PHYSIO-LIMIT] Policy LumenCare Silver, version V2026 (in force 2026-01-01 to open-ended). Section 5.1, Physiotherapy session limit: Physiotherapy is covered up to 12 sessions per plan year. Sessions beyond the twelfth require a physician letter of medical necessity and clinical progress notes demonstrating functional improvement. Evidence required for an appeal under this section: Physician letter of medical necessity (PHYSICIAN_NECESSITY_LETTER), Clinical progress notes (PROGRESS_NOTES).\n\n[CL-C-2024-PHYSIO-LIMIT] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 5.1, Physiotherapy session limit: Physiotherapy is covered up to 20 sessions per plan year. Sessions are considered medically necessary when supported by clinical progress notes. Evidence required for an appeal under this section: Clinical progress notes (PROGRESS_NOTES).\n\n[CL-C-2025-PHYSIO-LIMIT] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 5.1, Physiotherapy session limit: Physiotherapy is covered up to 20 sessions per plan year. Sessions are considered medically necessary when supported by clinical progress notes. Evidence required for an appeal under this section: Clinical progress notes (PROGRESS_NOTES).\n\n[CL-C-2025-OON-EMERGENCY] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 6.3, Out-of-network services: Services from out-of-network providers are not covered, except emergency services, which are covered at the in-network rate when an emergency attestation is filed within 72 hours of admission. Evidence required for an appeal under this section: Emergency attestation (EMERGENCY_ATTESTATION), Discharge summary (DISCHARGE_SUMMARY).\n\n[CL-C-2024-OON-EMERGENCY] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 6.3, Out-of-network services: Services from out-of-network providers are not covered, except emergency services, which are covered at the in-network rate when an emergency attestation is filed within 72 hours of admission. Evidence required for an appeal under this section: Emergency attestation (EMERGENCY_ATTESTATION), Discharge summary (DISCHARGE_SUMMARY).\n\n[CL-C-2026-OON-EMERGENCY] Policy LumenCare Silver, version V2026 (in force 2026-01-01 to open-ended). Section 6.3, Out-of-network services: Services from out-of-network providers are not covered, except emergency services, which are covered at the in-network rate when an emergency attestation is filed within 48 hours of admission. Evidence required for an appeal under this section: Emergency attestation (EMERGENCY_ATTESTATION), Discharge summary (DISCHARGE_SUMMARY).\n\n[CL-C-2025-NETWORK-DEF] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 2.6, Definition of network provider: A network provider is a provider contracted with the Plan on the date of service. Evidence required for an appeal under this section: none.\n\n[CL-C-2024-NETWORK-DEF] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 2.6, Definition of network provider: A network provider is a provider contracted with the Plan on the date of service. Evidence required for an appeal under this section: none.\n\nDecide and write the plan.",
+ "output": {
+  "denial_reason": "OUT_OF_NETWORK",
+  "policy_version": "V2025",
+  "cited_section": "6.3",
+  "required_evidence": [
+   "EMERGENCY_ATTESTATION",
+   "DISCHARGE_SUMMARY"
+  ],
+  "missing_evidence": [
+   "EMERGENCY_ATTESTATION",
+   "DISCHARGE_SUMMARY"
+  ],
+  "precedent_case_ids": [],
+  "disposition": "NO_BASIS_ESCALATE",
+  "summary": "The claim was denied because the provider was out-of-network and the service was not an emergency. Under V2025 Section 6.3, only emergency out-of-network services may be covered with an emergency attestation and discharge summary, which are absent and cannot be supplied for a non\u2011emergency claim.",
+  "items": [
+   {
+    "kind": "EVIDENCE_NEEDED",
+    "text": "Provide an emergency attestation and discharge summary to attempt an appeal under the out\u2011of\u2011network emergency exception.",
+    "cite_ids": [
+     "CL-C-2025-OON-EMERGENCY"
+    ]
+   },
+   {
+    "kind": "ACTION",
+    "text": "Verify whether the service qualifies as an emergency; if not, the claim cannot be appealed under the policy.",
+    "cite_ids": [
+     "CL-C-2025-OON-EMERGENCY"
+    ]
+   },
+   {
+    "kind": "WARNING",
+    "text": "Out\u2011of\u2011network, non\u2011emergency physiotherapy is excluded under the plan; the denial is consistent with policy.",
+    "cite_ids": [
+     "CL-C-2025-OON-EMERGENCY"
+    ]
+   }
+  ]
+ },
+ "input_tokens": 1943,
+ "output_tokens": 1160
+}

@@ -2,14 +2,46 @@
 
 Goal: credible, honest numbers that show **where the graph helps and where it doesn't**. Judges trust a table that includes failures.
 
-> **As built (Phase 3).** `uv run python -m claimbridge.cli eval all` writes `eval/results/latest.md` and `latest.json`, plus `raw/<system>.json` per system. Steps can be run separately (`eval claimbridge`, `no_memory`, `baseline`, `baseline_strong`, `chaos`, `report`), and recorded LLM answers replay, so a re-run only calls the LLM for what's missing. Code is in `backend/claimbridge/evaluation/`.
+> **Status: the "as built" section is current; sections 1 onward are the original plan (historical).**
 >
-> Differences from the plan below:
-> - **Baseline index:** the baseline's index is its own FalkorDB graph (`<graph>_baseline_<model>`) of `Chunk` nodes with no relationships. The corpus is 74 clause passages from all versions, each with its version dates and the evidence it requires, plus 52 historical case records with facts, evidence and verified outcome.
-> - **Embedding models:** `bge-small-en-v1.5` (same as ClaimBridge) for the main comparison, and `mxbai-embed-large-v1` as the large-embedding check.
-> - **Scoring:** every system is scored on the same claims. Missing evidence isn't scored when the correct disposition is NO_BASIS_ESCALATE. EV-M-B2 is held out for the memory-gain experiment.
-> - **M10 chaos run:** 12 claims, a pool with 2 replicas per role, and 10 hard kills of workers that hold a lease (each one replaced). We count kills that interrupted a step, by matching `RESUMED.previous_owner`.
-> - **Not measured:** M1 for the baseline on vague notices separately, and latency. M12 reports tokens per claim from the recorded calls.
+> ## As built
+>
+> **Every run is its own directory.** `GRAPH=claimbridge_eval uv run python -m claimbridge.cli eval all --label <name>` starts a **new run** in `eval/runs/<run_id>/` (the CLI refuses to run against the demo graph, because an evaluation resets its graph). A run contains:
+>
+> | File | What it is |
+> |---|---|
+> | `run.json` | identity: git revision and whether the tree was dirty, **source digest**, **dataset digest**, prompt digests, model, mode and cache policy, start/end times with their UTC offset, and any reason the run is invalid |
+> | `raw/<system>.json` | each system's raw predictions, written once. A step that already has output is never overwritten; re-running a failed step means a new run |
+> | `ledger.jsonl` | one line per LLM call: system, task, claim, cache key, tokens, fresh / replayed / fake. Tokens are attributed from this ledger, never inferred from the latest cache entry |
+> | `report.json`, `report.md` | the scored report |
+> | `generalization.json/.md` | the pre-registered unseen-case check, when run |
+>
+> Digests are taken when the run starts and again each time a step saves. If the source or data changed in between, the run is marked **invalid** and `promote` refuses it. `eval promote --run <id>` copies a reviewed run to `eval/results/` (what `/api/eval` and the site serve) after archiving the previous results to `eval/archive/`.
+>
+> **Systems compared** (all with the same LLM; see the access table in every report):
+>
+> | System | Policy clauses | Abstract findings | Raw case records | What decides the answer |
+> |---|---|---|---|---|
+> | ClaimBridge | graph | yes (shared memory) | own tenant only | deterministic Cypher; LLM reads notices with no section |
+> | No-memory ablation | graph | hidden | own tenant only | the same rules without memory |
+> | Baseline RAG (small / large embeddings) | text passages | no | own tenant only, filtered before prompting | the LLM decides everything |
+> | **Baseline RAG + findings** | text passages | yes, as passages with the same facts ClaimBridge stores (no verdicts) | own tenant only | the LLM decides everything |
+>
+> The last row is the information-parity comparison: once access is equal, what remains is deterministic rules versus LLM judgement. Do not read the plain-RAG gap as proof that FalkorDB alone causes an accuracy gain: rules, inputs, memory, prompts and compute all differ.
+>
+> **Scoring.** Every system is scored against the same claims; missing outputs stay in the denominator. Reported separately: *completion* (a disposition, not handed to a person), *escalated to a person* (safe abstention, not a crash), *no output* (with its cause: provider rate limit, timeout, unparseable generation, configuration, other), *decision correctness* (reason, version, disposition, missing evidence, completion; excludes precedent recall), *precedent recall* both over all expected precedents and over those **the system's permitted corpus can reach** (a tenant-filtered baseline cannot cite a precedent whose supporting cases belong to other tenants), and *fully correct*. Missing evidence is not scored when the right disposition is NO_BASIS_ESCALATE. "Items without valid citation IDs" measures only that an ID exists in the retrieved set; it does not establish that the text is true. EV-M-B2 is held out for the memory-gain experiment.
+>
+> **What the data is.** 34 authored synthetic claims. The expected answers come from a rule engine implemented separately from the graph queries (Python, no Cypher) by the same team: this is **not external validation**. The memory experiment shows that a *recorded synthetic outcome* changes a later checklist; it does not show the change helps a real appeal.
+>
+> **Coordination (M10).** Random hard kills of workers holding a lease (each replaced), counted by matching `RESUMED.previous_owner`. A killed process never wakes up, so the kills cannot show a stale worker being refused. The run therefore also executes a **deliberate paused-worker scenario**: a living worker is paused past its lease, a replacement finishes the step, then the first worker wakes and tries to write. Its tool write, checkpoint and commit are rejected and a `FENCED_WRITE_REJECTED` event is recorded.
+>
+> **Generalization check.** `data/scenarios/generalization.yaml` holds unseen letters with expected answers written before any run, locked by a sha256 on first use. Results are reported by `kind`: only `generalization` rows speak to generalization; `known-defect-regression` rows were written after defects were found and fixed; `design-intent` rows test behaviour the design already aimed for. The set was written by the AI assistant that helped build the system: **separately authored, not independent**. `generalization.template.yaml` is the template for a teammate's independent set.
+>
+> **Code:** `backend/claimbridge/evaluation/` (`harness.py`, `provenance.py`, `score.py`, `baseline.py`, `generalization.py`, `stale_probe.py`); tests in `backend/tests/test_evaluation_integrity.py`.
+
+# Original plan (historical)
+
+The text below is the first evaluation plan. Where it disagrees with the section above (the Claude baseline, `make eval`, the `backend/eval/` harness, "about 30 claims"), the section above is right.
 
 ## 1. Systems compared
 

@@ -19,7 +19,13 @@
 | 06 | [API and UI](06-api-and-ui.md) | REST endpoints, live events, and UI screens |
 | 07 | [Evaluation](07-evaluation.md) | RAG baseline, metrics, harness, and how results are reported |
 | 08 | [Demo and submission](08-demo-and-submission.md) | Demo video script, pitch, submission checklist, and blog post plan |
-| 09 | [Phases and status](09-phases.md) | The 6 build phases, Phase 1 results, and the Phase 2 plan |
+| 09 | [Phases and status](09-phases.md) | The build phases and what each delivered |
+| 10 | [Review changes](10-review-changes.md) | What the judge review found and how each finding was answered |
+| 11 | [Pending work plan](11-pending-work-and-completion-plan.md) | The completion checklist (updated 17 Oct) |
+| 12 | [Completion report](12-completion-report.md) | What was done, the evidence, and what only the team can do |
+| 13 | [Judge questions](13-judge-questions.md) | Candid answers, including what is not defensible |
+
+> Docs 00-05 are planning-era documents with an *as-built* banner at the top; 06 and 07 have a current section above the original design. Where they disagree, the code and the README are right.
 
 ## Non-negotiables (from the official rules)
 

@@ -1,0 +1,90 @@
+{
+ "task": "planner",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You are a caseworker assistant helping a policyholder respond to a denied health-insurance claim.\nYou receive the facts the claims graph established (CONTEXT) and the IDs you may cite (ALLOWED_IDS).\n\nWrite a short, practical plan:\n- one EVIDENCE_NEEDED item per missing evidence type, citing its evidence code and the governing clause;\n- ACTION items for the next steps (use the playbook steps of accepted precedents when present, citing their step IDs);\n- one REJECTED_PRECEDENT item per rejected precedent, explaining in plain words why it does not apply, citing its ID\n  (and the governing clause for VERSION_DRIFT);\n- WARNING items for gates (no appeal basis) or uncertainty.\n\nRules: use only facts from CONTEXT; every item must cite at least one ID from ALLOWED_IDS; never cite anything else;\nnever promise approval or payment; the disposition is already decided, do not change it.",
+ "user": "CONTEXT:\n{\n \"claim\": {\n  \"claim_id\": \"EV-N-04\",\n  \"service\": \"Emergency room visit\",\n  \"service_date\": 20250115,\n  \"is_emergency\": true,\n  \"in_network\": true,\n  \"filing_lag_days\": 30,\n  \"enrolled_months\": null\n },\n \"policy_version\": \"V2025\",\n \"denial_reason\": {\n  \"code\": \"NOT_MED_NECESSARY\",\n  \"name\": \"Not medically necessary\"\n },\n \"clause\": {\n  \"clause_id\": \"C-2025-ER-COVERAGE\",\n  \"section\": \"6.1\",\n  \"title\": \"Emergency room coverage\",\n  \"text\": \"Emergency room services are covered when symptoms would lead a prudent layperson to believe that urgent care was required, as documented in the discharge summary.\"\n },\n \"gates\": [],\n \"evidence\": [\n  {\n   \"code\": \"DISCHARGE_SUMMARY\",\n   \"name\": \"Discharge summary\",\n   \"satisfied\": true,\n   \"sources\": [\n    \"C-2025-ER-COVERAGE\",\n    \"F-ER-NECESSITY\"\n   ]\n  }\n ],\n \"accepted_precedents\": [\n  {\n   \"finding_id\": \"F-ER-NECESSITY\",\n   \"statement\": \"Not medically necessary denials under L-ER-COVERAGE were overturned when the appeal included: Discharge summary.\",\n   \"confidence\": 0.75,\n   \"support\": 2,\n   \"status\": \"ACTIVE\",\n   \"playbook_steps\": [\n    {\n     \"step_id\": \"PB-NECESSITY-APPEAL-S1\",\n     \"action\": \"Obtain a physician letter of medical necessity\"\n    },\n    {\n     \"step_id\": \"PB-NECESSITY-APPEAL-S2\",\n     \"action\": \"Attach clinical progress notes\"\n    },\n    {\n     \"step_id\": \"PB-NECESSITY-APPEAL-S3\",\n     \"action\": \"Request a peer-to-peer review\"\n    }\n   ]\n  }\n ],\n \"rejected_precedents\": [\n  {\n   \"finding_id\": \"F-DME-NECESSITY\",\n   \"code\": \"LINEAGE_MISMATCH\",\n   \"statement\": \"Not medically necessary denials under L-DME-NECESSITY were overturned when the appeal included: Physician letter of medical necessity.\",\n   \"learned_on\": \"C-2025-DME-NECESSITY\",\n   \"governing\": \"C-2025-DME-NECESSITY\",\n   \"contradicted_by\": []\n  },\n  {\n   \"finding_id\": \"F-PHYSIO-NECESSITY\",\n   \"code\": \"LINEAGE_MISMATCH\",\n   \"statement\": \"Not medically necessary denials under L-PHYSIO-LIMIT were overturned when the appeal included: Physician letter of medical necessity, Clinical progress notes.\",\n   \"learned_on\": \"C-2026-PHYSIO-LIMIT\",\n   \"governing\": \"C-2025-PHYSIO-LIMIT\",\n   \"contradicted_by\": []\n  },\n  {\n   \"finding_id\": \"F-PHYSIO-NOTES\",\n   \"code\": \"LINEAGE_MISMATCH\",\n   \"statement\": \"Not medically necessary denials under L-PHYSIO-LIMIT were overturned when the appeal included: Clinical progress notes.\",\n   \"learned_on\": \"C-2025-PHYSIO-LIMIT\",\n   \"governing\": \"C-2025-PHYSIO-LIMIT\",\n   \"contradicted_by\": []\n  }\n ],\n \"disposition\": \"APPEAL_VIABLE\"\n}\nALLOWED_IDS:\n[\"C-2025-DME-NECESSITY\", \"C-2025-ER-COVERAGE\", \"C-2025-PHYSIO-LIMIT\", \"C-2026-PHYSIO-LIMIT\", \"DISCHARGE_SUMMARY\", \"F-DME-NECESSITY\", \"F-ER-NECESSITY\", \"F-PHYSIO-NECESSITY\", \"F-PHYSIO-NOTES\", \"PB-NECESSITY-APPEAL-S1\", \"PB-NECESSITY-APPEAL-S2\", \"PB-NECESSITY-APPEAL-S3\", \"V2025\"]\nWrite the plan.",
+ "output": {
+  "summary": "The claim was denied as not medically necessary under the ER coverage clause. To pursue the viable appeal, gather additional medical evidence and follow the outlined steps.",
+  "items": [
+   {
+    "kind": "EVIDENCE_NEEDED",
+    "text": "Obtain a physician letter of medical necessity to support that the ER visit was required.",
+    "cite_ids": [
+     "C-2025-ER-COVERAGE",
+     "PB-NECESSITY-APPEAL-S1"
+    ]
+   },
+   {
+    "kind": "EVIDENCE_NEEDED",
+    "text": "Provide clinical progress notes from the treating physician documenting symptom severity.",
+    "cite_ids": [
+     "C-2025-ER-COVERAGE",
+     "PB-NECESSITY-APPEAL-S2"
+    ]
+   },
+   {
+    "kind": "EVIDENCE_NEEDED",
+    "text": "Request a peer\u2011to\u2011peer review with the insurer\u2019s medical director.",
+    "cite_ids": [
+     "C-2025-ER-COVERAGE",
+     "PB-NECESSITY-APPEAL-S3"
+    ]
+   },
+   {
+    "kind": "ACTION",
+    "text": "Gather the physician letter and attach it to the appeal.",
+    "cite_ids": [
+     "PB-NECESSITY-APPEAL-S1"
+    ]
+   },
+   {
+    "kind": "ACTION",
+    "text": "Include the clinical progress notes with the appeal packet.",
+    "cite_ids": [
+     "PB-NECESSITY-APPEAL-S2"
+    ]
+   },
+   {
+    "kind": "ACTION",
+    "text": "Schedule and document a peer\u2011to\u2011peer review as part of the appeal process.",
+    "cite_ids": [
+     "PB-NECESSITY-APPEAL-S3"
+    ]
+   },
+   {
+    "kind": "REJECTED_PRECEDENT",
+    "text": "The DME precedent (F-DME-NECESSITY) does not apply because it concerns durable medical equipment, not emergency room services, and is governed by C-2025-DME-NECESSITY.",
+    "cite_ids": [
+     "F-DME-NECESSITY",
+     "C-2025-DME-NECESSITY"
+    ]
+   },
+   {
+    "kind": "REJECTED_PRECEDENT",
+    "text": "The physiotherapy precedent (F-PHYSIO-NECESSITY) is irrelevant; it addresses physiotherapy limits under C-2025-PHYSIO-LIMIT, not ER coverage.",
+    "cite_ids": [
+     "F-PHYSIO-NECESSITY",
+     "C-2025-PHYSIO-LIMIT"
+    ]
+   },
+   {
+    "kind": "REJECTED_PRECEDENT",
+    "text": "The physiotherapy notes precedent (F-PHYSIO-NOTES) also pertains to physiotherapy limits (C-2025-PHYSIO-LIMIT) and cannot be used for this ER claim.",
+    "cite_ids": [
+     "F-PHYSIO-NOTES",
+     "C-2025-PHYSIO-LIMIT"
+    ]
+   },
+   {
+    "kind": "WARNING",
+    "text": "No gates are listed, but ensure the appeal is submitted within the policy\u2019s appeal window to avoid procedural denial.",
+    "cite_ids": [
+     "V2025"
+    ]
+   }
+  ]
+ },
+ "input_tokens": 1397,
+ "output_tokens": 2090
+}

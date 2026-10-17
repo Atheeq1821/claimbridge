@@ -1,5 +1,21 @@
 # 02 — Graph Data Model
 
+> **Status (updated 17 Oct 2026): the schema below is the original design; these are the as-built changes.**
+>
+> | Area | As built |
+> |---|---|
+> | Graph names | `claimbridge` (demo), `claimbridge_eval` (evaluation), `claimbridge_test` (tests), `claimbridge_access` (the browser access matrix). The evaluation refuses to touch the demo graph. |
+> | `Claim` lease fields | `lease_owner`, `lease_until` (set and compared with the database's `timestamp()`), **`lease_gen`** (a fencing token incremented on every acquisition), `attempt`, `prev_owner`, `reaped` |
+> | `Claim.source` | `historical`, seeded evaluation claims, `manual` (entered in the console, ids `NC-<12 hex>`), `generalization` |
+> | `Clause.fingerprint` | a content hash of text, params, evidence, type, governed services and routes. A policy change invalidates a `Finding` when its lineage's fingerprint changes, not only when a numeric parameter does. |
+> | `Finding` | conditions `req_emergency`, `req_in_network`; `confidence` is a **smoothed support score** `(wins+1)/(wins+losses+2)`, not a probability; learned findings have deterministic ids `F-L-<lineage>-<16 hex>` so a retry cannot create a second one; `origin` is `seed` or `learned` |
+> | `Evidence` | `declared_by`, `declared_at`, `verified` (always false: documents are never read or verified), `reference`, `source` (`filing` or `declared`), and `withdrawn`, `withdrawn_by`, `withdrawn_at` (a withdrawn document is kept and no longer counts) |
+> | `Correction` (new) | `(Claim)-[:CORRECTED_BY]->(Correction {correction_id, reason_code, previous_reason, escalation_reason, note, reviewer, ts})`: a person's reclassification of a notice. The `DenialNotice` is never edited. |
+> | `Resolution` | `confirmed_evidence`: the documents the reviewer says the decision relied on (null = not observed) |
+> | `Recommendation` | `support_state` (`NO_PRECEDENT`, `NO_APPEAL_BASIS`, `RECORDED_OUTCOMES`); a score is shown only for the last |
+> | `CaseEvent` types added | `HUMAN_CORRECTION`, `EVIDENCE_DECLARED`, `EVIDENCE_WITHDRAWN`, `FENCED_WRITE_REJECTED` (with `lease_gen` on `LEASE_EXPIRED`) |
+> | Evidence gap | each requirement carries `sources`: clause ids (policy requirements) or finding ids (suggestions learned from outcomes). Both the API and the replay build their edges from them. |
+
 Graph name: `claimbridge`. All dates are stored as **integers `YYYYMMDD`**, and timestamps as **epoch milliseconds**. This keeps comparisons trivial and portable in FalkorDB Cypher.
 
 ## 1. Three layers, plus coordination

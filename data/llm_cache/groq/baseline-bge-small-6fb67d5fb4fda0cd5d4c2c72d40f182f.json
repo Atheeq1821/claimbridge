@@ -1,0 +1,36 @@
+{
+ "task": "baseline-bge-small",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You help a caseworker respond to a denied health-insurance claim.\nYou get the claim and the passages retrieved from the policy documents (all policy versions) and from\npast case records. Decide:\n- the insurer's denial reason (one code);\n- the policy version in force on the service date (versions run from their effective date until the next one);\n- the evidence an appeal needs under the governing terms, and which of it the claim is missing;\n- which past cases (HC-...) are valid precedents for this claim (empty if none truly apply);\n- the disposition: APPEAL_VIABLE (all required evidence on file), APPEAL_NEEDS_EVIDENCE (an appeal is possible\n  once evidence is added) or NO_BASIS_ESCALATE (the governing terms leave no basis for appeal);\n- a short plan whose items cite the passage IDs they rely on.\nUse only the passages and claim facts. Never promise approval.",
+ "user": "CLAIM:\nClaim ID: EV-N-03\nService: Inpatient surgery\nService date: 2026-03-20\nFiled: 2026-04-06 (17 days after the service)\nEmergency: no\nIn network: yes\nEvidence already on file: Retroactive authorization request (RETRO_AUTH_REQUEST), Discharge summary (DISCHARGE_SUMMARY)\nDenial notice: Lumen Health Assurance - Notice of claim denial. Claim EV-N-03. Service: Inpatient surgery. Date of service: 2026-03-20. Our records show no pre-approval on file for this service. See Section 4.1 (Prior authorization for inpatient surgery) of your LumenCare Silver policy. You may appeal this decision within 180 days of this notice.\n\nRETRIEVED PASSAGES:\n[CL-C-2024-INPATIENT-PREAUTH] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 4.1, Prior authorization for inpatient surgery: Planned inpatient surgery requires prior authorization. If authorization was not obtained, a retroactive authorization request with the discharge summary may be submitted within the appeal window. Evidence required for an appeal under this section: Retroactive authorization request (RETRO_AUTH_REQUEST), Discharge summary (DISCHARGE_SUMMARY).\n\n[CL-C-2025-INPATIENT-PREAUTH] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 4.1, Prior authorization for inpatient surgery: Planned inpatient surgery requires prior authorization. If authorization was not obtained, a retroactive authorization request with the discharge summary may be submitted within the appeal window. Evidence required for an appeal under this section: Retroactive authorization request (RETRO_AUTH_REQUEST), Discharge summary (DISCHARGE_SUMMARY).\n\n[CS-HC-052] Past case HC-052. Policyholder: Grace Lin. Service: Outpatient MRI, service date 2025-04-08 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Outpatient MRI. Prior authorization was not obtained before this service was performed. See Section 4.2 (Prior authorization for outpatient MRI) of your LumenCare Silver policy. Evidence submitted on appeal: none. Verified outcome: UPHELD on 2025-06-24.\n\n[CL-C-2026-INPATIENT-PREAUTH] Policy LumenCare Silver, version V2026 (in force 2026-01-01 to open-ended). Section 4.1, Prior authorization for inpatient surgery: Planned inpatient surgery requires prior authorization. If authorization was not obtained, a retroactive authorization request with the discharge summary may be submitted within the appeal window. Evidence required for an appeal under this section: Retroactive authorization request (RETRO_AUTH_REQUEST), Discharge summary (DISCHARGE_SUMMARY).\n\n[CS-HC-023] Past case HC-023. Policyholder: Grace Lin. Service: Emergency room visit, service date 2024-04-18 (policy V2024). Emergency: yes. In network: no. Denial notice: Service: Emergency room visit. Services from non-participating providers are not covered under your plan. See Section 6.3 (Out-of-network services) of your LumenCare Silver policy. Evidence submitted on appeal: Emergency attestation (EMERGENCY_ATTESTATION), Discharge summary (DISCHARGE_SUMMARY). Verified outcome: OVERTURNED on 2024-07-28.\n\n[CS-HC-037] Past case HC-037. Policyholder: Grace Lin. Service: Physiotherapy, service date 2025-04-19 (policy V2025). Emergency: no. In network: yes. Denial notice: Service: Physiotherapy. A claim for the same member, provider, date and amount has already been processed. See Section 9.5 (Duplicate claims) of your LumenCare Silver policy. Evidence submitted on appeal: Itemized bill (ITEMIZED_BILL). Verified outcome: OVERTURNED on 2025-06-19.\n\n[CL-C-2024-ER-NOTIFY] Policy LumenCare Silver, version V2024 (in force 2024-01-01 to 2025-01-01). Section 6.2, Emergency admission notification: The Plan must be notified of an emergency admission as soon as reasonably possible. Evidence required for an appeal under this section: none.\n\n[CL-C-2025-ER-NOTIFY] Policy LumenCare Silver, version V2025 (in force 2025-01-01 to 2026-01-01). Section 6.2, Emergency admission notification: The Plan must be notified of an emergency admission as soon as reasonably possible. Evidence required for an appeal under this section: none.\n\nDecide and write the plan.",
+ "output": {
+  "denial_reason": "PREAUTH_MISSING",
+  "policy_version": "V2026",
+  "cited_section": "4.1",
+  "required_evidence": [
+   "RETRO_AUTH_REQUEST",
+   "DISCHARGE_SUMMARY"
+  ],
+  "missing_evidence": [],
+  "precedent_case_ids": [],
+  "disposition": "APPEAL_VIABLE",
+  "summary": "The claim was denied for missing prior authorization (Section 4.1). Under V2026 the required evidence for a retroactive appeal\u2014RETRO_AUTH_REQUEST and DISCHARGE_SUMMARY\u2014are already on file, so an appeal is viable.",
+  "items": [
+   {
+    "kind": "ACTION",
+    "text": "File an appeal citing Section\u202f4.1 and submit the existing retroactive authorization request and discharge summary.",
+    "cite_ids": [
+     "CL-C-2026-INPATIENT-PREAUTH"
+    ]
+   },
+   {
+    "kind": "WARNING",
+    "text": "Appeal must be submitted within 180\u202fdays of the denial notice.",
+    "cite_ids": []
+   }
+  ]
+ },
+ "input_tokens": 1992,
+ "output_tokens": 996
+}

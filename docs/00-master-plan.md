@@ -1,5 +1,9 @@
 # 00 — Master Plan
 
+> **Status (updated 17 Oct 2026): planning-era document, kept for context.** Several goals below were met, several were deliberately narrowed after review, and some claims were retired. The current truth lives in the README, `10-review-changes.md`, `11-pending-work-and-completion-plan.md` and `12-completion-report.md`.
+>
+> Retired or reworded: "memory makes the next decision better" is shown as *a recorded outcome changes the next checklist*, not as a measured gain in decisions (the static decision metric shows no gain over the no-memory ablation); "independent rule engine" is a separately implemented rule engine by the same team, not external validation; the model, the framework (Next.js, not Vite) and the evaluation protocol changed. No scoring promise (such as 95/100) or prize claim is made anywhere.
+
 ## 1. One-line pitch
 
 **ClaimBridge is an AI caseworker for denied health-insurance claims. It remembers verified resolutions, knows when prior knowledge no longer applies, and explains every recommendation through its evidence graph.**

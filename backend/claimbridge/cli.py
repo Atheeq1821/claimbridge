@@ -20,9 +20,13 @@ Claims
   approve <claim_id>          human approval of the recommendation
   outcome <claim_id> <OVERTURNED|UPHELD|PARTIAL>   record the real result
 
-Evaluation
-  eval [all|claimbridge|no_memory|baseline|baseline_strong|chaos|report]
-                              run the evaluation step(s); results in eval/results/
+Evaluation (resets its OWN graph: set GRAPH=claimbridge_eval first; the demo graph is refused)
+  eval [all|claimbridge|no_memory|baseline|baseline_strong|baseline_findings|chaos]
+                              start a NEW run in eval/runs/<run_id>/ and run the step(s)
+  eval ... --run <id>         add steps that have no output yet to an existing run (never overwrites)
+  eval report --run <id>      rebuild that run's report from its raw outputs
+  eval promote --run <id>     make a reviewed run the one the API and site serve (archives the old results)
+  eval generalization         the pre-registered unseen-case check (data/scenarios/generalization.yaml)
 
 Gates
   gate                        Phase 1: traps end to end + crash/resume
@@ -397,7 +401,13 @@ def main(argv=None):
     sub.add_parser("gate2")
     ev = sub.add_parser("eval")
     ev.add_argument("steps", nargs="*", default=["all"],
-                    choices=["all", "claimbridge", "no_memory", "baseline", "baseline_strong", "chaos", "report"])
+                    choices=["all", "claimbridge", "no_memory", "baseline", "baseline_strong", "baseline_findings",
+                             "chaos", "report", "promote", "generalization"])
+    ev.add_argument("--run", help="continue this run id (adds steps without output; never overwrites)")
+    ev.add_argument("--label", help="a short name for a new run")
+    ev.add_argument("--note", action="append", default=[], help="a sentence recorded in the run and its report (repeatable), e.g. why a system was not run")
+    ev.add_argument("--allow-invalid", action="store_true", help="promote a run despite recorded invalidity (not recommended)")
+    ev.add_argument("--file", help="generalization: an expectation file under data/scenarios (default generalization.yaml)")
     a = p.parse_args(argv)
 
     for stream in (sys.stdout, sys.stderr):
@@ -453,15 +463,40 @@ def main(argv=None):
     elif a.cmd == "gate2":
         sys.exit(0 if gate2() else 1)
     elif a.cmd == "eval":
-        run_eval(a.steps)
+        run_eval(a.steps, a.run, a.label, a.allow_invalid, a.file, a.note)
 
 
-def run_eval(steps: list[str]):
+def run_eval(steps: list[str], run_id: str | None = None, label: str | None = None, allow_invalid: bool = False,
+             file: str | None = None, notes: list[str] | None = None):
     from claimbridge.evaluation import harness
-    from claimbridge.seed.load import reset
-    order = ["claimbridge", "no_memory", "baseline", "baseline_strong", "chaos"]
+    from claimbridge.evaluation import provenance as pv
+    if "promote" in steps:
+        if not run_id:
+            raise SystemExit("promote needs --run <id>")
+        dest = harness.promote(run_id, allow_invalid)
+        print(f"promoted run {run_id} -> {dest}")
+        return
+    if config.GRAPH == "claimbridge":
+        raise SystemExit("The evaluation resets its graph. Refusing to touch the demo graph 'claimbridge': "
+                         "set GRAPH=claimbridge_eval (any other name) and run again.")
+    order = ["claimbridge", "no_memory", "baseline", "baseline_strong", "baseline_findings", "chaos"]
     todo = order if "all" in steps else [s for s in order if s in steps]
+    if "generalization" in steps:
+        from claimbridge.evaluation import generalization
+        run = harness.begin(run_id, label or "generalization", notes)
+        out = generalization.run(config.DATA_DIR / "scenarios" / file if file else None)
+        harness.build_report(run)                      # fold the result into the run's report
+        print(f"generalization: {out['passed']}/{out['total']} pre-registered expectations met "
+              f"(run {run.name}); report: {run / 'generalization.md'}")
+        return
+    run = harness.begin(run_id, label, notes)
+    print(f"run {run.name}  ({run})", flush=True)
     for s in todo:
+        name = {"baseline": "baseline_rag", "baseline_strong": "baseline_rag_strong",
+                "baseline_findings": "baseline_rag_findings"}.get(s, s)
+        if harness.has_output(name):
+            print(f"== eval: {s}: already has output in this run; not overwriting (start a new run to repeat it)")
+            continue
         print(f"== eval: {s}", flush=True)
         t0 = time.time()
         if s == "claimbridge":
@@ -472,18 +507,19 @@ def run_eval(steps: list[str]):
             harness.run_baseline(config.BASELINE_EMBED_MODEL, "baseline_rag")
         elif s == "baseline_strong":
             harness.run_baseline(config.BASELINE_STRONG_EMBED_MODEL, "baseline_rag_strong")
+        elif s == "baseline_findings":
+            harness.run_baseline(config.BASELINE_EMBED_MODEL, "baseline_rag_findings", variant="findings")
         elif s == "chaos":
             harness.run_chaos()
         print(f"   done in {time.time() - t0:.0f} s", flush=True)
-    if todo:
-        reset()  # leave the main graph in its seeded state
-    out = harness.build_report()
-    path = config.RESULTS_DIR / "latest.md"
-    print(f"\nreport: {path}\n")
+    out = harness.build_report(run)
+    print(f"\nrun {run.name}: {'VALID' if out['valid'] else 'INVALID: ' + '; '.join(out['run']['invalid_reasons'])}")
+    print(f"report: {run / 'report.md'}\n")
     for s, d in out["systems"].items():
         m = d["metrics"]
-        print(f"  {d['label']:34} correct {m['all_correct']}  wrong-precedent {m['M4_wrong_precedent_rate']}  "
-              f"disposition {m['M6_disposition_accuracy']}  version {m['M2_version_accuracy']}")
+        print(f"  {d['label']:34} correct {m['all_correct']}  decisions {m['decision_correct']}  "
+              f"wrong-precedent {m['M4_wrong_precedent_rate']}  completion {m['completion_rate']}")
+    print(f"\nTo publish it: GRAPH={config.GRAPH} python -m claimbridge.cli eval promote --run {run.name}")
 
 
 if __name__ == "__main__":

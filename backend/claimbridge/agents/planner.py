@@ -1,9 +1,8 @@
 """Resolution Planner: VERIFIED -> AWAITING_REVIEW.
 
-The disposition and the evidence gap are decided from the graph. The LLM only
-writes the wording of the checklist, and every item must cite graph nodes the
-Verifier returned for this claim (guard.py). If the LLM fails, a deterministic
-plan is used, so a claim never stalls on an LLM outage.
+The disposition and evidence gap come from the graph. LLM drafts are audited;
+published items always use graph templates and reviewed playbook steps. A valid
+citation ID alone cannot establish that arbitrary model prose is supported.
 """
 import json
 import logging
@@ -38,7 +37,7 @@ def decide_disposition(ctx: dict) -> str:
     return "APPEAL_VIABLE"
 
 
-def assess(ctx: dict, disposition: str, intake: dict | None) -> tuple[float, list[str]]:
+def assess(ctx: dict, disposition: str, intake: dict | None) -> tuple[float, list[str], str]:
     acc, rej = ctx["accepted_precedents"], ctx["rejected_precedents"]
     notes = []
     if not acc:
@@ -55,13 +54,15 @@ def assess(ctx: dict, disposition: str, intake: dict | None) -> tuple[float, lis
                          f"{r['governing']} governs this claim.")
     if intake and intake.get("needs_llm_review"):
         notes.append("The denial reason was inferred with low confidence; confirm it against the notice.")
+    # The support score is a smoothed count of recorded outcomes, not an approval probability. When there is
+    # nothing to count it is not 0%: it is absent, and `support_state` says why so no screen shows a number.
     if disposition == "NO_BASIS_ESCALATE":
-        confidence = 0.9                       # a clause-level gate, not a judgement call
+        confidence, state = 0.0, "NO_APPEAL_BASIS"      # a policy gate is not evidence of appeal success
     elif acc:
-        confidence = max(a["confidence"] or 0 for a in acc)
+        confidence, state = max(a["confidence"] or 0 for a in acc), "RECORDED_OUTCOMES"
     else:
-        confidence = 0.4
-    return round(confidence, 3), notes
+        confidence, state = 0.0, "NO_PRECEDENT"
+    return round(confidence, 3), notes, state
 
 
 def draft_plan(ctx: dict, allowed: dict, disposition: str) -> tuple[list[dict], str, dict]:
@@ -87,7 +88,9 @@ class Planner(Worker):
         intake = coord.load_checkpoint(g, cid, "RECEIVED")
 
         cp = ctx.checkpoint or {}
-        if cp.get("draft_done"):
+        if not config.PLANNER_DRAFT_AUDIT:
+            draft_items, summary, llm_meta = [], "", {"mode": "graph_templates"}
+        elif cp.get("draft_done"):
             draft_items, summary, llm_meta = cp["items"], cp["summary"], cp["llm"]
             ctx.notes.append("resumed from checkpoint; skipped the LLM call")
         else:
@@ -100,21 +103,17 @@ class Planner(Worker):
                                   {"draft_done": True, "items": draft_items, "summary": summary, "llm": llm_meta})
 
         items, stats = guard.apply(draft_items, pctx, allowed, disposition)
-        if disposition == "NO_BASIS_ESCALATE":
-            summary = guard.no_basis_summary(pctx)   # decided by the gate, so stated by it
-        elif not summary or guard.PROMISE.search(summary):
-            summary = {"NO_BASIS_ESCALATE": "No appeal basis was found in the policy terms that govern this claim.",
-                       "APPEAL_NEEDS_EVIDENCE": "An appeal may be possible once the missing evidence is supplied.",
-                       "APPEAL_VIABLE": "The evidence the governing clause requires is on file; an appeal can be filed."
-                       }[disposition]
-        confidence, uncertainty = assess(pctx, disposition, intake)
+        summary = (guard.no_basis_summary(pctx) if disposition == "NO_BASIS_ESCALATE" else
+                   {"APPEAL_NEEDS_EVIDENCE": "A caseworker should review the missing evidence before preparing an appeal.",
+                    "APPEAL_VIABLE": "The modeled evidence requirements are met. A caseworker should review the appeal."}[disposition])
+        confidence, uncertainty, support_state = assess(pctx, disposition, intake)
         for n, it in enumerate(items):
             it["order"], it["item_id"] = n + 1, f"REC-{cid}-{n + 1}"
         rec = {"disposition": disposition, "summary": summary, "confidence": confidence,
-               "uncertainty": uncertainty, "created_at": db.now_ms(),
+               "support_state": support_state, "uncertainty": uncertainty, "created_at": db.now_ms(),
                "llm_platform": llm_meta.get("platform"), "llm_model": llm_meta.get("model"),
                "guard_dropped": (stats["dropped_uncited"] + stats["dropped_unknown_id"] + stats["dropped_promise"]
-                                 + stats["dropped_moot"]),
+                                 + stats["dropped_moot"] + stats["dropped_unsupported"]),
                "guard_added": stats["added_required"]}
         recs.write_recommendation(g, cid, me, rec, items, allowed)
         payload = {"disposition": disposition, "confidence": confidence, "items": len(items),

@@ -1,0 +1,61 @@
+{
+ "task": "planner",
+ "platform": "groq",
+ "model": "openai/gpt-oss-120b",
+ "system": "You are a caseworker assistant helping a policyholder respond to a denied health-insurance claim.\nYou receive the facts the claims graph established (CONTEXT) and the IDs you may cite (ALLOWED_IDS).\n\nWrite a short, practical plan:\n- one EVIDENCE_NEEDED item per missing evidence type, citing its evidence code and the governing clause;\n- ACTION items for the next steps (use the playbook steps of accepted precedents when present, citing their step IDs);\n- one REJECTED_PRECEDENT item per rejected precedent, explaining in plain words why it does not apply, citing its ID\n  (and the governing clause for VERSION_DRIFT);\n- WARNING items for gates (no appeal basis) or uncertainty.\n\nRules: use only facts from CONTEXT; every item must cite at least one ID from ALLOWED_IDS; never cite anything else;\nnever promise approval or payment; the disposition is already decided, do not change it.",
+ "user": "CONTEXT:\n{\n \"claim\": {\n  \"claim_id\": \"EV-T2-03\",\n  \"service\": \"Ambulance transport\",\n  \"service_date\": 20250303,\n  \"is_emergency\": true,\n  \"in_network\": true,\n  \"filing_lag_days\": 38,\n  \"enrolled_months\": null\n },\n \"policy_version\": \"V2025\",\n \"denial_reason\": {\n  \"code\": \"NOT_MED_NECESSARY\",\n  \"name\": \"Not medically necessary\"\n },\n \"clause\": {\n  \"clause_id\": \"C-2025-AMBULANCE\",\n  \"section\": \"6.5\",\n  \"title\": \"Ambulance transport\",\n  \"text\": \"Ground ambulance transport is covered for emergencies, as documented by an emergency attestation.\"\n },\n \"gates\": [],\n \"evidence\": [\n  {\n   \"code\": \"EMERGENCY_ATTESTATION\",\n   \"name\": \"Emergency attestation\",\n   \"satisfied\": false,\n   \"sources\": [\n    \"C-2025-AMBULANCE\"\n   ]\n  }\n ],\n \"accepted_precedents\": [],\n \"rejected_precedents\": [\n  {\n   \"finding_id\": \"F-DME-NECESSITY\",\n   \"code\": \"LINEAGE_MISMATCH\",\n   \"statement\": \"Not medically necessary denials under L-DME-NECESSITY were overturned when the appeal included: Physician letter of medical necessity.\",\n   \"learned_on\": \"C-2025-DME-NECESSITY\",\n   \"governing\": \"C-2025-DME-NECESSITY\",\n   \"contradicted_by\": []\n  },\n  {\n   \"finding_id\": \"F-ER-NECESSITY\",\n   \"code\": \"LINEAGE_MISMATCH\",\n   \"statement\": \"Not medically necessary denials under L-ER-COVERAGE were overturned when the appeal included: Discharge summary.\",\n   \"learned_on\": \"C-2025-ER-COVERAGE\",\n   \"governing\": \"C-2025-ER-COVERAGE\",\n   \"contradicted_by\": []\n  },\n  {\n   \"finding_id\": \"F-PHYSIO-NECESSITY\",\n   \"code\": \"LINEAGE_MISMATCH\",\n   \"statement\": \"Not medically necessary denials under L-PHYSIO-LIMIT were overturned when the appeal included: Physician letter of medical necessity, Clinical progress notes.\",\n   \"learned_on\": \"C-2026-PHYSIO-LIMIT\",\n   \"governing\": \"C-2025-PHYSIO-LIMIT\",\n   \"contradicted_by\": []\n  },\n  {\n   \"finding_id\": \"F-PHYSIO-NOTES\",\n   \"code\": \"LINEAGE_MISMATCH\",\n   \"statement\": \"Not medically necessary denials under L-PHYSIO-LIMIT were overturned when the appeal included: Clinical progress notes.\",\n   \"learned_on\": \"C-2025-PHYSIO-LIMIT\",\n   \"governing\": \"C-2025-PHYSIO-LIMIT\",\n   \"contradicted_by\": []\n  }\n ],\n \"disposition\": \"APPEAL_NEEDS_EVIDENCE\"\n}\nALLOWED_IDS:\n[\"C-2025-AMBULANCE\", \"C-2025-DME-NECESSITY\", \"C-2025-ER-COVERAGE\", \"C-2025-PHYSIO-LIMIT\", \"C-2026-PHYSIO-LIMIT\", \"EMERGENCY_ATTESTATION\", \"F-DME-NECESSITY\", \"F-ER-NECESSITY\", \"F-PHYSIO-NECESSITY\", \"F-PHYSIO-NOTES\", \"V2025\"]\nWrite the plan.",
+ "output": {
+  "summary": "The claim was denied for lack of an emergency attestation. Supplying the required attestation will allow the appeal to proceed.",
+  "items": [
+   {
+    "kind": "EVIDENCE_NEEDED",
+    "text": "Provide a signed emergency attestation documenting that the ambulance transport was an emergency.",
+    "cite_ids": [
+     "EMERGENCY_ATTESTATION",
+     "C-2025-AMBULANCE"
+    ]
+   },
+   {
+    "kind": "ACTION",
+    "text": "Submit the emergency attestation to the insurer as soon as possible.",
+    "cite_ids": [
+     "C-2025-AMBULANCE"
+    ]
+   },
+   {
+    "kind": "REJECTED_PRECEDENT",
+    "text": "The DME precedent (F-DME-NECESSITY) does not apply because this denial concerns ambulance transport under clause C-2025-AMBULANCE, not DME, so the lineage mismatch rule excludes it.",
+    "cite_ids": [
+     "F-DME-NECESSITY",
+     "C-2025-DME-NECESSITY"
+    ]
+   },
+   {
+    "kind": "REJECTED_PRECEDENT",
+    "text": "The ER coverage precedent (F-ER-NECESSITY) is irrelevant since the issue is ambulance coverage under C-2025-AMBULANCE, not emergency room services.",
+    "cite_ids": [
+     "F-ER-NECESSITY",
+     "C-2025-ER-COVERAGE"
+    ]
+   },
+   {
+    "kind": "REJECTED_PRECEDENT",
+    "text": "The physiotherapy limit precedent (F-PHYSIO-NECESSITY) does not apply because the claim is for ambulance transport, not physiotherapy, under clause C-2025-AMBULANCE.",
+    "cite_ids": [
+     "F-PHYSIO-NECESSITY",
+     "C-2025-PHYSIO-LIMIT"
+    ]
+   },
+   {
+    "kind": "REJECTED_PRECEDENT",
+    "text": "The physiotherapy notes precedent (F-PHYSIO-NOTES) is not relevant; the denial is based on ambulance coverage rules, not physiotherapy limits.",
+    "cite_ids": [
+     "F-PHYSIO-NOTES",
+     "C-2025-PHYSIO-LIMIT"
+    ]
+   }
+  ]
+ },
+ "input_tokens": 1270,
+ "output_tokens": 1117
+}

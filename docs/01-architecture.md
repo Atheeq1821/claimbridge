@@ -1,5 +1,14 @@
 # 01 — Architecture
 
+> **Status (updated 17 Oct 2026): planning-era architecture with as-built deltas.**
+>
+> - **Models:** Groq `openai/gpt-oss-120b` by default (switchable with `LLM_PLATFORM=groq|openai|claude`; `fake` for tests). Not Claude Haiku/Sonnet. The LLM only classifies a notice that cites no section; published plans are graph templates and reviewed playbook steps.
+> - **Web:** Next.js 16 + Tailwind 4 + SWR (not Vite/shadcn/react-force-graph). The evidence graph is a custom SVG replay.
+> - **Processes:** Docker Compose profile `app` = `falkordb`, `seed` (resets the demo graph on start), `agents` (the Supervisor and its worker pool), `api` (FastAPI, bound to 127.0.0.1), `web` (port 3100). FalkorDB's ports are bound to localhost only.
+> - **Access:** `AUTH_MODE=demo` (public sandbox) or `protected` (server-issued tokens, tenant-scoped); see `06-api-and-ui.md`.
+> - **Coordination:** database-clock leases, a monotonic fencing token (`lease_gen`) and expiry checked in the same query that writes; see `04-agents-and-memory.md` and `backend/claimbridge/tools/__init__.py`.
+> - **Evaluation:** one directory per run with provenance; see `07-evaluation.md`.
+
 ## 1. Big picture
 
 ```
