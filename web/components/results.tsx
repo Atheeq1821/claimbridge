@@ -81,7 +81,7 @@ export function HeadlineTable({ data, compact = false }: { data: EvalData; compa
     <div className="overflow-x-auto">
       <table className={`w-full border-collapse text-left ${compact ? "" : "min-w-[640px]"}`}>
         <thead>
-          <tr className="border-b border-ink">
+          <tr className="border-b border-rule-2">
             <th className="py-2 pr-4 text-[12px] font-semibold uppercase tracking-[0.06em] text-ink-3">
               {data.scored_claims ?? ""} claims, same LLM, same documents
             </th>
@@ -113,7 +113,7 @@ export function HeadlineTable({ data, compact = false }: { data: EvalData; compa
                     <td
                       key={s}
                       className={`py-2 pl-3 text-right font-serif text-[17px] tabular sm:pl-4 ${
-                        s === "claimbridge" ? "bg-wash font-semibold text-ink" : isBest ? "text-ink" : "text-ink-3"
+                        s === "claimbridge" ? "bg-wash-2 font-semibold text-ink" : isBest ? "text-ink" : "text-ink-3"
                       } ${compact && s === "baseline_rag_strong" ? "hidden sm:table-cell" : ""}`}
                     >
                       {fmt(v, isPct)}
@@ -132,7 +132,7 @@ export function HeadlineTable({ data, compact = false }: { data: EvalData; compa
 export function EvaluationView() {
   const { data, error } = useEval();
   if (error) return <ErrorNote error={error} />;
-  if (!data) return <div className="mx-auto h-96 max-w-[1280px] animate-pulse bg-wash" />;
+  if (!data) return <div className="mx-auto h-96 max-w-[1280px] animate-pulse rounded-[12px] bg-wash" />;
   const systems = ORDER.filter((s) => data.systems[s]);
   const cb = data.systems.claimbridge;
   const ch = data.chaos;
@@ -140,7 +140,7 @@ export function EvaluationView() {
 
   return (
     <div className="mx-auto max-w-[1280px]">
-      <h1 className="font-serif text-[32px] font-semibold leading-[1.1] tracking-[-0.015em]">Evaluation</h1>
+      <h1 className="text-[26px] font-semibold leading-[1.15] tracking-[-0.03em]">Evaluation</h1>
       <p className="mt-1.5 max-w-[78ch] text-[13.5px] text-ink-2">
         Every system answers the same {data.scored_claims} synthetic claims with the same LLM ({data.llm.split("/").slice(1).join("/")}) and the
         same documents: every clause of every policy version and every past case with its verified outcome. Only graph reasoning differs.

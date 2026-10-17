@@ -19,7 +19,7 @@ function Versions({ f, present }: { f: Finding; present: string[] }) {
           <span
             key={v}
             className={`px-1.5 font-mono text-[11px] leading-[18px] tabular ${
-              ok ? "border border-ink text-ink" : "border border-dashed border-rule-2 text-ink-3 line-through"
+              ok ? "rounded-[4px] border border-rule-2 bg-wash-2 text-ink" : "rounded-[4px] border border-dashed border-rule-2 text-ink-3 line-through"
             }`}
           >
             {v}
@@ -56,14 +56,14 @@ function WorldPanel({ memory, onChange }: { memory: Memory; onChange: () => void
 
   const present = memory.versions.map((v) => v.label);
   return (
-    <section className="border border-ink p-4">
-      <h2 className="font-serif text-[16px] font-semibold">Policy world</h2>
+    <section className="rounded-[12px] border border-rule bg-wash p-4">
+      <h2 className="text-[14px] font-semibold">Policy world</h2>
       <ol className="mt-3 flex items-center gap-2">
         {ALL_VERSIONS.map((v, i) => (
           <li key={v} className="flex items-center gap-2">
             <span
-              className={`px-2 py-0.5 font-mono text-[12px] tabular ${
-                present.includes(v) ? "bg-ink text-white" : "border border-dashed border-rule-2 text-ink-3"
+              className={`rounded-[6px] px-2 py-0.5 font-mono text-[12px] tabular ${
+                present.includes(v) ? "bg-ink text-paper" : "border border-dashed border-rule-2 text-ink-3"
               }`}
             >
               {v}
@@ -135,7 +135,7 @@ function Privacy({ findings }: { findings: Finding[] }) {
       <SectionHead title="Shared memory, private cases" aside="the precedent is shared; the cases behind it are not" />
       <div className="flex flex-wrap items-center gap-2 text-[13px]">
         <span className="text-ink-2">Viewing</span>
-        <select value={fid} onChange={(e) => setFid(e.target.value)} aria-label="Precedent" className="h-8 rounded-[3px] border border-rule-2 bg-paper px-2 font-mono text-[12px] hover:border-ink">
+        <select value={fid} onChange={(e) => setFid(e.target.value)} aria-label="Precedent" className="h-8 rounded-[8px] border border-rule bg-wash px-2 font-mono text-[12px] hover:border-rule-2">
           {findings.map((f) => (
             <option key={f.finding_id} value={f.finding_id}>
               {f.finding_id}
@@ -143,7 +143,7 @@ function Privacy({ findings }: { findings: Finding[] }) {
           ))}
         </select>
         <span className="text-ink-2">as policyholder</span>
-        <select value={tenant} onChange={(e) => setTenant(e.target.value)} aria-label="Policyholder" className="h-8 rounded-[3px] border border-rule-2 bg-paper px-2 hover:border-ink">
+        <select value={tenant} onChange={(e) => setTenant(e.target.value)} aria-label="Policyholder" className="h-8 rounded-[8px] border border-rule bg-wash px-2 hover:border-rule-2">
           {TENANTS.map(([id, name]) => (
             <option key={id} value={id}>
               {name}
@@ -192,7 +192,7 @@ export function MemoryView() {
 
   return (
     <div className="mx-auto max-w-[1280px]">
-      <h1 className="font-serif text-[32px] font-semibold leading-[1.1] tracking-[-0.015em]">Memory</h1>
+      <h1 className="text-[26px] font-semibold leading-[1.15] tracking-[-0.03em]">Memory</h1>
       <p className="mt-1.5 max-w-[70ch] text-[13.5px] text-ink-2">
         Precedents distilled from verified outcomes. Each is good law only in the policy versions whose clause it was learned on; later
         verified losses count against it.
@@ -200,7 +200,7 @@ export function MemoryView() {
 
       <div className="mt-6 grid gap-x-10 gap-y-8 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0">
-          {!data && <div className="h-64 animate-pulse bg-wash" />}
+          {!data && <div className="h-64 animate-pulse rounded-[12px] bg-wash" />}
           {data &&
             STATUS_ORDER.filter((s) => grouped[s]?.length).map((s, gi) => {
               const st = FINDING_STATUS[s];
@@ -210,7 +210,7 @@ export function MemoryView() {
                     top={gi === 0}
                     title={
                       <span className="inline-flex items-center gap-2">
-                        <Treatment kind={st.signal} label={st.label} size={15} className="font-serif text-[19px] font-semibold" />
+                        <Treatment kind={st.signal} label={st.label} size={15} className="text-[17px] font-semibold" />
                         <span className="font-sans text-[13px] font-normal text-ink-3 tabular">{grouped[s].length}</span>
                       </span>
                     }
@@ -223,13 +223,13 @@ export function MemoryView() {
                           <div className="flex flex-wrap items-baseline gap-x-2">
                             <Mono className="font-medium text-ink">{f.finding_id}</Mono>
                             {f.origin === "learned" && (
-                              <span className="bg-ink px-1.5 text-[10.5px] font-semibold uppercase leading-[17px] tracking-[0.06em] text-white">learned live</span>
+                              <span className="rounded-[4px] bg-link px-1.5 text-[10.5px] font-semibold uppercase leading-[17px] tracking-[0.06em] text-accent-ink">learned live</span>
                             )}
                             <span className="text-[12px] text-ink-3">
                               {f.reason_name} · §{f.section} {f.clause_title}
                             </span>
                           </div>
-                          <p className="mt-1 max-w-[75ch] font-serif text-[15px] leading-snug text-ink">{f.statement}</p>
+                          <p className="mt-1 max-w-[75ch] text-[14px] leading-snug text-ink">{f.statement}</p>
                           {f.stale_because.length > 0 && (
                             <p className="mt-1 text-[12.5px] text-caution-ink">
                               Superseded by <Mono>{f.stale_because.join(", ")}</Mono>; still applies to claims under {f.valid_in.join(" and ")}.
@@ -294,8 +294,8 @@ export function MemoryView() {
         <aside className="space-y-6 lg:sticky lg:top-6 lg:self-start">
           {data && <WorldPanel memory={data} onChange={() => mutate()} />}
           {data && (
-            <section className="text-[12.5px] text-ink-2">
-              <h2 className="mb-2 border-b border-ink pb-1.5 font-serif text-[15px] font-semibold">Learned in this session</h2>
+            <section className="rounded-[12px] border border-rule bg-wash p-4 text-[12.5px] text-ink-2">
+              <h2 className="mb-2 text-[14px] font-semibold text-ink">Learned in this session</h2>
               {learned.length ? (
                 <ul className="space-y-1">
                   {learned.map((f) => (

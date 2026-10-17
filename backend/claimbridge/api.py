@@ -8,7 +8,9 @@ Agents keep coordinating through the graph; the API never talks to them directly
 """
 import asyncio
 import json
+import random
 import threading
+from datetime import date
 from functools import lru_cache
 
 from fastapi import FastAPI, Header, HTTPException
@@ -27,10 +29,18 @@ STEPS = ["RECEIVED", "CLASSIFIED", "RETRIEVED", "VERIFIED", "AWAITING_REVIEW", "
          "VERIFIED_OUTCOME", "CURATED"]
 _world_lock = threading.Lock()
 _world_job: dict = {"running": False, "action": None, "error": None}
+_new_lock = threading.Lock()
 
 
 def g():
     return db.connect()
+
+
+@app.on_event("startup")
+def _warm_embedder():
+    # Entering a claim by hand embeds its notice; load the model now, not on the first click.
+    from claimbridge.embed import embed
+    threading.Thread(target=lambda: embed(["warm up"]), daemon=True).start()
 
 
 @lru_cache(maxsize=1)
@@ -126,6 +136,105 @@ def inject(body: InjectBody):
         ids += [c for c, x in t.items() if (grp == "ALL") or (grp == "NORMAL" and not x["trap"])
                 or x["trap"] == grp]
     return {"injected": coord.inject(g(), list(dict.fromkeys(ids)))}
+
+
+@app.get("/api/catalog")
+def catalog():
+    """What a caseworker can choose from when entering a claim by hand."""
+    raw = load().raw
+    pick = lambda kind: [{"code": x["code"], "name": x["name"]} for x in raw[kind]]  # noqa: E731
+    return {"tenants": [{"code": t["tenant_id"], "name": t["display_name"]} for t in raw["tenants"]],
+            "services": pick("service_categories"), "reasons": pick("denial_reasons"),
+            "evidence": pick("evidence_types")}
+
+
+def _date_int(s: str) -> int:
+    try:
+        y, m, d = (int(x) for x in s.split("-"))
+        return date(y, m, d).year * 10000 + m * 100 + d
+    except ValueError:
+        raise HTTPException(422, "Dates must be YYYY-MM-DD.") from None
+
+
+class SampleBody(BaseModel):
+    service: str
+    reason: str
+    service_date: str
+
+
+@app.post("/api/claims/sample-notice")
+def sample_notice(body: SampleBody):
+    """A realistic denial notice for (service, reason), citing the clause in force on that date."""
+    from claimbridge.seed.notices import notice_text
+    kn = load()
+    sd = _date_int(body.service_date)
+    try:
+        clause = kn.route(body.reason, body.service, kn.version_for(sd))
+    except (ValueError, KeyError):
+        clause = None
+    try:
+        text = notice_text(random.Random(), "(new)", kn.name("service_categories", body.service), sd,
+                           body.reason, clause, "cited")
+    except KeyError:
+        raise HTTPException(422, "Unknown service or denial reason.") from None
+    return {"text": text, "cites": clause.clause_id if clause else None}
+
+
+class NewClaimBody(BaseModel):
+    tenant_id: str
+    service: str
+    service_date: str              # YYYY-MM-DD
+    filed_date: str                # YYYY-MM-DD
+    notice: str
+    evidence: list[str] = []
+    in_network: bool = True
+    is_emergency: bool = False
+    enrolled_months: int | None = 12
+    file_now: bool = True
+
+
+@app.post("/api/claims/new")
+def new_claim(body: NewClaimBody):
+    """Enter a denied claim by hand. It gets the same graph shape as a seeded claim
+    (Claim, DenialNotice, Evidence) and, if asked, goes straight to the agents."""
+    from claimbridge.seed.load import load_cases_into
+    kn, gr = load(), g()
+    cat = catalog()
+    if body.tenant_id not in {t["code"] for t in cat["tenants"]}:
+        raise HTTPException(422, "Choose one of the fictional policyholders.")
+    if body.service not in {s["code"] for s in cat["services"]}:
+        raise HTTPException(422, "Unknown service.")
+    bad = set(body.evidence) - {e["code"] for e in cat["evidence"]}
+    if bad:
+        raise HTTPException(422, f"Unknown evidence: {', '.join(sorted(bad))}.")
+    notice = " ".join(body.notice.split())
+    if not 40 <= len(notice) <= 4000:
+        raise HTTPException(422, "The denial notice should be between 40 and 4000 characters.")
+    sd, fd = _date_int(body.service_date), _date_int(body.filed_date)
+    lag = (date(fd // 10000, fd // 100 % 100, fd % 100) - date(sd // 10000, sd // 100 % 100, sd % 100)).days
+    if lag < 0:
+        raise HTTPException(422, "The claim cannot be filed before the service date.")
+    try:
+        version = kn.version_for(sd)
+    except ValueError:
+        raise HTTPException(422, "No policy version covers that service date.") from None
+    if not db.one(gr, "MATCH (v:PolicyVersion {version_id: $v}) RETURN v.version_id AS v", {"v": version}):
+        raise HTTPException(409, f"The {version[1:]} policy is not published in this world yet.")
+
+    with _new_lock:
+        n = db.one(gr, """MATCH (c:Claim) WHERE c.claim_id STARTS WITH 'NC-'
+                          RETURN count(c) AS n""")["n"]
+        cid = f"NC-{n + 1:03d}"
+        notice = notice.replace("(new)", cid)
+        load_cases_into(gr, kn, [{
+            "claim_id": cid, "tenant_id": body.tenant_id, "source": "manual",
+            "service": body.service, "service_date": sd, "filed_date": fd, "filing_lag_days": lag,
+            "amount": None, "in_network": body.in_network, "is_emergency": body.is_emergency,
+            "enrolled_months": body.enrolled_months, "session_number": None,
+            "notice_text": notice, "notice_issued": fd, "evidence": list(dict.fromkeys(body.evidence)),
+        }])
+    filed = coord.inject(gr, [cid]) if body.file_now else []
+    return {"claim_id": cid, "filed": bool(filed), "version": version}
 
 
 @app.get("/api/claims/{cid}")

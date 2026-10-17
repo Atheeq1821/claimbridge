@@ -89,16 +89,18 @@ export function Treatment({
 
 export function Wordmark({ className = "", invert = false }: { className?: string; invert?: boolean }) {
   return (
-    <span className={`inline-flex items-baseline gap-2 ${className}`}>
-      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden className="self-center">
-        <path d="M1 13.5h16" stroke={invert ? "#fff" : "var(--ink)"} strokeWidth="1.6" />
-        <path d="M3 13.5V8M15 13.5V8" stroke={invert ? "#fff" : "var(--ink)"} strokeWidth="1.6" />
-        <path d="M3 8c2-4.5 10-4.5 12 0" fill="none" stroke={invert ? "#fff" : "var(--ink)"} strokeWidth="1.6" />
-        <path d="M9 1.2 12.4 4.6 9 8 5.6 4.6z" fill="var(--pos)" />
-      </svg>
-      <span className={`font-serif text-[19px] font-semibold tracking-[-0.01em] ${invert ? "text-white" : "text-ink"}`}>
-        ClaimBridge
+    <span className={`inline-flex items-center gap-2 ${className}`} data-invert={invert || undefined}>
+      <span
+        aria-hidden
+        className="grid size-[22px] place-items-center rounded-[6px]"
+        style={{ background: "linear-gradient(135deg, var(--link), #c4b5fd)" }}
+      >
+        <svg width="14" height="14" viewBox="0 0 18 18">
+          <path d="M2 13.5h14M4 13.5V9M14 13.5V9" stroke="var(--accent-ink)" strokeWidth="1.8" />
+          <path d="M4 9c1.8-4 8.2-4 10 0" fill="none" stroke="var(--accent-ink)" strokeWidth="1.8" />
+        </svg>
       </span>
+      <span className="text-[15px] font-semibold tracking-[-0.02em] text-ink">ClaimBridge</span>
     </span>
   );
 }

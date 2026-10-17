@@ -58,7 +58,7 @@ export function AgentsView() {
     <div className="mx-auto max-w-[1280px]">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-serif text-[32px] font-semibold leading-[1.1] tracking-[-0.015em]">Agents</h1>
+          <h1 className="text-[26px] font-semibold leading-[1.15] tracking-[-0.03em]">Agents</h1>
           <p className="mt-1.5 max-w-[72ch] text-[13.5px] text-ink-2">
             Each worker is its own process. They never message each other: a worker leases a claim in the graph, does one step, and
             commits. Kill one mid-step and its lease expires; another replica resumes from the checkpoint it left behind.
@@ -78,12 +78,12 @@ export function AgentsView() {
         </div>
       )}
 
-      <div className="mt-6 grid border-y border-ink sm:grid-cols-2 lg:grid-cols-5">
+      <div className="mt-6 grid gap-px overflow-hidden rounded-[12px] border border-rule bg-rule sm:grid-cols-2 lg:grid-cols-5">
         {ROLES.map((r) => {
           const ws = byRole(r);
           return (
-            <section key={r} className="border-b border-rule p-4 last:border-b-0 sm:border-r lg:border-b-0 lg:last:border-r-0">
-              <h2 className="font-serif text-[17px] font-semibold">{ROLE_LABEL[r]}</h2>
+            <section key={r} className="bg-wash p-4">
+              <h2 className="text-[15px] font-semibold tracking-[-0.02em]">{ROLE_LABEL[r]}</h2>
               <p className="mt-0.5 min-h-[34px] text-[12px] leading-snug text-ink-3">{ROLE_JOB[r]}</p>
               <ul className="mt-3 space-y-2.5">
                 {ws.map((w) => (
@@ -106,7 +106,7 @@ export function AgentsView() {
                         <button
                           onClick={() => act(`kill-${w.agent_id}`, `/api/agents/${w.agent_id}/kill`)}
                           disabled={!!busy}
-                          className="rounded-[2px] px-1.5 py-0.5 font-medium text-neg hover:bg-neg-wash disabled:opacity-50"
+                          className="rounded-[5px] px-1.5 py-0.5 font-medium text-neg hover:bg-neg-wash disabled:opacity-50"
                         >
                           {busy === `kill-${w.agent_id}` ? "Killing…" : "Kill"}
                         </button>
