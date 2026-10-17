@@ -62,6 +62,17 @@ def test_guard_adds_warning_when_no_basis():
     assert items[0]["kind"] == "WARNING" and items[0]["cite_ids"] == ["C-1"]
 
 
+def test_guard_drops_moot_steps_when_no_basis():
+    draft = [{"kind": "EVIDENCE_NEEDED", "text": "Get the letter.", "cite_ids": ["E1", "C-1"]},
+             {"kind": "ACTION", "text": "File the appeal.", "cite_ids": ["C-1"]},
+             {"kind": "REJECTED_PRECEDENT", "text": "Do not rely on F-OLD.", "cite_ids": ["F-OLD", "C-1"]}]
+    items, stats = guard.apply(draft, {**CTX, "gates": ["FILED_LATE"]}, ALLOWED, "NO_BASIS_ESCALATE")
+    assert stats["dropped_moot"] == 2
+    assert not any(i["kind"] == "EVIDENCE_NEEDED" for i in items)
+    assert any(i["kind"] == "ACTION" and "Escalate" in i["text"] for i in items)
+    assert any(i["kind"] == "REJECTED_PRECEDENT" for i in items)
+
+
 # ------------------------------------------------------------ planner + memory
 
 def test_planner_writes_cited_recommendation(seeded, truth):

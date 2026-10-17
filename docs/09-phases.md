@@ -5,7 +5,7 @@
 | **1** | Foundation and spine | Thu Oct 16 | T1 runs end to end across separate processes with correct rejection | ✅ **Done** |
 | 2 | Full agent loop and memory | Fri Oct 17, morning | Plan → approve → learn → stale → contradict. Kill-and-resume through the Supervisor. | ✅ **Done** |
 | 3 | Evaluation | Fri Oct 17, afternoon | `make eval` prints ClaimBridge vs. no-memory vs. baseline RAG, failures included | ✅ **Done** |
-| 4 | API and UI | Fri evening to Sat morning | Every demo step can be clicked through live | |
+| 4 | API and UI | Fri evening to Sat morning | Every demo step can be clicked through live | ✅ **Done** |
 | 5 | Deploy and harden | Sat Oct 18, morning | Live URL works from a phone. Feature freeze at 1:00 PM IST. | |
 | 6 | Docs, video, submit | Sat Oct 18, afternoon | Submitted by 9:00 PM IST | |
 
@@ -148,3 +148,34 @@ uv run python -m claimbridge.cli reset --upto V2025 && uv run python -m claimbri
 ### Notes
 - Groq's free tier allows 200K tokens a day for `gpt-oss-120b`, refilling at about 139 tokens a minute. A full evaluation from scratch needs about 400K tokens. Every answer is recorded under `data/llm_cache/groq/`, so `cli eval all` now replays in a few minutes with no LLM calls.
 - The OpenAI-compatible provider retries once when a generation breaks off mid-JSON (`json_validate_failed`). This happened once in about 140 baseline calls.
+
+---
+
+## Phase 4 — API and UI ✅
+
+### Deliverables
+
+| # | Deliverable | Where | Result |
+|---|---|---|---|
+| 4.1 | FastAPI service over the tested graph tools | `backend/claimbridge/api.py` | Overview, claims, case, evidence graph, approve/outcome, memory, tenant-scoped precedents, policy world, agents kill/start, eval, and an SSE stream |
+| 4.2 | Visual world chosen on the Impeccable decision page | `PRODUCT.md`, `.impeccable/surfaces/` | "The Citator": drawn citator signals (stop sign = superseded or contradicted, triangle = distinguished, diamond = followed, ring = not relevant), navy ink on paper, Source Serif 4 / Public Sans / JetBrains Mono, 1px rules |
+| 4.3 | Landing page for judges | `web/components/landing.tsx` | A real citator card (EV-T6-01, where plain RAG failed), the four treatments, the five-agent pipeline, and live results |
+| 4.4 | Caseworker console | `web/components/*` | Docket, case view with evidence graph, memory with policy-world controls and privacy demo, agents with kill/start, evaluation |
+| 4.5 | Live updates | `console-shell.tsx`, `/api/stream` | Every page revalidates when the graph changes |
+| 4.6 | Containers | `web/Dockerfile`, `docker-compose.yml` (profile `app`) | FalkorDB, seed, API, supervised agent pool, and web on :3100 |
+
+### Verified
+- **Demo flows through the API** (the same calls the buttons make):
+  - file all 35 claims; all reach review with the pool running;
+  - approve EV-M-A and record the outcome OVERTURNED, after which the Curator learns `F-L-AMBULANCE-1`;
+  - recording an outcome before approval is refused with a clear message;
+  - kill `verifier-2`: the Supervisor kills it, and starting another brings up `verifier-3`.
+- **Guard bug found in the UI and fixed:** "no basis" claims showed evidence-gathering steps that contradicted their own holding. The guard now drops those steps, adds a cited escalation step, and states the gate as the summary. There's a new test, and no new LLM calls were needed; recordings replayed.
+- **Build and checks:** `next build` passes; every console page prerenders as a static shell and the case page streams. `tsc` and `eslint` are clean. The Impeccable detector reports no findings.
+- **Layout:** no horizontal overflow at 390px on any page.
+- **Finish review:** an independent finish review (fresh context, screenshots at 1440 and 390) returned **fix** with 8 material findings, and all 8 were addressed: graph labels, citation wording, mobile docket, mobile overflow, section spacing, the stage filter, the disabled primary action, and the recorded landing deviation.
+- **Backend tests:** 33 passed.
+
+### Notes
+- **Dev origin:** open the dev server at `http://localhost:3100`. Next 16 refuses dev assets to other origins unless they're listed in `allowedDevOrigins`; `127.0.0.1` is now listed.
+- **Dev ports:** FalkorDB Browser uses :3000, the web app :3100, the API :8000.

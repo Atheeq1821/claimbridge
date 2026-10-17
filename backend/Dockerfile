@@ -9,6 +9,7 @@ RUN uv sync --frozen --no-dev --no-install-project
 
 COPY backend/ ./
 COPY data/ /app/data/
+COPY eval/ /app/eval/
 RUN uv sync --frozen --no-dev
 
 ENV CB_DATA_DIR=/app/data EMBED_CACHE=/app/.fastembed_cache PATH="/app/backend/.venv/bin:$PATH"

@@ -1,0 +1,140 @@
+@import "tailwindcss";
+
+/* ClaimBridge — the Citator world.
+   Paper and navy ink; precedent treatment is signalled the way a legal citator
+   signals it: shape, colour and words together, never colour alone. */
+
+:root {
+  --paper: #ffffff;
+  --wash: #f4f6fa;
+  --wash-2: #eaeef5;
+  --ink: #14213d;
+  --ink-2: #3a4763;
+  --ink-3: #5e6984;
+  --rule: #d8dde6;
+  --rule-2: #b9c1cf;
+  --link: #1f5fad;
+
+  --neg: #b3261e;        /* superseded / overruled: do not rely */
+  --neg-wash: #fbeceb;
+  --caution: #c99a06;    /* distinguished */
+  --caution-ink: #7a5c00;
+  --caution-wash: #fbf4dc;
+  --pos: #2f7d4f;        /* followed / good law */
+  --pos-wash: #e9f4ee;
+  --neutral: #8a93a6;    /* not relevant */
+
+  --rail: #14213d;
+  --rail-ink: #c9d1e2;
+  --rail-ink-strong: #ffffff;
+  --rail-rule: #2a3a5c;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-wash: var(--wash);
+  --color-wash-2: var(--wash-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-rule: var(--rule);
+  --color-rule-2: var(--rule-2);
+  --color-link: var(--link);
+  --color-neg: var(--neg);
+  --color-neg-wash: var(--neg-wash);
+  --color-caution: var(--caution);
+  --color-caution-ink: var(--caution-ink);
+  --color-caution-wash: var(--caution-wash);
+  --color-pos: var(--pos);
+  --color-pos-wash: var(--pos-wash);
+  --color-neutral: var(--neutral);
+  --color-rail: var(--rail);
+  --color-rail-ink: var(--rail-ink);
+  --color-rail-rule: var(--rail-rule);
+
+  --font-serif: var(--font-source-serif), Georgia, serif;
+  --font-sans: var(--font-public-sans), system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html {
+  color-scheme: light;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  font-feature-settings: "kern", "liga";
+  text-rendering: optimizeLegibility;
+}
+
+/* Browser surfaces carry the design too. */
+::selection {
+  background: #cfdcf3;
+  color: var(--ink);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule-2) transparent;
+}
+
+:focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+a {
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+
+input,
+select,
+textarea {
+  caret-color: var(--link);
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+/* State feedback: a status cell turns over like a filed card when it changes (two frames, no easing). */
+@keyframes turn {
+  0% { transform: rotateX(0deg); }
+  50% { transform: rotateX(90deg); }
+  100% { transform: rotateX(0deg); }
+}
+.turn {
+  animation: turn 240ms steps(2, jump-none);
+  transform-origin: center;
+}
+
+/* The one authored motion: the citator signal is stamped once, on arrival. */
+@keyframes stamp {
+  from { transform: scale(1.35); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.stamp {
+  animation: stamp 520ms var(--ease-out-expo) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .turn,
+  .stamp {
+    animation: none;
+  }
+}

@@ -10,10 +10,29 @@ PROMISE = re.compile(r"\b(guarantee[sd]?|will (definitely |certainly )?be (appro
                      re.I)
 
 
+GATE_TEXT = {
+    "EXCLUSION_NO_BASIS": "the governing clause excludes this service",
+    "EMERGENCY_REQUIRED": "out-of-network care is covered only in emergencies, and this was not one",
+    "FILED_LATE": "the claim was filed after the limit in force on the service date",
+    "WAITING_NOT_MET": "the member had not completed the waiting period in force on the service date",
+}
+
+
+def no_basis_summary(ctx: dict) -> str:
+    reasons = "; ".join(GATE_TEXT.get(g, g.replace("_", " ").lower()) for g in ctx["gates"])
+    return (f"No appeal basis under §{ctx['clause']['section']} {ctx['clause']['title']}: {reasons}. "
+            "Escalate to a human reviewer rather than gathering evidence.")
+
+
 def apply(draft_items: list[dict], ctx: dict, allowed: dict[str, str], disposition: str) -> tuple[list[dict], dict]:
     kept, stats = [], {"drafted": len(draft_items), "dropped_uncited": 0, "dropped_unknown_id": 0,
-                       "dropped_promise": 0, "added_required": 0}
+                       "dropped_promise": 0, "dropped_moot": 0, "added_required": 0}
+    no_basis = disposition == "NO_BASIS_ESCALATE"
     for it in draft_items:
+        # With no basis for appeal, steps to gather evidence or file an appeal contradict the holding.
+        if no_basis and it["kind"] in ("EVIDENCE_NEEDED", "ACTION"):
+            stats["dropped_moot"] += 1
+            continue
         cites = list(dict.fromkeys(it["cite_ids"]))
         if not cites:
             stats["dropped_uncited"] += 1
@@ -30,13 +49,17 @@ def apply(draft_items: list[dict], ctx: dict, allowed: dict[str, str], dispositi
         return any(i["kind"] == kind and node_id in i["cite_ids"] for i in kept)
 
     clause = ctx["clause"]
-    if disposition == "NO_BASIS_ESCALATE" and not any(i["kind"] == "WARNING" for i in kept):
-        kept.insert(0, {"kind": "WARNING", "origin": "template", "cite_ids": [clause["clause_id"]],
-                        "text": (f"No appeal basis found under {clause['title']} (section {clause['section']}): "
-                                 f"{', '.join(ctx['gates']).replace('_', ' ').lower()}. "
-                                 "Escalate to a human reviewer.")})
+    if no_basis:
+        if not any(i["kind"] == "WARNING" for i in kept):
+            kept.insert(0, {"kind": "WARNING", "origin": "template", "cite_ids": [clause["clause_id"]],
+                            "text": no_basis_summary(ctx)})
+            stats["added_required"] += 1
+        kept.append({"kind": "ACTION", "origin": "template", "cite_ids": [clause["clause_id"]],
+                     "text": "Escalate to a human reviewer: the governing terms leave no basis for an appeal."})
         stats["added_required"] += 1
     for e in ctx["evidence"]:
+        if no_basis:
+            break
         if not e["satisfied"] and not cited("EVIDENCE_NEEDED", e["code"]):
             kept.append({"kind": "EVIDENCE_NEEDED", "origin": "template",
                          "cite_ids": [e["code"], clause["clause_id"]],

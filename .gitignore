@@ -6,3 +6,4 @@ __pycache__/
 .fastembed_cache/
 node_modules/
 dist/
+.impeccable/

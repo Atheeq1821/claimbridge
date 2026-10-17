@@ -1,5 +1,30 @@
 # 06 — API and UI
 
+> **As built (Phase 4).** The API is `backend/claimbridge/api.py` (FastAPI). The web app is `web/` (Next.js 16, App Router, Tailwind 4, SWR). The browser calls `/api/*` on the web origin, and Next rewrites those calls to the API. Live updates are one server-sent event stream (`/api/stream`, a `tick` whenever graph activity changes), which revalidates every SWR key.
+>
+> **Endpoints:**
+> - **Overview:** `GET /api/overview`
+> - **Claims:** `GET /api/claims`, `POST /api/claims/inject {ids | group}`, `GET /api/claims/{id}`, `GET /api/claims/{id}/graph`
+> - **Review:** `POST /api/claims/{id}/approve`, `POST /api/claims/{id}/outcome {outcome}`
+> - **Memory:** `GET /api/memory`, `GET /api/memory/findings/{id}/precedents` (tenant-scoped through the `X-Tenant-Id` header, Q11)
+> - **Policy world:** `POST /api/world {action: reset | reset_2025 | publish, version}`
+> - **Agents:** `GET /api/agents`, `POST /api/agents/{id}/kill`, `POST /api/agents/start {role}`
+> - **Evaluation and live updates:** `GET /api/eval`, `GET /api/stream`
+>
+> Kill and start become `Command` nodes in the graph, which the Supervisor executes.
+>
+> **Screens:**
+> - **`/`:** landing page for judges.
+> - **`/console`:** the docket, with a stage filter, scenario filing, and a precedent-flag strip on each claim.
+> - **`/console/claims/[id]`:** the case: holding, cited plan, precedents with citator treatment, evidence graph, denial notice, evidence, action panel, agent record.
+> - **`/console/memory`:** Findings by treatment; the policy-world panel (rewind to 2025 / publish 2026); the shared-memory privacy demo; playbooks.
+> - **`/console/agents`:** workers by role with kill and start; the coordination ledger, leases and commands.
+> - **`/console/evaluation`:** the eval results.
+>
+> **Visual world:** "The Citator", recorded in `PRODUCT.md`, `.impeccable/surfaces/` and `DESIGN.md`.
+>
+> The plan below is the original design. A tenant selector exists only on the privacy demo; there are no reviewer roles or headers.
+
 ## 1. API (FastAPI)
 
 Base path `/api`. Every case-level endpoint takes the `X-Tenant-Id` header (the demo tenant selector), except reviewer and ops endpoints, which use `X-Role: reviewer|ops` for the demo.

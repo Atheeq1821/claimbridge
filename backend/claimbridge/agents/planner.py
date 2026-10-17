@@ -100,7 +100,9 @@ class Planner(Worker):
                                   {"draft_done": True, "items": draft_items, "summary": summary, "llm": llm_meta})
 
         items, stats = guard.apply(draft_items, pctx, allowed, disposition)
-        if not summary or guard.PROMISE.search(summary):
+        if disposition == "NO_BASIS_ESCALATE":
+            summary = guard.no_basis_summary(pctx)   # decided by the gate, so stated by it
+        elif not summary or guard.PROMISE.search(summary):
             summary = {"NO_BASIS_ESCALATE": "No appeal basis was found in the policy terms that govern this claim.",
                        "APPEAL_NEEDS_EVIDENCE": "An appeal may be possible once the missing evidence is supplied.",
                        "APPEAL_VIABLE": "The evidence the governing clause requires is on file; an appeal can be filed."
@@ -111,7 +113,8 @@ class Planner(Worker):
         rec = {"disposition": disposition, "summary": summary, "confidence": confidence,
                "uncertainty": uncertainty, "created_at": db.now_ms(),
                "llm_platform": llm_meta.get("platform"), "llm_model": llm_meta.get("model"),
-               "guard_dropped": stats["dropped_uncited"] + stats["dropped_unknown_id"] + stats["dropped_promise"],
+               "guard_dropped": (stats["dropped_uncited"] + stats["dropped_unknown_id"] + stats["dropped_promise"]
+                                 + stats["dropped_moot"]),
                "guard_added": stats["added_required"]}
         recs.write_recommendation(g, cid, me, rec, items, allowed)
         payload = {"disposition": disposition, "confidence": confidence, "items": len(items),

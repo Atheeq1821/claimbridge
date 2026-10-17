@@ -4,10 +4,31 @@ An AI caseworker for denied health-insurance claims. It remembers verified resol
 
 Built for *Graph Hacks: Context for AI Agents* (WeMakeDevs × FalkorDB), **Track 02: Agent Memory and Coordination**.
 
-> Status: Phases 1–3 complete (agent spine, full agent loop and memory, evaluation). See [docs/09-phases.md](docs/09-phases.md) and [eval/results/latest.md](eval/results/latest.md).
+> Status: Phases 1–4 complete (agent spine, full agent loop and memory, evaluation, web console). See [docs/09-phases.md](docs/09-phases.md) and [eval/results/latest.md](eval/results/latest.md).
 > All data is synthetic and fictional. Recommendations require human approval.
 
-## Quick start
+## Run the app
+
+```bash
+cp .env.example .env                          # add GROQ_API_KEY (optional: recorded answers replay without it)
+docker compose --profile app up -d --build    # FalkorDB, seed, API, supervised agent pool, web
+```
+
+Open **http://localhost:3100**. It has a landing page for judges and a caseworker console with these screens:
+- **Docket:** file scenarios and watch the agents work.
+- **Case:** the holding, cited plan, precedents with citator treatment, and the evidence graph.
+- **Memory:** rewind to the 2025 world and publish the 2026 policy, plus a privacy demo.
+- **Agents:** kill a worker mid-step.
+- **Evaluation:** the comparison results.
+
+The FalkorDB Browser is at http://localhost:3000.
+
+For local development:
+- **API:** `cd backend && uv run uvicorn claimbridge.api:app --port 8000`
+- **Agent pool:** `uv run python -m claimbridge.cli up`
+- **Web:** `cd web && npm install && npm run dev` (http://localhost:3100)
+
+## Quick start (CLI)
 
 Prerequisites: Docker and [uv](https://docs.astral.sh/uv/). For live LLM calls you also need a free [Groq](https://console.groq.com) API key; recorded responses in `data/llm_cache/` replay without one.
 
@@ -37,11 +58,7 @@ uv run pytest -q                              # offline (fake LLM)
 
 A much larger embedding model (`mxbai-embed-large`, 1024-dim, vs. `bge-small`, 384-dim) didn't fix the baseline's mistakes; they're reasoning errors about policy versions, conditions and contradictions, not retrieval misses. Under random worker kills, every interrupted step was resumed by another worker, with no duplicate work.
 
-To run the whole stack in containers:
-
-```bash
-docker compose --profile agents up -d --build
-```
+To run only the database and agent pool in containers (no web app): `docker compose --profile agents up -d --build`.
 
 ## How it works
 

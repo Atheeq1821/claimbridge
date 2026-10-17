@@ -1,6 +1,7 @@
-# ClaimBridge local stack.
-#   docker compose up -d falkordb            database only (develop agents locally)
-#   docker compose --profile agents up -d    database + seeded graph + supervised agent pool
+# ClaimBridge stack.
+#   docker compose up -d falkordb                 database only (develop locally)
+#   docker compose --profile app up -d --build    everything: database, seed, API, agent pool, web
+#   then open http://localhost:3100
 services:
   falkordb:
     image: falkordb/falkordb:latest
@@ -15,7 +16,7 @@ services:
       retries: 10
 
   seed:
-    profiles: ["agents"]
+    profiles: ["app", "agents"]
     build: {context: ., dockerfile: backend/Dockerfile}
     command: ["reset"]
     env_file: [.env]
@@ -30,15 +31,40 @@ services:
   # The Supervisor runs every worker as its own process, executes KILL/START
   # commands written into the graph, and records expired leases.
   agents:
-    profiles: ["agents"]
+    profiles: ["app", "agents"]
     build: {context: ., dockerfile: backend/Dockerfile}
     command: ["up", "--pool", "intake=1,retrieval=1,verifier=2,planner=1,curator=1"]
     env_file: [.env]
-    environment: *env
+    environment:
+      <<: *env
+      STEP_DELAY_S: "1.5"   # demo pacing: each step stays visible for a moment
     volumes:
       - ./data/llm_cache:/app/data/llm_cache   # recorded LLM responses survive restarts
     depends_on:
       seed: {condition: service_completed_successfully}
+
+  api:
+    profiles: ["app"]
+    build: {context: ., dockerfile: backend/Dockerfile}
+    entrypoint: ["uvicorn"]
+    command: ["claimbridge.api:app", "--host", "0.0.0.0", "--port", "8000"]
+    env_file: [.env]
+    environment: *env
+    ports:
+      - "8000:8000"
+    volumes:
+      - embed_cache:/app/.fastembed_cache
+    depends_on:
+      seed: {condition: service_completed_successfully}
+
+  web:
+    profiles: ["app"]
+    build:
+      context: ./web
+      args: {API_URL: "http://api:8000"}
+    ports:
+      - "3100:3000"
+    depends_on: [api]
 
 volumes:
   falkordb_data:
