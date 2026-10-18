@@ -19,9 +19,12 @@ class _ChatProvider:
             raise LLMError(f"no API key: set one of {', '.join(self.key_names)} in .env")
         self.client = OpenAI(api_key=key, base_url=self.base_url, max_retries=6, timeout=120)
 
-    def complete(self, model: str, system: str, user: str, schema: type[BaseModel], effort: str):
+    def complete(self, model: str, system: str, user: str, schema: type[BaseModel], effort: str,
+                 max_tokens: int | None = None):
         from openai import APIStatusError
         kwargs = {}
+        if max_tokens:
+            kwargs["max_completion_tokens"] = max_tokens
         if self.sends_reasoning_effort and effort:
             kwargs["reasoning_effort"] = effort
         for attempt in (1, 2):
@@ -37,7 +40,7 @@ class _ChatProvider:
                 break
             except APIStatusError as e:
                 # A generation that broke off mid-JSON is transient: try once more.
-                if attempt == 1 and e.status_code == 400 and "json_validate_failed" in str(e.body or e.message):
+                if attempt == 1 and e.status_code == 400 and any(c in str(e.body or e.message) for c in ("json_validate_failed", "output_parse_failed")):
                     continue
                 raise LLMError(f"{type(self).__name__} {e.status_code}: {e.message}") from e
         choice = resp.choices[0]

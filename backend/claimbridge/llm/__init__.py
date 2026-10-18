@@ -66,9 +66,12 @@ def _key(platform, model, task, system, user, schema) -> str:
 
 
 def complete(task: str, system: str, user: str, schema: type[BaseModel],
-             effort: str | None = None) -> tuple[BaseModel, Meta]:
+             effort: str | None = None, model: str | None = None,
+             max_tokens: int | None = None) -> tuple[BaseModel, Meta]:
+    """`model` overrides LLM_MODEL for this call (used for rate-limit fallbacks); `max_tokens` caps the
+    completion (reasoning included) where the provider supports it."""
     platform = config.LLM_PLATFORM
-    model = model_name(platform)
+    model = model or model_name(platform)
     key = _key(platform, model, task, system, user, schema)
     path = config.LLM_CACHE_DIR / platform / f"{task}-{key}.json"
 
@@ -82,7 +85,7 @@ def complete(task: str, system: str, user: str, schema: type[BaseModel],
 
     t0 = time.time()
     out, usage = _provider(platform).complete(model, system, user, schema,
-                                              effort or config.LLM_REASONING_EFFORT)
+                                              effort or config.LLM_REASONING_EFFORT, max_tokens=max_tokens)
     meta = Meta(platform, model, False, int((time.time() - t0) * 1000), *usage)
     if platform != "fake":
         path.parent.mkdir(parents=True, exist_ok=True)

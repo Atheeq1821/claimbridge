@@ -158,9 +158,9 @@ Every worker writes a `WorkerHeartbeat` (see [02](02-data-model.md)), so the UI'
 - Use a cap on LLM spend (default to `cached` mode for public visitors and `live` for the "Run live" button).
 - Provide a "Reset demo" endpoint that reseeds the graph.
 
-## 7. Optional: MCP server (stretch)
+## 7. MCP server and investigator (implemented)
 
-Expose the read-only graph tools (`select_version`, `find_candidates`, `check_applicability`, `evidence_gap`, `explain_path`) as an MCP server. Any MCP client can then ask "why was this precedent rejected?" against the same graph. It is cheap because the functions already exist, and it fits the hackathon's listed integrations.
+`backend/claimbridge/catalogue.py` holds one registry of eight read-only tools (`get_claim`, `select_version`, `find_candidates`, `check_applicability`, `evidence_gap`, `explain_path`, `what_rests_on_clause`, `policy_blast_radius`). `mcp_server.py` serves it over MCP stdio as one fixed tenant against its own graph, and `investigator.py` lets an LLM choose from the same registry in-process. What an MCP client can do and what the investigator can do are therefore identical, and neither can write a decision. Tenant scope comes from the server start-up configuration or the API identity, never from a tool argument.
 
 ## 8. Security and privacy notes
 

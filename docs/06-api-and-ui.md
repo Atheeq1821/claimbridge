@@ -85,6 +85,18 @@ Base path `/api`. Every case-level endpoint takes the `X-Tenant-Id` header (the 
 |---|---|---|
 | `GET` | `/eval/latest` | Latest results JSON produced by `make eval` |
 
+### Investigator and graph algorithms
+
+| Endpoint | What it does |
+|---|---|
+| `GET /api/tools` | The read-only tool catalogue (name, description, JSON schema) shared with the MCP server |
+| `POST /api/claims/{id}/investigate` | Run the investigator. Body optional: `{"mode": "auto" \| "graph_only"}`. `auto` lets a model choose tools if one is available, else falls back to the fixed order and says "Graph-only (LLM unavailable)". Unknown id gives 404, another tenant's claim gives 404, a malformed or oversized body gives 400, and a model-using run beyond 6 a minute per identity gives 429 (graph-only runs are never limited) |
+| `GET /api/claims/{id}/investigations` | Stored traces for the claim, newest first, each with its steps and raw tool results |
+| `GET /api/blast/lineages` | Clause lineages ranked by dependent memory (`algo.pageRank`) |
+| `GET /api/blast/clause/{clause_id}` | What a clause change reaches, with hop distances (`algo.BFS`) |
+
+UI: Case → **Investigate** (button, plain-language steps each expandable to the raw result, brief, outcome label, tokens, and the existing *Show the path through the graph* view for precedent steps) and Memory → **Which clauses carry the most memory**.
+
 ### Live events
 `GET /api/stream` is a Server-Sent Events stream. The API polls the graph every 500 ms for new `CaseEvent`s and heartbeat changes, then pushes them. The UI never polls separately. Using polling here (instead of having workers push) keeps the "graph is the only shared state" rule intact.
 

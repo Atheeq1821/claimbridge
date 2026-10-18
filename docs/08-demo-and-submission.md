@@ -1,6 +1,6 @@
 # Submission and demonstration guide
 
-Track: **02 — Agent Memory and Coordination**.
+Tracks: **02 — Agent Memory and Coordination** (primary) and **01 — Agents That Act on Connected Data**. Name both at submission, and confirm with the organizers (Discord) that one project may enter two tracks. See [14-track-assessment.md](14-track-assessment.md).
 
 ## Organizer requirements
 

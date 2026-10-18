@@ -20,6 +20,11 @@ Claims
   approve <claim_id>          human approval of the recommendation
   outcome <claim_id> <OVERTURNED|UPHELD|PARTIAL>   record the real result
 
+Tools for other agents
+  mcp                         serve the read-only graph tool catalogue over MCP (stdio); see mcp_server.py
+  investigate <claim_id> [--graph-only] [--tenant T]
+                              run the investigator; writes results/investigator_<claim_id>.md
+
 Evaluation (resets its OWN graph: set GRAPH=claimbridge_eval first; the demo graph is refused)
   eval [all|claimbridge|no_memory|baseline|baseline_strong|baseline_findings|chaos]
                               start a NEW run in eval/runs/<run_id>/ and run the step(s)
@@ -399,6 +404,11 @@ def main(argv=None):
     oc.add_argument("--reviewer", default="reviewer-cli")
     sub.add_parser("gate")
     sub.add_parser("gate2")
+    sub.add_parser("mcp")
+    iv = sub.add_parser("investigate")
+    iv.add_argument("claim_id")
+    iv.add_argument("--graph-only", action="store_true", help="skip the model: fixed-order catalogue run")
+    iv.add_argument("--tenant", help="act as this tenant (default: all claims, like the demo)")
     ev = sub.add_parser("eval")
     ev.add_argument("steps", nargs="*", default=["all"],
                     choices=["all", "claimbridge", "no_memory", "baseline", "baseline_strong", "baseline_findings",
@@ -410,12 +420,24 @@ def main(argv=None):
     ev.add_argument("--file", help="generalization: an expectation file under data/scenarios (default generalization.yaml)")
     a = p.parse_args(argv)
 
+    if a.cmd == "mcp":          # stdout belongs to the protocol: no reconfiguring, no prints
+        from claimbridge.mcp_server import main as serve_mcp
+        return serve_mcp()
     for stream in (sys.stdout, sys.stderr):
         stream.reconfigure(encoding="utf-8", errors="replace")
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
     for noisy in ("httpx", "httpx2", "openai", "anthropic"):
         logging.getLogger(noisy).setLevel(logging.WARNING)
     g = db.connect()
+    if a.cmd == "investigate":
+        from claimbridge import catalogue, investigator
+        run = investigator.investigate(g, catalogue.Scope(a.tenant), a.claim_id, use_llm=not a.graph_only)
+        out_dir = config.REPO_DIR / "results"
+        out_dir.mkdir(exist_ok=True)
+        path = out_dir / f"investigator_{a.claim_id}.md"
+        path.write_text(investigator.to_markdown(run), encoding="utf-8")
+        print(f"{run.outcome}: {run.label}", f"tokens: {run.tokens}", "", run.brief, "", f"written to {path}", sep=chr(10))
+        sys.exit(0 if run.outcome != "unknown_claim" else 1)
     if a.cmd == "generate":
         from claimbridge.seed.generate import generate
         h, e = generate()

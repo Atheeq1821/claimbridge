@@ -292,15 +292,12 @@ RETURN h.agent_id, h.role, h.state, h.current_claim, h.last_seen,
 ORDER BY h.role, h.agent_id
 ```
 
-## Graph algorithms (optional, for Track 1 crossover)
-- **Shortest path** from a claim to a winning Resolution through the evidence it's missing, using `shortestPath`. It's a nice "fewest steps to an overturn" visual.
-- **PageRank or degree over clauses** cited by OVERTURNED resolutions, to show the "most decisive clauses" on the memory page.
-
-These are optional. Don't spend MVP time here.
+## Graph algorithms (implemented: Q16)
+Two FalkorDB built-ins, both present in the pinned image (`CALL dbms.procedures()` lists `algo.BFS` and `algo.pageRank`), are used by `policy_blast_radius`. See Q16 below. Shortest path and PageRank over clauses cited by OVERTURNED resolutions remain ideas, not features.
 
 ## Query tests
 
-Implemented in `backend/tests/` (`uv run pytest`). Status as of Phase 1: **21 passed**.
+Implemented in `backend/tests/` (`uv run pytest`; the suite needs FalkorDB, see the README).
 
 | Test | Query | Expectation | Status |
 |---|---|---|---|
@@ -318,7 +315,7 @@ Implemented in `backend/tests/` (`uv run pytest`). Status as of Phase 1: **21 pa
 | Learn a Finding | `create_finding` | `VALID_IN` computed from clause params, reused by the next claim | ✅ |
 | Lease reaper | supervisor | `LEASE_EXPIRED` recorded once per expiry | ✅ |
 
-The implemented Q6, Q9 and learning queries are in `backend/claimbridge/tools/memory.py`. Planner context and recommendation writes are in `tools/recommendation.py`. All tests: **30 passed** (Phase 2).
+The implemented Q6, Q9 and learning queries are in `backend/claimbridge/tools/memory.py`. Planner context and recommendation writes are in `tools/recommendation.py`.
 
 ## Q14 — What rests on a clause (blast radius) and Q15 — Why this precedent (path trace)
 
@@ -339,3 +336,34 @@ RETURN x, f, collect(DISTINCT e), collect(DISTINCT cl)
 A test asserts that the traversal reaches exactly the clauses sharing the lineage key. A tenant sees its own claims by id; other policyholders' claims are only counted.
 
 **Q15, `GET /api/claims/{cid}/trace/{fid}`.** For one claim and one precedent, it rebuilds the chain of edges the Verifier relies on (reason, lineage, governing version, `SUPERSEDES*` distance, `VALID_IN`, contradiction, conditions). The first hop that does not hold is the break. A test checks, for every precedent of every evaluation claim, that the break reproduces the verdict code stored on the `CONSIDERED` edge.
+
+## Q16 — Blast radius with graph algorithms, and Q17 — the investigation trace
+
+**Q16, `policy_blast_radius`, `GET /api/blast/clause/{id}`, `GET /api/blast/lineages`** (`backend/claimbridge/tools/blast.py`, tests in `tests/test_blast.py`). `algo.BFS` follows outgoing edges only, while the dependency runs claim → precedent → clause, so the live graph is only *read* (four plain queries over `SUPERSEDES`, `ON_LINEAGE`, `CONSIDERED`, `DERIVED_FROM`) and the dependency edges are copied into a throwaway scratch graph beside it, under two relationship types, `IMPACTS` (direction of effect) and `DEPENDS_ON` (direction of dependence). The scratch graph is deleted in a `finally`. `VALID_IN` is deliberately not walked: it points at `PolicyVersion` hubs shared by every precedent, which would connect unrelated lineages.
+
+```cypher
+// reach and hop distance (the BFS tree edges give each node's parent, hence its depth)
+MATCH (s:N {id: $clause_id})
+CALL algo.BFS(s, 6, 'IMPACTS') YIELD nodes, edges
+RETURN nodes, edges
+
+// how much depends on each clause (summed per lineage)
+CALL algo.pageRank('N', 'DEPENDS_ON') YIELD node, score
+RETURN node.id AS id, score
+```
+
+What the algorithms add over `COUNT`: the hop distance of each affected item and a rank that counts indirect dependence. They do not change *which* claims are affected; Q14 reaches the same set. On this small synthetic graph the ranking mostly follows the counts. The test builds a 4-clause, 3-precedent, 3-claim graph and checks every hop distance against a hand computation.
+
+**Q17, investigation memory** (`backend/claimbridge/investigator.py`). Each investigator run is stored as `(Investigation)-[:OF]->(Claim)`, `(Investigation)-[:CALLED {seq, args}]->(ToolCall)` and `(ToolCall)-[:RETURNED]->(Finding|Clause|Claim|PolicyVersion|EvidenceType|Resolution)`. A later run on a claim of the same tenant citing the same lineage reads the latest one:
+
+```cypher
+MATCH (c:Claim {claim_id: $cid})
+MATCH (cl:Clause {clause_id: $clause})
+MATCH (inv:Investigation)-[:OF]->(pc:Claim)-[:HAS_NOTICE]->(:DenialNotice)-[:CITES]->(:Clause {lineage_id: cl.lineage_id})
+WHERE pc.claim_id <> $cid AND pc.tenant_id = c.tenant_id
+RETURN pc.claim_id, inv.summary ORDER BY inv.started_at DESC LIMIT 1
+```
+
+The result is shown as "Last time on this clause" and given to the model as a hint. It orders nothing and decides nothing.
+
+The tool catalogue (`backend/claimbridge/catalogue.py`) reuses Q1, Q3, Q5, Q14, Q15 unchanged. The two tools whose stored queries also write (`select_version` pins the claim, `check_applicability` stores the verdict) read the same facts without the write: the version lookup is the match part of Q1, and the verdict is re-derived by the path trace of Q15.

@@ -24,7 +24,7 @@ KEYWORDS = [
 
 
 class FakeProvider:
-    def complete(self, model, system, user, schema: type[BaseModel], effort):
+    def complete(self, model, system, user, schema: type[BaseModel], effort, max_tokens=None):
         if schema is IntakeExtraction:
             return self._intake(user), (None, None)
         if schema is PlanDraft:

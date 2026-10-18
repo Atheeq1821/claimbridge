@@ -52,6 +52,8 @@ LLM_PLATFORM = os.getenv("LLM_PLATFORM", "groq").strip().lower()
 LLM_MODE = os.getenv("LLM_MODE", "cached").strip().lower()
 LLM_MODEL = os.getenv("LLM_MODEL", "").strip()
 LLM_REASONING_EFFORT = os.getenv("LLM_REASONING_EFFORT", "medium").strip()
+# Comma-separated models the investigator tries, in order, when the provider answers 429 (rate limit).
+LLM_MODEL_FALLBACKS = [m.strip() for m in os.getenv("LLM_MODEL_FALLBACKS", "").split(",") if m.strip()]
 PLANNER_DRAFT_AUDIT = os.getenv("PLANNER_DRAFT_AUDIT", "0") == "1"
 LLM_CACHE_DIR = Path(os.getenv("LLM_CACHE_DIR", DATA_DIR / "llm_cache"))
 DEFAULT_MODELS = {

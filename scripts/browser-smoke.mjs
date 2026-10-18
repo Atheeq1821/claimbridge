@@ -92,6 +92,24 @@ try {
     const ok = await waitFor(`document.body.innerText.includes(${JSON.stringify(needle)})`, { timeout: 6000, what: `${tab} tab` }).then(() => true, () => false);
     step(`case: the ${tab} tab shows its content`, ok, needle);
   }
+  // ------------------------------------------------------------------ the Investigate panel (desktop)
+  await click('Investigate');
+  await waitFor('document.body.innerText.includes("The investigator picks read-only graph tools")', { what: 'Investigate tab' });
+  await click('Graph-only run');
+  await waitFor('document.body.innerText.includes("tool calls, in order")', { timeout: 60000, what: 'investigation steps' });
+  const steps = await evaluate('document.querySelectorAll("[aria-label=\\"Tool calls in order\\"] ol > li").length');
+  step('investigate: the tool calls are listed in order', steps >= 5, `${steps} steps`);
+  step('investigate: the outcome is named in words, honestly ("Graph-only")', await evaluate('/Graph-only \\(/.test(document.body.innerText) || document.body.innerText.includes("AI agent")'));
+  step('investigate: a graph-only run is never labelled an AI agent', await evaluate('(() => { const t = document.body.innerText; return !/Graph-only \\(/.test(t) || !/AI agent:/.test(t.split("Brief")[0].slice(-400)); })()'));
+  step('investigate: plain sentence first, then the tool and its ids', await evaluate('document.body.innerText.includes("Looked up the policy in force")'));
+  await evaluate('document.querySelector("details > summary").click()');
+  step('investigate: a step expands to its raw tool result', await evaluate(`!!document.querySelector('details[open] pre') && document.querySelector('details[open] pre').innerText.includes('"ok"')`));
+  step('investigate: tokens are reported', await evaluate('/tokens|0 tokens/.test(document.body.innerText)'));
+  await evaluate('[...document.querySelectorAll("button")].find(b => b.textContent.includes("Show the path through the graph"))?.click()');
+  step('investigate: reuses the existing path-through-the-graph view', await waitFor('!!document.querySelector("[aria-label=\\"Path through the graph\\"]")', { timeout: 8000 }).then(() => true, () => false));
+  await screenshot(path.join(out, 'investigate.png'));
+  await click('Open the graph replay');
+  step('investigate: links to the graph replay', await waitFor('!!document.querySelector(".cbg-svg")', { timeout: 8000 }).then(() => true, () => false));
   step('case: the support score is never a bare 0%', !/Support score\s*0%/.test(await text()));
   step('case: no stale wording ("good law", "Could be wrong if")', !/good law|Could be wrong if/i.test(await text()));
   await screenshot(path.join(out, 'case-evidence.png'));
@@ -116,7 +134,7 @@ try {
 
   // ------------------------------------------------------------------ the other pages
   for (const [route, needles, name] of [
-    ['/console/memory', ['Memory', 'recorded win'], 'memory'],
+    ['/console/memory', ['Memory', 'recorded win', 'Which clauses carry the most memory', 'algo.pageRank'], 'memory'],
     ['/console/agents', ['Agents', 'Supervisor'], 'agents'],
     ['/console/evaluation', ['What each system can see', 'Limits of this evaluation'], 'evaluation'],
   ]) {
@@ -127,8 +145,27 @@ try {
   }
   step('evaluation page names the run it shows', /Run\s+\S{8,}/.test(await text()) || (await text()).includes('Run identity'));
 
+  // ------------------------------------------------------------------ blast radius on the Memory page
+  await navigate(`${base}/console/memory`);
+  await waitFor('document.body.innerText.includes("If C-")', { timeout: 30000, what: 'blast radius reach' });
+  step('memory: the blast radius lists what is reached, with hop distances', await evaluate('/hop \d/.test(document.body.innerText)'));
+  await evaluate('document.getElementById("blast-h").scrollIntoView()');
+  await screenshot(path.join(out, 'blast-radius.png'));
+
   // ------------------------------------------------------------------ phone width
   await browser.viewport(390, 844, true);
+  await navigate(`${base}/console/claims/EV-T1-01`);
+  await waitFor('!!document.querySelector("[role=tab]")', { what: 'case on phone' });
+  await click('Investigate');
+  await waitFor('document.body.innerText.includes("The investigator picks read-only graph tools")', { what: 'Investigate tab on phone' });
+  await click('Graph-only run');
+  await waitFor('document.body.innerText.includes("tool calls, in order")', { timeout: 60000, what: 'investigation on phone' });
+  step('mobile-investigate: no horizontal page scroll', (await evaluate('document.documentElement.scrollWidth - window.innerWidth')) <= 2);
+  step('mobile-investigate: the run button is reachable by keyboard (a real <button>)', await evaluate('[...document.querySelectorAll("button")].some(b => b.textContent.trim() === "Graph-only run" && b.tabIndex >= 0)'));
+  await screenshot(path.join(out, 'mobile-investigate.png'));
+  await navigate(`${base}/console/memory`);
+  await waitFor('document.body.innerText.includes("If C-")', { timeout: 30000, what: 'blast radius on phone' });
+  step('mobile-blast-radius: no horizontal page scroll', (await evaluate('document.documentElement.scrollWidth - window.innerWidth')) <= 2);
   for (const [route, name] of [['/console', 'mobile-docket'], ['/console/claims/EV-T1-01', 'mobile-case'], ['/console/evaluation', 'mobile-evaluation'], ['/', 'mobile-landing']]) {
     await navigate(`${base}${route}`);
     await delay(2500);

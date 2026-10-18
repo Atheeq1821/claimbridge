@@ -229,3 +229,55 @@ export type Overview = {
   llm: { platform: string; model: string; mode: string };
   world_job: { running: boolean; action: string | null; error: string | null };
 };
+
+// ---- investigator and graph algorithms
+
+export type InvestigationStep = {
+  seq: number;
+  round?: number;
+  tool: string;
+  args: Record<string, unknown>;
+  ok: boolean;
+  plain: string;
+  result: unknown;
+};
+
+export type Investigation = {
+  investigation_id: string | null;
+  outcome: "investigated" | "investigated_with_template" | "guarded" | "llm_unavailable" | "unknown_claim";
+  label: string;
+  model: string | null;
+  platform: string | null;
+  brief: string;
+  hint: string | null;
+  violations: string[];
+  notes: string[];
+  rounds: { round: number; cached?: boolean; prompt_tokens?: number | null; completion_tokens?: number | null }[];
+  tokens: { prompt: number | null; completion: number | null };
+  calls: InvestigationStep[];
+};
+
+export type BlastLineage = {
+  rank: number;
+  lineage_id: string;
+  title: string;
+  section: string;
+  score: number;
+  clause_ids: string[];
+  findings: string[];
+  claims_total: number;
+  claims_visible: number;
+};
+
+export type BlastRadius = {
+  clause_id: string;
+  lineage_id: string;
+  max_hops: number;
+  algorithms: string[];
+  counts: { clauses: number; findings: number; outcomes: number; claims_visible: number; claims_withheld: number; farthest_hop: number };
+  clauses: { clause_id: string; hops: number; version_id: string }[];
+  findings: { finding_id: string; hops: number; status: string }[];
+  outcomes: { resolution_id: string; hops: number }[];
+  claims: { claim_id: string; hops: number; status: string }[];
+  lineage_rank: { rank: number | null; of: number; score: number | null };
+};

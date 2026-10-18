@@ -12,12 +12,13 @@ class ClaudeProvider:
         # Without an explicit key the SDK falls back to its own credential chain.
         self.client = anthropic.Anthropic(api_key=key) if key else anthropic.Anthropic()
 
-    def complete(self, model: str, system: str, user: str, schema: type[BaseModel], effort: str):
+    def complete(self, model: str, system: str, user: str, schema: type[BaseModel], effort: str,
+                 max_tokens: int | None = None):
         import anthropic
         try:
             resp = self.client.messages.parse(
                 model=model,
-                max_tokens=16000,
+                max_tokens=max_tokens or 16000,
                 system=system,
                 messages=[{"role": "user", "content": user}],
                 output_config={"effort": effort or "medium"},

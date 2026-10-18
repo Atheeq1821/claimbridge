@@ -55,7 +55,7 @@ Success means a caseworker gets a correct, cited plan and never acts on a preced
 - **LLM layer:** provider-agnostic (`LLM_PLATFORM` groq|openai|claude|fake; default Groq `openai/gpt-oss-120b`). Responses are recorded and replayed (`LLM_MODE=cached`). Groq's free tier is limited to 200K tokens a day, so public visitors should mostly replay.
 - **Terminology:** claim, denial notice, policy version, clause, lineage, Finding (precedent), Playbook, disposition (APPEAL_VIABLE / APPEAL_NEEDS_EVIDENCE / NO_BASIS_ESCALATE), verdict codes (ACCEPTED, VERSION_DRIFT, LINEAGE_MISMATCH, CONTRADICTED, CONDITION_UNMET, REASON_MISMATCH), gates, lease, checkpoint.
 - **Tenancy:** case detail is tenant-scoped; Findings are anonymous and shared.
-- **Undecided:** the final hosting provider and whether to add an MCP server. Authentication exists (`AUTH_MODE=protected`); demo mode is a deliberately public sandbox.
+- **Undecided:** the final hosting provider. A read-only MCP server exists (see the README). Authentication exists (`AUTH_MODE=protected`); demo mode is a deliberately public sandbox.
 
 ## Brand Commitments
 

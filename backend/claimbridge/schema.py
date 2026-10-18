@@ -12,6 +12,7 @@ RANGE_INDEXES = [
     ("Tenant", "tenant_id"), ("CaseEvent", "event_id"), ("Checkpoint", "checkpoint_id"),
     ("Resolution", "resolution_id"), ("Playbook", "playbook_id"), ("Agent", "agent_id"),
     ("WorkerHeartbeat", "agent_id"), ("DenialNotice", "notice_id"), ("Evidence", "doc_id"),
+    ("Investigation", "investigation_id"), ("ToolCall", "call_id"),
 ]
 
 VECTOR_INDEXES = [("DenialNotice", "embedding"), ("DenialReason", "embedding")]

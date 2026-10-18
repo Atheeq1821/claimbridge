@@ -1,6 +1,6 @@
 # ClaimBridge stack.
 #   docker compose up -d falkordb                 database only (develop locally)
-#   docker compose --profile app up -d --build    everything: database, seed, API, agent pool, web
+#   docker compose --profile app up -d --build    everything: database, seed, API, agent pool, web (.env is optional)
 #   then open http://localhost:3100
 #
 # Every host port is bound to localhost and can be moved with a variable in .env (WEB_PORT, API_PORT, DB_PORT,
@@ -24,7 +24,7 @@ services:
     profiles: ["app", "agents"]
     build: {context: ., dockerfile: backend/Dockerfile}
     command: ["reset"]
-    env_file: [.env]
+    env_file: [{path: .env, required: false}]   # optional: the stack runs without one
     environment: &env
       FALKORDB_HOST: falkordb
       GRAPH: claimbridge
@@ -39,7 +39,7 @@ services:
     profiles: ["app", "agents"]
     build: {context: ., dockerfile: backend/Dockerfile}
     command: ["up", "--pool", "intake=1,retrieval=1,verifier=2,planner=1,curator=1"]
-    env_file: [.env]
+    env_file: [{path: .env, required: false}]   # optional: the stack runs without one
     environment:
       <<: *env
       STEP_DELAY_S: "1.5"   # demo pacing: each step stays visible for a moment
@@ -53,12 +53,13 @@ services:
     build: {context: ., dockerfile: backend/Dockerfile}
     entrypoint: ["uvicorn"]
     command: ["claimbridge.api:app", "--host", "0.0.0.0", "--port", "8000"]
-    env_file: [.env]
+    env_file: [{path: .env, required: false}]   # optional: the stack runs without one
     environment: *env
     ports:
       - "127.0.0.1:${API_PORT:-8000}:8000"
     volumes:
       - embed_cache:/app/.fastembed_cache
+      - ./data/llm_cache:/app/data/llm_cache   # investigator recordings replay in the UI and survive restarts
     depends_on:
       seed: {condition: service_completed_successfully}
 
@@ -70,6 +71,22 @@ services:
     ports:
       - "127.0.0.1:${WEB_PORT:-3100}:3000"
     depends_on: [api]
+
+  # MCP server (read-only graph tools over stdio) for Claude Desktop, the MCP Inspector or any MCP client:
+  #   docker compose run --rm -T --quiet-build mcp
+  # It runs as ONE tenant (CLAIMBRIDGE_MCP_TENANT) against its own graph (CLAIMBRIDGE_MCP_GRAPH).
+  mcp:
+    profiles: ["mcp"]
+    build: {context: ., dockerfile: backend/Dockerfile}
+    command: ["mcp"]
+    stdin_open: true
+    env_file: [{path: .env, required: false}]
+    environment:
+      <<: *env
+      CLAIMBRIDGE_MCP_TENANT: ${CLAIMBRIDGE_MCP_TENANT:-TEN-01}
+      CLAIMBRIDGE_MCP_GRAPH: ${CLAIMBRIDGE_MCP_GRAPH:-claimbridge}
+    depends_on:
+      falkordb: {condition: service_healthy}
 
 volumes:
   falkordb_data:

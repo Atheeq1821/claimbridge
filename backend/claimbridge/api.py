@@ -21,11 +21,11 @@ from fastapi import FastAPI, Header, HTTPException, Request, Response
 from fastapi.responses import StreamingResponse, JSONResponse
 from pydantic import BaseModel, Field
 
-from claimbridge import auth, config, db, llm, report
+from claimbridge import auth, catalogue, config, db, investigator, llm, report
 from claimbridge.knowledge import load
 from claimbridge.supervisor import approve, command, correct_classification, declare_evidence, record_outcome, withdraw_evidence
 from claimbridge.tools import coordination as coord
-from claimbridge.tools import tenancy, trace
+from claimbridge.tools import blast, tenancy, trace
 
 app = FastAPI(title="ClaimBridge API", version="0.4.0")
 
@@ -471,8 +471,9 @@ def claim_graph(cid: str):
     for v in d["verdicts"]:
         if v["code"] == "REASON_MISMATCH":
             continue
-        node(v["finding_id"], "finding", v["finding_id"], code=v["code"], status=v["status"])
-        edges.append({"from": cid, "to": v["finding_id"], "label": v["code"].replace("_", " ").lower(), "code": v["code"]})
+        code = v["code"] or "CANDIDATE"          # retrieved but not yet judged by the Verifier (a claim mid-pipeline)
+        node(v["finding_id"], "finding", v["finding_id"], code=code, status=v["status"])
+        edges.append({"from": cid, "to": v["finding_id"], "label": code.replace("_", " ").lower(), "code": code})
         if v["learned_on"]:
             node(v["learned_on"], "clause", v["learned_on"], sub="learned on")
             edges.append({"from": v["finding_id"], "to": v["learned_on"], "label": "learned on"})
@@ -633,6 +634,86 @@ def clause_impact(clause_id: str):
     if not out:
         raise HTTPException(404, "No such clause.")
     return out
+
+
+# ------------------------------------------------- investigator and graph algorithms
+
+_INVESTIGATE_PER_MINUTE = 6
+_investigate_log: dict[str, list[float]] = {}
+_investigate_lock = threading.Lock()
+
+
+def _scope() -> catalogue.Scope:
+    return catalogue.Scope(auth.tenant())
+
+
+def _llm_allowed() -> bool:
+    """Rate limit for runs that may call the model: _INVESTIGATE_PER_MINUTE per identity. Graph-only runs are never limited."""
+    p = auth.current.get()
+    who = p.subject if p else "anonymous"
+    now = time.time()
+    with _investigate_lock:
+        recent = [t for t in _investigate_log.get(who, []) if now - t < 60]
+        ok = len(recent) < _INVESTIGATE_PER_MINUTE
+        if ok:
+            recent.append(now)
+        _investigate_log[who] = recent
+    return ok
+
+
+@app.get("/api/tools")
+def tool_catalogue():
+    """The read-only tools the investigator and the MCP server share."""
+    return {"tools": catalogue.specs()}
+
+
+@app.post("/api/claims/{cid}/investigate")
+async def investigate_claim(cid: str, request: Request):
+    """Run the investigator on a claim and store the trace. Body (optional): {"mode": "auto" | "graph_only"}."""
+    raw = await request.body()
+    if len(raw) > 1024:
+        raise HTTPException(400, "That request is too large.")
+    try:
+        body = json.loads(raw) if raw.strip() else {}
+    except (ValueError, UnicodeDecodeError):
+        raise HTTPException(400, "The request body is not valid JSON.") from None
+    if not isinstance(body, dict) or set(body) - {"mode"} or body.get("mode", "auto") not in ("auto", "graph_only"):
+        raise HTTPException(400, 'Send {} or {"mode": "auto" | "graph_only"}.')
+    if not re.fullmatch(r"[A-Za-z0-9_.:\-]{1,80}", cid):
+        raise HTTPException(400, "That is not a claim id.")
+    row = db.one(g(), "MATCH (c:Claim {claim_id: $cid}) RETURN c.tenant_id AS tenant", {"cid": cid})
+    if not row:
+        raise HTTPException(404, "We could not find that claim.")
+    auth.require_tenant(row["tenant"])
+    use_llm = body.get("mode", "auto") == "auto"
+    if use_llm and config.LLM_PLATFORM != "fake" and not _llm_allowed():
+        raise HTTPException(429, f"Investigations that use the language model are limited to {_INVESTIGATE_PER_MINUTE} a minute. "
+                                 "Wait a moment, or run the graph-only investigation.")
+    from starlette.concurrency import run_in_threadpool
+    run = await run_in_threadpool(investigator.investigate, db.connect(), _scope(), cid, use_llm=use_llm)
+    return investigator.as_json(run)
+
+
+@app.get("/api/claims/{cid}/investigations")
+def claim_investigations(cid: str):
+    """Stored investigation traces for a claim, newest first (the graph remembers them)."""
+    _claim_access(cid)
+    return {"investigations": investigator.history(g(), cid)}
+
+
+@app.get("/api/blast/lineages")
+def blast_lineages():
+    """Clause lineages ranked by how much memory depends on them (PageRank over the dependency edges)."""
+    return {"lineages": blast.rank_lineages(g(), auth.tenant()), "algorithm": "algo.pageRank"}
+
+
+@app.get("/api/blast/clause/{clause_id}")
+def blast_clause(clause_id: str):
+    """What is affected if a clause changes, with hop distances (algo.BFS)."""
+    out = catalogue.call(g(), _scope(), "policy_blast_radius", {"clause_id": clause_id})
+    if not out["ok"]:
+        raise HTTPException(404 if out["error"]["code"] == "NOT_FOUND" else 400, out["error"]["message"])
+    return out["data"]
 
 
 # ------------------------------------------------------------------- world

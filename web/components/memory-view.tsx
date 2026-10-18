@@ -9,6 +9,7 @@ import { Button, ErrorNote, Mono, SectionHead } from "./ui";
 
 import { useAccess } from "./session-gate";
 import { ClauseImpactPanel } from "./graph-trace";
+import { BlastRadiusPanel } from "./blast-panel";
 
 const ALL_VERSIONS = ["2024", "2025", "2026"];
 const STATUS_ORDER = ["ACTIVE", "STALE", "CONTRADICTED"];
@@ -272,6 +273,8 @@ export function MemoryView() {
           {data && <Privacy findings={data.findings} />}
 
           {data && <ClauseImpactPanel />}
+
+          {data && <BlastRadiusPanel />}
 
           {data && (
             <section>

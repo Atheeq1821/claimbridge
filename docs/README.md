@@ -3,7 +3,7 @@
 > An AI caseworker that remembers verified resolutions, knows when prior knowledge no longer applies, and explains every recommendation through its evidence graph.
 
 **Hackathon:** Graph Hacks: Context for AI Agents (WeMakeDevs × FalkorDB)
-**Track:** 02 — Agent Memory and Coordination (optionally also entered in Track 01)
+**Tracks:** 02 — Agent Memory and Coordination (primary) and 01 — Agents That Act on Connected Data
 **Window:** Oct 15, 12:01 AM IST → **Oct 18, 11:59 PM IST** (2026)
 
 ## Read in this order
@@ -24,6 +24,7 @@
 | 11 | [Pending work plan](11-pending-work-and-completion-plan.md) | The completion checklist (updated 17 Oct) |
 | 12 | [Completion report](12-completion-report.md) | What was done, the evidence, and what only the team can do |
 | 13 | [Judge questions](13-judge-questions.md) | Candid answers, including what is not defensible |
+| 14 | [Track assessment](14-track-assessment.md) | Both tracks focus item by focus item, the rule checks, honest scores and the do-not-claim list |
 
 > Docs 00-05 are planning-era documents with an *as-built* banner at the top; 06 and 07 have a current section above the original design. Where they disagree, the code and the README are right.
 

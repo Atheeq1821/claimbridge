@@ -123,7 +123,7 @@ export function Landing() {
         <div className="relative mx-auto max-w-[1200px] px-4 pb-10 pt-16 text-center sm:px-8 sm:pt-24">
           <p className="rise inline-flex items-center gap-2 rounded-full border border-rule-2 bg-wash px-3 py-1 text-[12px] text-ink-2">
             <span className="size-1.5 rounded-full bg-link" aria-hidden />
-            FalkorDB Graph Hacks · Track 02, agent memory and coordination
+            FalkorDB Graph Hacks · Track 02, agent memory and coordination · Track 01, agents that act on connected data
           </p>
           <h1
             className="rise mx-auto mt-6 max-w-[16ch] text-[clamp(40px,7vw,76px)] font-semibold leading-[1.02] tracking-[-0.045em] text-ink"

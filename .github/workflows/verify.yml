@@ -34,9 +34,9 @@ jobs:
         working-directory: web
       - run: npm run lint
         working-directory: web
-      - run: npx tsc --noEmit
-        working-directory: web
       - run: npm test
         working-directory: web
-      - run: npm run build
+      - run: npm run build          # generates Next's route types, which tsc needs (LayoutProps)
+        working-directory: web
+      - run: npx tsc --noEmit
         working-directory: web

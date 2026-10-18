@@ -10,6 +10,7 @@ import { DISPOSITION, STATUS_LABEL, TRAPS, TREATMENT, ago, fmtDate, humanEvent, 
 import { SUPPORT_NOTE, conditionFailure, originLine, requirementOrigin, supportView } from "@/lib/explain";
 import { GraphReplay } from "./graph-replay";
 import { PrecedentPath } from "./graph-trace";
+import { InvestigatePanel } from "./investigate-panel";
 import { EvidenceManager, ReclassifyForm } from "./human-actions";
 import { SignalMark, Treatment } from "./signal";
 import { Button, Cite, ErrorNote, Mono, SectionHead } from "./ui";
@@ -275,7 +276,7 @@ function AgentRecord({ d }: { d: ClaimDetail }) {
   );
 }
 
-type Tab = "graph" | "plan" | "precedents" | "evidence" | "record";
+type Tab = "graph" | "plan" | "precedents" | "evidence" | "investigate" | "record";
 
 export function CaseView() {
   const { id } = useParams<{ id: string }>();
@@ -331,6 +332,7 @@ export function CaseView() {
     { id: "plan", label: "Plan", n: rec?.items.length },
     { id: "precedents", label: "Precedents", n: relevant.length || undefined },
     { id: "evidence", label: "Evidence", n: noBasis ? undefined : missing.length || undefined },
+    { id: "investigate", label: "Investigate" },
     { id: "record", label: "Agent record", n: d.timeline.length || undefined },
   ];
 
@@ -486,6 +488,8 @@ export function CaseView() {
           ) : (
             <p className="text-[13.5px] text-ink-3">The graph fills in as the agents work.</p>
           ))}
+
+        {tab === "investigate" && <InvestigatePanel claimId={id} onShowGraph={() => setTab("graph")} />}
 
         {tab === "plan" &&
           (rec && rec.items.length > 0 ? (

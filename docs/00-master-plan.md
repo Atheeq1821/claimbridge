@@ -51,7 +51,7 @@ Each claim is shown live in the demo and measured in the evaluation.
 - Authentication beyond a tenant selector for the demo.
 
 ### Stretch (only after the MVP is frozen)
-1. An MCP server that exposes the graph tools from [05-cypher-queries.md](05-cypher-queries.md).
+1. ~~An MCP server that exposes the graph tools~~ (done: `backend/claimbridge/mcp_server.py`, see the README).
 2. A concurrency stress test (N workers per role, M claims) with a duplicate-work counter.
 3. A blog post for the side prize.
 
@@ -70,7 +70,7 @@ Each claim is shown live in the demo and measured in the evaluation.
 | M9 | Baseline RAG and evaluation harness | P0 | [07](07-evaluation.md) |
 | M10 | Tenant isolation | P1 | [02](02-data-model.md), [04](04-agents-and-memory.md) |
 | M11 | Deployment, README, video, and submission | P0 | [01](01-architecture.md), [08](08-demo-and-submission.md) |
-| M12 | MCP server | Stretch | [01](01-architecture.md) |
+| M12 | MCP server | Done (read-only catalogue over stdio) | [01](01-architecture.md) |
 
 ## 6. Timeline
 
@@ -123,7 +123,7 @@ If you're solo, follow the timeline as written and use the cut lines below aggre
 
 ## 7. Cut lines (drop in this order if behind)
 
-1. Stretch items (MCP, stress test, blog post).
+1. Stretch items (stress test, blog post).
 2. Memory browser page. Show Findings inside case detail instead.
 3. Tenant isolation UI. Keep the enforced query and show it in a test.
 4. Playbook success-rate math. Use static Playbooks linked to Findings.
