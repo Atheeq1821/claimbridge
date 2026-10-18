@@ -4,6 +4,8 @@ A review workspace for denied health-insurance claims, with versioned memory and
 
 Built for **Graph Hacks**. Tracks entered: **Track 02, Agent Memory and Coordination (primary)** and **Track 01, Agents That Act on Connected Data**. All insurers, policies, people and outcomes are fictional. This is a bounded research prototype, not a coverage decision service.
 
+**Demo video:** [youtu.be/dky01tNoJX0](https://youtu.be/dky01tNoJX0)
+
 ## Tracks entered
 
 **Track 02 (primary): Agent Memory and Coordination.** Episodic memory is the per-claim event log and checkpoints; semantic memory is the versioned Findings (`VALID_IN`, `STALE_BECAUSE`); procedural memory is the playbooks counted from verified outcomes; shared state and handoffs are the claim status, leases and fenced commits; per-tenant memory is the tenant boundary. Evidence for each is in [docs/14-track-assessment.md](docs/14-track-assessment.md).
@@ -156,5 +158,5 @@ The model covers one fictional plan and fixed denial/evidence taxonomies. It doe
 
 Development used **Claude Code** (reported in the original README) and **OpenAI Codex** for implementation, review, tests and documentation. Codex also revised evaluation and submission materials. Runtime AI defaults to Groq `openai/gpt-oss-120b` for notice classification; published advice uses graph templates. Automated checks are not a claim that participants personally authored or reviewed every line. Team members must describe their actual contributions and demonstrate understanding.
 
-See the [submission guide](docs/08-demo-and-submission.md) and [review changes](docs/10-review-changes.md). Public source access and a hosted working-project video must be verified before submission. Local setup is the deployment fallback.
+The demo video is linked at the top. There is no live deployment; local setup (above) is the way to run it.
 
